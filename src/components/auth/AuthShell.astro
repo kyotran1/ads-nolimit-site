@@ -1,0 +1,60 @@
+---
+/**
+ * Khung chung của trang đăng nhập / đăng ký / quên mật khẩu:
+ * link về trang chủ, thẻ giữa màn hình (logo, tiêu đề, dòng phụ), nội dung form ở slot mặc định,
+ * slot "below" cho dòng chữ nhỏ dưới thẻ. Kiểu dáng: src/styles/auth.css.
+ */
+import { Image } from 'astro:assets';
+import logoMark from '../../assets/brand/logo-mark.png';
+import AuthConfig from './AuthConfig.astro';
+import { homeOf } from '../../config/i18n';
+import type { Lang } from '../../config/i18n';
+
+interface Props {
+  lang: Lang;
+  title: string;
+  lead?: string;
+}
+const { lang, title, lead } = Astro.props;
+const back = lang === 'en' ? 'ADS-Nolimit home' : 'Trang chủ ADS-Nolimit';
+---
+
+<section class="auth-section">
+  <div class="container auth-container">
+    <a class="auth-back" href={homeOf[lang]}>
+      <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"
+        ><path d="M19 12H5M11 6l-6 6 6 6"></path></svg
+      >
+      {back}
+    </a>
+
+    <div class="auth-card">
+      <div class="auth-head">
+        <Image src={logoMark} alt="" width={64} densities={[1, 2]} loading="eager" class="auth-logo" />
+        <p class="auth-brand">ADS-Nolimit</p>
+        <h1 class="auth-title">{title}</h1>
+        {lead && <p class="auth-lead">{lead}</p>}
+      </div>
+      <slot />
+    </div>
+
+    {
+      Astro.slots.has('below') && (
+        <div class="auth-below">
+          <slot name="below" />
+        </div>
+      )
+    }
+  </div>
+  <noscript>
+    <p class="container auth-noscript">
+      {
+        lang === 'en'
+          ? 'Signing in needs JavaScript. Please turn it on, or contact us by Telegram, Zalo or email.'
+          : 'Đăng nhập cần bật JavaScript. Bạn bật JavaScript, hoặc liên hệ ADS-Nolimit qua Zalo, hotline hay email.'
+      }
+    </p>
+  </noscript>
+</section>
+
+<AuthConfig lang={lang} />
