@@ -1,7 +1,8 @@
 # ads-nolimit-website
 
 Website mới của **ADS-Nolimit — Quảng cáo & AI Agent cho doanh nghiệp** (www.ads-nolimit.agency).
-Site tĩnh dựng bằng [Astro](https://astro.build), font Be Vietnam Pro, gần như không dùng JavaScript.
+Site tĩnh dựng bằng [Astro](https://astro.build), font Be Vietnam Pro (tự host), rất ít JavaScript.
+Song ngữ: tiếng Việt ở gốc (`/`), tiếng Anh dưới `/en/`.
 Yêu cầu nội dung và giới hạn (điều được nói, điều cấm) nằm trong BRIEF.md ở repo riêng tư `kyotran1/ads-nolimit-website-backup` (nhánh `site-v1`).
 
 ## Chạy trên máy
@@ -21,21 +22,25 @@ Kết quả build nằm ở **`dist/`**. Đây là toàn bộ website, có thể
 
 | Muốn sửa | Sửa ở file |
 |---|---|
-| **Giá, gói dịch vụ, ưu đãi thí điểm, ghi chú VAT** | `src/data/pricing.ts` |
+| **Giá, gói dịch vụ, ưu đãi thí điểm, ghi chú dưới bảng giá** (cả hai ngôn ngữ) | `src/data/pricing.ts` |
 | **Số điện thoại, Zalo, Telegram, email, fanpage, Messenger** | `src/config/site.ts` (object `contact`) |
-| Menu, tên site, mô tả mặc định | `src/config/site.ts` |
+| Menu, tên site, mô tả mặc định, nút liên hệ chính mỗi ngôn ngữ | `src/config/site.ts` |
+| **Bảng đối chiếu trang Việt ↔ Anh** (nút VI \| EN, hreflang, sitemap) | `src/config/i18n.ts` (`routes`) |
+| Chữ giao diện dùng chung (header, footer, nút) | `src/config/i18n.ts` (`ui`) |
 | Huy hiệu đối tác (Meta, Google, Shopify, TikTok Shop) và link xác minh `verifyUrl` | `src/config/site.ts` (`partners`); ảnh ở `src/assets/partners/` |
 | Google Analytics / Meta Pixel (đang **tắt**) | `src/config/analytics.ts` |
-| Câu hỏi thường gặp (FAQ) | `src/data/faq.ts` |
-| Bài blog | `src/content/blog/*.md` (thêm file mới là có bài mới) |
-| Nội dung từng trang | `src/pages/*.astro` |
-| Màu sắc, cỡ chữ chung | `src/styles/global.css` (biến ở đầu file) |
+| Câu hỏi thường gặp (FAQ, hai ngôn ngữ) | `src/data/faq.ts` |
+| Bài blog tiếng Việt / tiếng Anh | `src/content/blog/*.md` / `src/content/blog-en/*.md` |
+| Nội dung & bố cục từng trang (chữ Việt và Anh nằm cạnh nhau trong `copy`) | `src/views/*.astro` |
+| Hội thoại minh họa (tự phát như video) | `copy.chat` trong `src/views/HomePage.astro`, `src/views/AiAgentPage.astro`; khung chat ở `src/components/ChatDemo.astro` |
+| Màu sắc, cỡ chữ, khoảng cách, nút, thẻ | `src/styles/global.css` (biến ở đầu file) |
 
 ### Giá
 
-Mọi trang (trang chủ, `/bang-gia/`, các trang dịch vụ, FAQ) đều đọc giá từ `src/data/pricing.ts`.
-Số tiền viết dạng số nguyên, ví dụ `vnd(4_900_000)` hiển thị thành `4.900.000đ`.
-Khi đã đủ 3 khách thí điểm, đổi `pilotOffer.active` thành `false` để ẩn ưu đãi ở mọi nơi.
+Mọi trang (trang chủ, `/bang-gia/`, `/en/pricing/`, các trang dịch vụ, FAQ) đều đọc giá từ `src/data/pricing.ts`.
+Số tiền viết dạng số nguyên (`amount: 4_900_000`): trang Việt hiện `4.900.000đ`, trang Anh hiện `4,900,000 VND`.
+Mỗi chữ trong file có hai bản `{ vi: '…', en: '…' }`.
+Khi đã đủ 3 khách thí điểm, đổi `active: true` thành `false` trong object `pilot` để ẩn ưu đãi ở mọi nơi (cả tiếng Anh).
 
 ### Liên hệ
 
@@ -45,13 +50,14 @@ Link `tel:`, `zalo.me`, `t.me`, `mailto:`, `m.me` và dữ liệu JSON-LD đư�
 ### Analytics / Meta Pixel
 
 Mặc định tắt, site không tải script đo lường nào. Để bật: điền ID vào `src/config/analytics.ts`,
-đổi `enabled: true`, rồi cập nhật mục "Cookie & công cụ đo lường" trong `src/pages/chinh-sach-bao-mat.astro`.
+đổi `enabled: true`, rồi cập nhật mục "Cookie & công cụ đo lường" trong `src/views/PrivacyPage.astro` (cả hai ngôn ngữ).
 
 ### Form liên hệ
 
-Site chưa có backend. Form ở `/lien-he/` chỉ soạn sẵn nội dung rồi mở ứng dụng email (mailto:) hoặc Zalo,
-không lưu gì trên website. Nút "Đăng ký nhận tin" của ADS-NOLIMIT AI Office cũng mở email soạn sẵn.
-Khi có dịch vụ nhận form, xem ghi chú `TODO` trong `src/pages/lien-he.astro` và `src/components/AiOfficeTeaser.astro`.
+Site chưa có backend. Form ở `/lien-he/` chỉ soạn sẵn nội dung rồi mở ứng dụng email (mailto:) hoặc Zalo
+(bản tiếng Anh `/en/contact/`: email hoặc Telegram), không lưu gì trên website. Nút "Đăng ký nhận tin" của
+ADS-NOLIMIT AI Office cũng mở email soạn sẵn. Khi có dịch vụ nhận form, xem ghi chú `TODO` trong
+`src/views/ContactPage.astro` và `src/components/AiOfficeTeaser.astro`.
 
 ## Logo, favicon, ảnh chia sẻ
 
@@ -64,13 +70,27 @@ Khi có dịch vụ nhận form, xem ghi chú `TODO` trong `src/pages/lien-he.as
 
 ## Trang
 
-`/`, `/giai-phap-ai-agent/`, `/tu-dong-hoa/`, `/quang-cao/`, `/thiet-ke-website/`, `/phan-mem/`, `/bang-gia/`,
-`/du-an/`, `/blog/` (+ 2 bài), `/ve-chung-toi/`, `/lien-he/`, `/chinh-sach-bao-mat/`, `/en/`, trang 404.
-`/sitemap.xml` tự sinh từ các trang và bài blog; `robots.txt` ở `public/`.
+Tiếng Việt: `/`, `/giai-phap-ai-agent/`, `/tu-dong-hoa/`, `/quang-cao/`, `/thiet-ke-website/`, `/phan-mem/`, `/bang-gia/`,
+`/du-an/`, `/blog/` (+ 2 bài), `/ve-chung-toi/`, `/lien-he/`, `/chinh-sach-bao-mat/`, trang 404.
+
+Tiếng Anh: `/en/`, `/en/ai-agent/`, `/en/automation/`, `/en/advertising/`, `/en/web-design/`, `/en/software/`, `/en/pricing/`,
+`/en/projects/`, `/en/blog/` (+ 2 bài), `/en/about/`, `/en/contact/`, `/en/privacy/`.
+
+- Mỗi cặp trang Việt/Anh dùng chung một file bố cục trong `src/views/`; `src/pages/` chỉ là các file mỏng gọi view với `lang="vi"` hoặc `lang="en"`.
+- Thêm trang mới: tạo view, hai file trong `src/pages/` (Việt + `en/`), rồi thêm một dòng vào `routes` trong `src/config/i18n.ts`
+  (nếu quên, build sẽ báo lỗi khi có link tiếng Anh trỏ tới trang chưa khai báo).
+- `/sitemap.xml` tự sinh từ các trang và bài blog cả hai ngôn ngữ, kèm liên kết hreflang; `robots.txt` ở `public/`.
+- Trang 404 có cả tiếng Việt và tiếng Anh (đường dẫn `/en/…` thì tiếng Anh lên trước).
+- Chuyển hướng: `/vn/` → `/` (file `public/vn/index.html`); `/EN/` → `/en/` (file `scripts/redirect-EN.html`, được chép vào
+  `dist/EN/` sau khi build — không đặt trong `public/` vì trên Windows/macOS thư mục `EN` và `en` trùng nhau).
+
+## Sau khi build
+
+`scripts/build-integrations.mjs` chạy hai bước nhỏ sau `npm run build`:
+giữ chữ "ADS-Nolimit" không bị ngắt dòng ở dấu gạch nối, và tạo trang `/EN/`.
 
 ## Deploy
 
 - `public/CNAME` = `www.ads-nolimit.agency`.
-- `.github/workflows/deploy.yml` build và deploy lên GitHub Pages **khi push vào nhánh `main`**.
-- Workflow chỉ chạy được sau khi chủ repo bật GitHub Pages (Settings → Pages → Source: GitHub Actions)
-  và trỏ DNS tên miền về GitHub Pages. Hai bước này chưa làm; tên miền hiện vẫn trỏ về site Canva cũ.
+- `.github/workflows/deploy.yml` build và deploy lên GitHub Pages **khi push vào nhánh `main`**
+  (site đang chạy tại https://www.ads-nolimit.agency). Làm việc trên nhánh khác, chỉ gộp vào `main` khi đã duyệt.
