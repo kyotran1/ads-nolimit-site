@@ -7,6 +7,7 @@ import CtaBand from '../components/CtaBand.astro';
 import Icon from '../components/Icon.astro';
 import { primaryChannel } from '../config/site';
 import type { Lang } from '../config/i18n';
+import { localize } from '../config/i18n';
 import { getPlans, getPilotOffer, getPriceNote, currencyNote } from '../data/pricing';
 import type { Plan } from '../data/pricing';
 
@@ -46,6 +47,7 @@ const copy = {
     othersTitle: 'Tự động hóa, website và đào tạo',
     othersId: 'nhom-khac',
     planCta: 'Tư vấn gói này qua Zalo',
+    planRequest: 'Gửi yêu cầu',
     ctaTitle: 'Chưa chắc gói nào hợp?',
     ctaText:
       'Nhắn Zalo cho ADS-Nolimit: anh/chị bán gì, khách nhắn qua kênh nào, mỗi ngày khoảng bao nhiêu tin. Chúng tôi gợi ý gói vừa đủ dùng.',
@@ -61,6 +63,7 @@ const copy = {
     othersTitle: 'Automation, websites and training',
     othersId: 'nhom-khac',
     planCta: 'Ask about this plan',
+    planRequest: 'Send a request',
     ctaTitle: 'Not sure which plan fits?',
     ctaText:
       'Tell us what you sell, where customers message you and roughly how many messages you get a day. We will suggest the plan that is just enough.',
@@ -72,6 +75,8 @@ const jumpLinks = [
   ...(singles.length ? [{ href: `#${copy.othersId}`, label: copy.othersTitle }] : []),
 ];
 const cta = { href: primary.href, label: copy.planCta, external: true };
+// Gửi yêu cầu qua trang tài khoản, chọn sẵn gói (chưa đăng nhập thì qua trang đăng nhập rồi quay lại).
+const requestFor = (plan: Plan) => ({ href: `${localize('/tai-khoan/', lang)}?plan=${plan.id}#yeu-cau`, label: copy.planRequest });
 ---
 
 <BaseLayout title={copy.title} description={copy.description} lang={lang}>
@@ -116,7 +121,7 @@ const cta = { href: primary.href, label: copy.planCta, external: true };
           </h2>
           <div class="plans">
             {group.plans.map((plan) => (
-              <PlanCard lang={lang} plan={plan} cta={cta} />
+              <PlanCard lang={lang} plan={plan} cta={cta} request={requestFor(plan)} />
             ))}
           </div>
         </div>
@@ -137,7 +142,7 @@ const cta = { href: primary.href, label: copy.planCta, external: true };
           </h2>
           <div class="plans plans--three">
             {singles.map((group) => (
-              <PlanCard lang={lang} plan={group.plans[0]} kicker={group.name} cta={cta} />
+              <PlanCard lang={lang} plan={group.plans[0]} kicker={group.name} cta={cta} request={requestFor(group.plans[0])} />
             ))}
           </div>
           <p class="price-note">{getPriceNote(lang)}</p>
