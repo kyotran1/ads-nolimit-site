@@ -2,8 +2,13 @@
 dist/
 .astro/
 
-# dependencies
+# dependencies (cả node_modules dạng symlink)
 node_modules/
+node_modules
+
+# Firebase emulator logs (thư mục firebase/)
+firestore-debug.log
+firebase-debug.log
 
 # logs
 npm-debug.log*

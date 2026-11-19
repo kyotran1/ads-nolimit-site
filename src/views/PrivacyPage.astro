@@ -5,6 +5,7 @@ import PageHero from '../components/PageHero.astro';
 import { contact, links } from '../config/site';
 import { analytics } from '../config/analytics';
 import type { Lang } from '../config/i18n';
+import { localize } from '../config/i18n';
 
 interface Props {
   lang: Lang;
@@ -13,13 +14,14 @@ const { lang } = Astro.props;
 
 /** Ngày cập nhật — sửa khi chính sách thay đổi (cả hai ngôn ngữ). */
 const updated = { vi: '19/11/2026', en: '19 November 2026' };
+const accountPage = { vi: localize('/tai-khoan/', 'vi'), en: localize('/tai-khoan/', 'en') };
 ---
 
 {
   lang === 'vi' ? (
     <BaseLayout
       title="Chính sách bảo mật | ADS-Nolimit"
-      description="ADS-Nolimit thu thập thông tin gì qua website, form liên hệ và AI Agent, dùng để làm gì, lưu bao lâu, và cách yêu cầu xem, sửa, xóa dữ liệu."
+      description="ADS-Nolimit thu thập thông tin gì qua website, tài khoản khách hàng, form liên hệ và AI Agent, dùng để làm gì, lưu bao lâu, và cách xem, sửa, xóa dữ liệu."
       lang="vi"
     >
       <PageHero title="Chính sách bảo mật" lead={`Cập nhật lần cuối: ${updated.vi}.`} />
@@ -27,25 +29,63 @@ const updated = { vi: '19/11/2026', en: '19 November 2026' };
         <div class="container">
           <div class="prose policy">
             <p>
-              Trang này giải thích ADS-Nolimit thu thập thông tin gì khi bạn dùng website www.ads-nolimit.agency, liên
-              hệ với chúng tôi, hoặc trò chuyện với một AI Agent do ADS-Nolimit triển khai; thông tin đó được dùng để làm
-              gì; và bạn có quyền gì với dữ liệu của mình.
+              Trang này giải thích ADS-Nolimit thu thập thông tin gì khi bạn dùng website www.ads-nolimit.agency, tạo tài
+              khoản khách hàng, liên hệ với chúng tôi, hoặc trò chuyện với một AI Agent do ADS-Nolimit triển khai; thông tin
+              đó được dùng để làm gì; và bạn có quyền gì với dữ liệu của mình.
             </p>
 
             <h2>1. Thông tin chúng tôi thu thập</h2>
             <h3>Qua website</h3>
             <ul>
               <li>
-                Website không có tài khoản người dùng và không lưu thông tin bạn nhập vào form. Form liên hệ chỉ soạn
-                sẵn nội dung rồi mở ứng dụng email hoặc Zalo của bạn.
+                Form liên hệ không lưu thông tin bạn nhập. Form chỉ soạn sẵn nội dung rồi mở ứng dụng email hoặc Zalo của
+                bạn.
               </li>
               <li>
-                Thông tin chỉ đến ADS-Nolimit khi bạn bấm gửi trong ứng dụng đó, gồm: họ tên, số điện thoại/Zalo,
-                email (nếu có), nhu cầu và lời nhắn.
+                Thông tin chỉ đến ADS-Nolimit khi bạn bấm gửi trong ứng dụng đó, gồm: họ tên, số điện thoại/Zalo, email
+                (nếu có), nhu cầu và lời nhắn.
               </li>
               <li>
                 Nhà cung cấp hạ tầng lưu trữ website có thể ghi nhật ký kỹ thuật (như địa chỉ IP, thời điểm truy cập) để
                 vận hành và bảo vệ hệ thống.
+              </li>
+            </ul>
+
+            <h3 id="tai-khoan">Tài khoản khách hàng (nếu bạn tạo tài khoản)</h3>
+            <p>
+              Tạo tài khoản là tùy chọn: bạn vẫn có thể liên hệ ADS-Nolimit qua Zalo, điện thoại hay email mà không cần tài
+              khoản. Khi bạn tạo và dùng tài khoản, chúng tôi lưu:
+            </p>
+            <ul>
+              <li>
+                <strong>Thông tin đăng nhập:</strong> email, tên hiển thị, thời điểm tạo tài khoản và các lần đăng nhập. Nếu
+                bạn đăng nhập bằng Google: tên và ảnh đại diện trong tài khoản Google của bạn.
+              </li>
+              <li>
+                <strong>Mật khẩu</strong> do Firebase Authentication (dịch vụ của Google) xử lý và lưu ở dạng đã mã hóa.
+                ADS-Nolimit không xem được mật khẩu của bạn.
+              </li>
+              <li>
+                <strong>Hồ sơ</strong> (nếu bạn điền): số điện thoại/Zalo, công ty hoặc cửa hàng, ngành hàng, và lựa chọn
+                nhận tin khi ADS-NOLIMIT AI Office ra mắt.
+              </li>
+              <li>
+                <strong>Yêu cầu dịch vụ</strong> bạn gửi từ trang tài khoản: dịch vụ quan tâm, mô tả nhu cầu, cách liên hệ
+                bạn muốn, ngôn ngữ, thời điểm gửi và trạng thái xử lý.
+              </li>
+              <li>
+                <strong>Nơi lưu:</strong> tài khoản, hồ sơ và yêu cầu dịch vụ được lưu trên máy chủ Google Firebase
+                (Firebase Authentication và Cloud Firestore), có thể đặt ngoài Việt Nam.
+              </li>
+              <li>
+                Trên các trang đăng nhập và tài khoản, trình duyệt tải mã của Firebase (Google) để việc đăng nhập hoạt động;
+                khi đó Google nhận được địa chỉ IP và thông tin kỹ thuật của trình duyệt. Các trang khác của website không tải
+                mã này.
+              </li>
+              <li>
+                Trình duyệt của bạn lưu phiên đăng nhập (do Firebase quản lý) và một ghi nhớ nhỏ gồm tên hiển thị, chữ cái
+                đầu và ảnh đại diện để hiện nút "Tài khoản" ở đầu trang. Chúng được xóa khi bạn đăng xuất hoặc xóa tài khoản,
+                và không dùng để theo dõi bạn.
               </li>
             </ul>
 
@@ -64,8 +104,8 @@ const updated = { vi: '19/11/2026', en: '19 November 2026' };
 
             <h3>Qua các kênh liên hệ</h3>
             <p>
-              Khi bạn nhắn Zalo, Messenger, Telegram, gửi email hoặc gọi điện, chúng tôi nhận những thông tin bạn
-              chủ động gửi, cùng tên hiển thị và số điện thoại/tài khoản của kênh đó.
+              Khi bạn nhắn Zalo, Messenger, Telegram, gửi email hoặc gọi điện, chúng tôi nhận những thông tin bạn chủ động
+              gửi, cùng tên hiển thị và số điện thoại/tài khoản của kênh đó.
             </p>
 
             <h3>Qua AI Agent do ADS-Nolimit triển khai cho doanh nghiệp</h3>
@@ -88,21 +128,33 @@ const updated = { vi: '19/11/2026', en: '19 November 2026' };
             <h2>2. Chúng tôi dùng thông tin để làm gì</h2>
             <ul>
               <li>Liên hệ lại để tư vấn, báo giá và cung cấp dịch vụ bạn yêu cầu.</li>
+              <li>
+                Cho bạn đăng nhập, lưu hồ sơ, gửi và theo dõi yêu cầu dịch vụ; hỗ trợ bạn khi bạn cần (chăm sóc khách hàng).
+              </li>
               <li>Báo tin khi ADS-NOLIMIT AI Office ra mắt, nếu bạn đăng ký nhận tin.</li>
             </ul>
             <p>ADS-Nolimit không bán, không cho thuê thông tin cá nhân của bạn.</p>
 
             <h2>3. Lưu trữ bao lâu</h2>
             <p>
-              Chúng tôi giữ thông tin liên hệ trong thời gian cần để tư vấn và cung cấp dịch vụ, hoặc cho tới khi bạn
-              yêu cầu xóa.
+              Chúng tôi giữ thông tin liên hệ trong thời gian cần để tư vấn và cung cấp dịch vụ, hoặc cho tới khi bạn yêu
+              cầu xóa.
+            </p>
+            <p>
+              Tài khoản và hồ sơ được giữ cho tới khi bạn xóa tài khoản. Yêu cầu dịch vụ đã gửi được giữ lại để đối chiếu
+              cả sau khi bạn xóa tài khoản; bạn có thể email cho chúng tôi để yêu cầu xóa cả những yêu cầu này.
             </p>
 
             <h2>4. Quyền của bạn</h2>
             <p>
-              Bạn có thể yêu cầu ADS-Nolimit cho xem, sửa hoặc xóa thông tin cá nhân của mình, và rút lại đồng ý nhận
-              tin bất cứ lúc nào. Luật Bảo vệ dữ liệu cá nhân (số 91/2025/QH15, có hiệu lực từ 01/01/2026) cho người dân
-              quyền yêu cầu xóa dữ liệu cá nhân của mình.
+              Bạn có thể yêu cầu ADS-Nolimit cho xem, sửa hoặc xóa thông tin cá nhân của mình, và rút lại đồng ý nhận tin
+              bất cứ lúc nào. Luật Bảo vệ dữ liệu cá nhân (số 91/2025/QH15, có hiệu lực từ 01/01/2026) cho người dân quyền
+              yêu cầu xóa dữ liệu cá nhân của mình.
+            </p>
+            <p>
+              Nếu có tài khoản, bạn tự xem và sửa hồ sơ ở <a href={accountPage.vi}>trang Tài khoản</a>, và tự xóa tài khoản
+              bằng nút "Xóa tài khoản" ở cuối trang đó: tài khoản đăng nhập và hồ sơ bị xóa ngay. Bạn cũng có thể email
+              yêu cầu xóa tới <a href={links.email}>{contact.email}</a>.
             </p>
             <p>
               Với dữ liệu thu thập qua AI Agent của một doanh nghiệp khác, bạn liên hệ trực tiếp doanh nghiệp đó;
@@ -111,8 +163,7 @@ const updated = { vi: '19/11/2026', en: '19 November 2026' };
 
             <h2>5. Liên hệ về dữ liệu cá nhân</h2>
             <p>
-              Gửi yêu cầu tới email <a href={links.email}>{contact.email}</a>, ghi rõ thông tin bạn muốn xem, sửa hoặc
-              xóa.
+              Gửi yêu cầu tới email <a href={links.email}>{contact.email}</a>, ghi rõ thông tin bạn muốn xem, sửa hoặc xóa.
             </p>
 
             <h2>6. Thay đổi chính sách</h2>
@@ -124,7 +175,7 @@ const updated = { vi: '19/11/2026', en: '19 November 2026' };
   ) : (
     <BaseLayout
       title="Privacy policy | ADS-Nolimit"
-      description="What ADS-Nolimit collects through this website, the contact form and AI agents, how it is used and how long it is kept, and how to ask to see, correct or delete your data."
+      description="What ADS-Nolimit collects through this website, customer accounts, the contact form and AI agents, how it is used and how long it is kept, and how to see, correct or delete your data."
       lang="en"
     >
       <PageHero title="Privacy policy" lead={`Last updated: ${updated.en}.`} />
@@ -133,7 +184,7 @@ const updated = { vi: '19/11/2026', en: '19 November 2026' };
           <div class="prose policy">
             <p>
               This page explains what information ADS-Nolimit collects when you use the website www.ads-nolimit.agency,
-              contact us, or chat with an AI agent that ADS-Nolimit has set up for a business; what that information is
+              create a customer account, contact us, or chat with an AI agent that ADS-Nolimit has set up for a business; what that information is
               used for; and what rights you have over your data. It is an English translation of our{' '}
               <a href="/chinh-sach-bao-mat/" lang="vi" hreflang="vi">
                 Vietnamese privacy policy
@@ -145,8 +196,8 @@ const updated = { vi: '19/11/2026', en: '19 November 2026' };
             <h3>Through the website</h3>
             <ul>
               <li>
-                The website has no user accounts and does not store anything you type into the form. The contact form only
-                prepares a message and opens your own email or chat app.
+                The contact form does not store anything you type into it. It only prepares a message and opens your own
+                email or chat app.
               </li>
               <li>
                 Information reaches ADS-Nolimit only when you press send in that app. It includes your name, phone, Zalo or
@@ -155,6 +206,44 @@ const updated = { vi: '19/11/2026', en: '19 November 2026' };
               <li>
                 The website hosting provider may keep technical logs (such as IP address and time of access) to operate and
                 protect its systems.
+              </li>
+            </ul>
+
+            <h3 id="tai-khoan">Customer accounts (if you create one)</h3>
+            <p>
+              Creating an account is optional: you can still reach ADS-Nolimit by Telegram, Zalo, phone or email without
+              one. When you create and use an account, we keep:
+            </p>
+            <ul>
+              <li>
+                <strong>Sign-in details:</strong> your email, display name, when the account was created and when you sign
+                in. If you sign in with Google: the name and profile photo of your Google account.
+              </li>
+              <li>
+                <strong>Your password</strong> is handled and stored in encrypted form by Firebase Authentication (a Google
+                service). ADS-Nolimit never sees it.
+              </li>
+              <li>
+                <strong>Your profile</strong> (if you fill it in): phone/Zalo, company or shop, industry, and whether you want
+                news when ADS-NOLIMIT AI Office launches.
+              </li>
+              <li>
+                <strong>Service requests</strong> you send from your account page: the service you are interested in, your
+                description, how you prefer to be contacted, language, when it was sent and its status.
+              </li>
+              <li>
+                <strong>Where it is stored:</strong> accounts, profiles and service requests are stored on Google Firebase
+                servers (Firebase Authentication and Cloud Firestore), which may be located outside Vietnam.
+              </li>
+              <li>
+                On the sign-in and account pages your browser loads Firebase (Google) code so that signing in works; Google
+                then receives your IP address and technical browser information. Other pages of this website do not load
+                this code.
+              </li>
+              <li>
+                Your browser keeps your sign-in session (managed by Firebase) and a small note with your display name,
+                initial and profile photo so the header can show an "Account" button. Both are removed when you sign out or
+                delete your account, and they are not used to track you.
               </li>
             </ul>
 
@@ -197,6 +286,7 @@ const updated = { vi: '19/11/2026', en: '19 November 2026' };
             <h2>2. How we use information</h2>
             <ul>
               <li>To get back to you with advice and quotes, and to provide the services you ask for.</li>
+              <li>To let you sign in, keep your profile, send and follow service requests, and to support you as a customer.</li>
               <li>To tell you when ADS-NOLIMIT AI Office launches, if you signed up for news.</li>
             </ul>
             <p>ADS-Nolimit does not sell or rent out your personal information.</p>
@@ -206,12 +296,22 @@ const updated = { vi: '19/11/2026', en: '19 November 2026' };
               We keep contact information for as long as we need it to advise you and provide our services, or until you
               ask us to delete it.
             </p>
+            <p>
+              Your account and profile are kept until you delete your account. Service requests you have sent are kept for
+              our records even after you delete your account; you can email us to have those deleted as well.
+            </p>
 
             <h2>4. Your rights</h2>
             <p>
               You can ask ADS-Nolimit to show you, correct or delete your personal information, and withdraw your consent to
               receive news at any time. Vietnam’s Personal Data Protection Law (No. 91/2025/QH15, in force since 1 January
               2026) gives people the right to request deletion of their personal data.
+            </p>
+            <p>
+              If you have an account, you can see and edit your profile on <a href={accountPage.en}>your account page</a>
+              and delete your account yourself with the "Delete account" button at the bottom of that page: your sign-in
+              account and profile are deleted straight away. You can also email a deletion request to{' '}
+              <a href={links.email}>{contact.email}</a>.
             </p>
             <p>
               For data collected through another business’s AI agent, please contact that business directly; ADS-Nolimit

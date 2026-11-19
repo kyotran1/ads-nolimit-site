@@ -1,0 +1,39 @@
+---
+/** Một ô nhập có nhãn, dòng gợi ý (tùy chọn) và chỗ báo lỗi (aria-describedby). */
+interface Props {
+  id: string;
+  name?: string;
+  label: string;
+  type?: 'text' | 'email' | 'tel';
+  autocomplete?: string;
+  hint?: string;
+  /** Chữ nhỏ cạnh nhãn, ví dụ "(không bắt buộc)" */
+  optional?: string;
+  required?: boolean;
+  maxlength?: number;
+  inputmode?: 'text' | 'email' | 'tel';
+  placeholder?: string;
+}
+const { id, name = id, label, type = 'text', autocomplete, hint, optional, required = false, maxlength, inputmode, placeholder } =
+  Astro.props;
+const describedBy = [hint ? `${id}-hint` : '', `${id}-error`].filter(Boolean).join(' ');
+---
+
+<div class="field">
+  <label for={id}>{label} {optional && <span class="optional">{optional}</span>}</label>
+  <input
+    id={id}
+    name={name}
+    type={type}
+    autocomplete={autocomplete}
+    required={required}
+    maxlength={maxlength}
+    inputmode={inputmode}
+    placeholder={placeholder}
+    spellcheck={type === 'email' ? 'false' : undefined}
+    autocapitalize={type === 'email' ? 'off' : undefined}
+    aria-describedby={describedBy}
+  />
+  {hint && <p class="field-hint" id={`${id}-hint`}>{hint}</p>}
+  <p class="field-error" id={`${id}-error`}></p>
+</div>

@@ -3,6 +3,7 @@ import { Image } from 'astro:assets';
 import logoMark from '../assets/brand/logo-mark.png';
 import Icon from './Icon.astro';
 import LangSwitch from './LangSwitch.astro';
+import AccountLink from './AccountLink.astro';
 import { site, solutionsNav, mainNav } from '../config/site';
 import { homeOf, localize, normalizePath, t } from '../config/i18n';
 import type { Lang } from '../config/i18n';
@@ -68,6 +69,7 @@ const inSolutions = solutions.some((item) => isCurrent(item.href));
 
     <div class="header-actions">
       <LangSwitch lang={lang} />
+      <AccountLink lang={lang} variant="desktop" />
       <a href={contactHref} class="btn btn-primary btn-sm header-cta">{s.headerCta}</a>
 
       <details class="nav-mobile" data-dismissable>
@@ -103,6 +105,8 @@ const inSolutions = solutions.some((item) => isCurrent(item.href));
               <a href={contactHref} aria-current={isCurrent(contactHref) ? 'page' : undefined}>{s.contact}</a>
             </li>
           </ul>
+          <p class="mobile-group">{s.account}</p>
+          <AccountLink lang={lang} variant="mobile" />
           <p class="mobile-group">{s.language}</p>
           <LangSwitch lang={lang} size="lg" />
         </nav>

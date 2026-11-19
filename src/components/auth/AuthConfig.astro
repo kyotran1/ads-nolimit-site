@@ -1,0 +1,31 @@
+---
+/**
+ * In cấu hình cho script của các trang tài khoản (đường dẫn theo ngôn ngữ, tên miền chính).
+ * Đọc ở src/lib/auth/client.ts. Đường dẫn lấy từ bảng routes trong src/config/i18n.ts.
+ */
+import { site } from '../../config/site';
+import { homeOf, localize, routes } from '../../config/i18n';
+import type { Lang } from '../../config/i18n';
+
+interface Props {
+  lang: Lang;
+}
+const { lang } = Astro.props;
+
+const authVi = ['/dang-nhap/', '/dang-ky/', '/quen-mat-khau/'];
+const config = {
+  siteUrl: site.url,
+  paths: {
+    home: homeOf[lang],
+    signIn: localize('/dang-nhap/', lang),
+    signUp: localize('/dang-ky/', lang),
+    forgot: localize('/quen-mat-khau/', lang),
+    account: localize('/tai-khoan/', lang),
+    privacy: localize('/chinh-sach-bao-mat/', lang),
+  },
+  authPaths: routes.filter((r) => authVi.includes(r.vi)).flatMap((r) => [r.vi, r.en]),
+};
+const json = JSON.stringify(config).replace(/</g, '\\u003c');
+---
+
+<script is:inline type="application/json" id="auth-config" set:html={json} />

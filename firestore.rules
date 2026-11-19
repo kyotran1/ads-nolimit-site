@@ -1,0 +1,104 @@
+rules_version = '2';
+
+// ==========================================================================
+// LUẬT BẢO MẬT FIRESTORE — dự án "ADS-Nolimit Web" (tài khoản khách hàng).
+//
+// Nguyên tắc: mặc định CẤM tất cả. Chỉ mở đúng hai bộ sưu tập:
+//
+//   users/{uid}     Hồ sơ của khách. Khách chỉ đọc / tạo / sửa / xóa hồ sơ CỦA MÌNH,
+//                   chỉ với các trường: displayName, phone, company, industry,
+//                   aiOfficeNews, createdAt, updatedAt. Chuỗi tối đa 120 ký tự,
+//                   số điện thoại tối đa 20 ký tự. (Xóa: dùng khi khách xóa tài khoản.)
+//
+//   requests/{id}   Yêu cầu dịch vụ khách gửi từ trang Tài khoản.
+//                   - Tạo: chỉ cho chính mình, trạng thái phải là 'new', thời điểm
+//                     tạo là giờ máy chủ, planId nằm trong danh sách gói ở
+//                     src/data/pricing.ts (thêm 'other').
+//                   - Đọc: chỉ yêu cầu của mình.
+//                   - Sửa: khách chỉ được HỦY ('new' → 'cancelled'), không đổi gì khác.
+//                   - Xóa: không cho khách xóa (giữ lại để đối chiếu).
+//
+// Chủ doanh nghiệp đổi trạng thái yêu cầu trong Firebase Console
+// (new → contacted → in_progress → done, hoặc cancelled). Thao tác trong Console
+// không bị luật này chặn.
+//
+// Khi thêm gói mới vào src/data/pricing.ts, nhớ thêm id gói vào planIds() bên dưới.
+// Test: cd firebase && npm ci && npm test (chạy trên Firebase Emulator, không chạm dự án thật).
+// ==========================================================================
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function signedIn() {
+      return request.auth != null;
+    }
+
+    function isMe(uid) {
+      return signedIn() && request.auth.uid == uid;
+    }
+
+    // Trường không bắt buộc: không có, hoặc là chuỗi dài tối đa `max` ký tự.
+    function optString(data, key, max) {
+      return !(key in data) || (data[key] is string && data[key].size() <= max);
+    }
+
+    // ---------- users/{uid} ----------
+
+    function validProfile(d) {
+      return d.keys().hasOnly(['displayName', 'phone', 'company', 'industry', 'aiOfficeNews', 'createdAt', 'updatedAt'])
+        && d.keys().hasAll(['createdAt', 'updatedAt'])
+        && optString(d, 'displayName', 120)
+        && optString(d, 'phone', 20)
+        && (!('phone' in d) || d.phone.matches('[0-9+() .-]*'))
+        && optString(d, 'company', 120)
+        && optString(d, 'industry', 120)
+        && (!('aiOfficeNews' in d) || d.aiOfficeNews is bool)
+        && d.createdAt is timestamp
+        && d.updatedAt == request.time;
+    }
+
+    match /users/{uid} {
+      allow get: if isMe(uid);
+      allow create: if isMe(uid)
+        && validProfile(request.resource.data)
+        && request.resource.data.createdAt == request.time;
+      allow update: if isMe(uid)
+        && validProfile(request.resource.data)
+        && request.resource.data.createdAt == resource.data.createdAt;
+      allow delete: if isMe(uid);
+    }
+
+    // ---------- requests/{id} ----------
+
+    function planIds() {
+      return ['ai-starter', 'ai-sales', 'ads', 'agency-account', 'automation', 'web', 'training', 'other'];
+    }
+
+    function validNewRequest(d) {
+      return d.keys().hasOnly(['uid', 'planId', 'note', 'contact', 'lang', 'status', 'createdAt'])
+        && d.keys().hasAll(['uid', 'planId', 'note', 'lang', 'status', 'createdAt'])
+        && d.uid == request.auth.uid
+        && d.planId in planIds()
+        && d.note is string && d.note.size() <= 1000
+        && optString(d, 'contact', 120)
+        && d.lang in ['vi', 'en']
+        && d.status == 'new'
+        && d.createdAt == request.time;
+    }
+
+    match /requests/{requestId} {
+      // Đọc một yêu cầu, hoặc truy vấn where('uid', '==', <uid của mình>).
+      allow read: if signedIn() && resource.data.uid == request.auth.uid;
+      allow create: if signedIn() && validNewRequest(request.resource.data);
+      // Khách chỉ được hủy yêu cầu còn ở trạng thái 'new', không đổi trường nào khác.
+      allow update: if signedIn()
+        && resource.data.uid == request.auth.uid
+        && resource.data.status == 'new'
+        && request.resource.data.status == 'cancelled'
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status']);
+      allow delete: if false;
+    }
+
+    // Mọi đường dẫn khác: cấm (không có match nào khác = không ai đọc/ghi được từ trình duyệt).
+  }
+}

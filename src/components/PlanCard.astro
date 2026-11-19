@@ -19,9 +19,11 @@ interface Props {
   cta?: { href: string; label: string; external?: boolean };
   /** Dòng nhỏ phía trên tên gói (ví dụ tên nhóm dịch vụ) */
   kicker?: string;
+  /** Link gửi yêu cầu qua trang tài khoản (chọn sẵn gói này) */
+  request?: { href: string; label: string };
 }
 
-const { plan, lang = 'vi', showLink = true, headingLevel = 'h3', cta, kicker } = Astro.props;
+const { plan, lang = 'vi', showLink = true, headingLevel = 'h3', cta, kicker, request } = Astro.props;
 const Heading = headingLevel;
 const pilot = getPilotOffer(lang);
 const hasPilot = plan.pilot && pilot.active;
@@ -79,11 +81,17 @@ const detailsLink = showLink && !/(^|\/)(bang-gia|pricing)\//.test(plan.href.spl
   </ul>
 
   {
-    (cta || detailsLink) && (
+    (cta || detailsLink || request) && (
       <div class="plan-foot">
         {cta && (
           <a class="btn btn-secondary plan-cta" href={cta.href} rel={cta.external ? 'noopener' : undefined}>
             {cta.label}
+          </a>
+        )}
+        {request && (
+          <a class="text-link plan-link" href={request.href}>
+            {request.label}
+            <span class="visually-hidden"> {plan.name}</span>
           </a>
         )}
         {detailsLink && (

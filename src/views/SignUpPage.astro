@@ -1,0 +1,121 @@
+---
+/** Trang Tạo tài khoản (/dang-ky/ và /en/sign-up/). Xử lý: src/lib/auth/sign-up.ts. */
+import '../styles/auth.css';
+import BaseLayout from '../layouts/BaseLayout.astro';
+import AuthShell from '../components/auth/AuthShell.astro';
+import Field from '../components/auth/Field.astro';
+import PasswordInput from '../components/auth/PasswordInput.astro';
+import GoogleButton from '../components/auth/GoogleButton.astro';
+import { localize, t } from '../config/i18n';
+import type { Lang } from '../config/i18n';
+
+interface Props {
+  lang: Lang;
+}
+const { lang } = Astro.props;
+const href = {
+  signIn: localize('/dang-nhap/', lang),
+  privacy: localize('/chinh-sach-bao-mat/', lang),
+};
+const newTab = t(lang).newTab;
+
+const copy = {
+  vi: {
+    title: 'Tạo tài khoản | ADS-Nolimit',
+    description: 'Tạo tài khoản ADS-Nolimit miễn phí bằng email hoặc Google để lưu hồ sơ, gửi yêu cầu dịch vụ và theo dõi tiến độ.',
+    h1: 'Tạo tài khoản',
+    lead: 'Miễn phí. Lưu hồ sơ, gửi yêu cầu dịch vụ và theo dõi tiến độ ở một nơi.',
+    name: 'Tên hiển thị',
+    namePlaceholder: 'Ví dụ: Lan Nguyễn',
+    email: 'Email',
+    password: 'Mật khẩu',
+    passwordHint: 'Tối thiểu 8 ký tự, nên có cả chữ và số.',
+    confirm: 'Nhập lại mật khẩu',
+    show: 'Hiện mật khẩu',
+    consentBefore: 'Tôi đồng ý với ',
+    consentLink: 'Chính sách bảo mật',
+    consentAfter: ' của ADS-Nolimit.',
+    submit: 'Tạo tài khoản',
+    or: 'hoặc',
+    google: 'Đăng ký với Google',
+    haveAccount: 'Đã có tài khoản?',
+    signIn: 'Đăng nhập',
+    below:
+      'Sau khi tạo tài khoản, ADS-Nolimit gửi email xác minh tới địa chỉ của bạn. Mật khẩu do Firebase Authentication (Google) lưu giữ, ADS-Nolimit không xem được.',
+  },
+  en: {
+    title: 'Create an account | ADS-Nolimit',
+    description: 'Create a free ADS-Nolimit account with email or Google to keep your profile, send service requests and follow their progress.',
+    h1: 'Create an account',
+    lead: 'Free. Keep your profile, send service requests and follow their progress in one place.',
+    name: 'Display name',
+    namePlaceholder: 'For example: Lan Nguyen',
+    email: 'Email',
+    password: 'Password',
+    passwordHint: 'At least 8 characters, ideally with letters and numbers.',
+    confirm: 'Repeat password',
+    show: 'Show password',
+    consentBefore: 'I agree to the ADS-Nolimit ',
+    consentLink: 'privacy policy',
+    consentAfter: '.',
+    submit: 'Create account',
+    or: 'or',
+    google: 'Sign up with Google',
+    haveAccount: 'Already have an account?',
+    signIn: 'Sign in',
+    below:
+      'After you sign up, we send a verification email to your address. Your password is kept by Firebase Authentication (Google); ADS-Nolimit never sees it.',
+  },
+}[lang];
+---
+
+<BaseLayout title={copy.title} description={copy.description} lang={lang}>
+  <AuthShell lang={lang} title={copy.h1} lead={copy.lead}>
+    <form id="signup-form" class="auth-form" novalidate>
+      <div id="signup-alert" class="auth-alert" role="alert"></div>
+      <Field
+        id="signup-name"
+        name="name"
+        label={copy.name}
+        autocomplete="name"
+        maxlength={60}
+        placeholder={copy.namePlaceholder}
+        required
+      />
+      <Field id="signup-email" name="email" type="email" label={copy.email} autocomplete="email" inputmode="email" required />
+      <PasswordInput
+        id="signup-password"
+        name="password"
+        label={copy.password}
+        autocomplete="new-password"
+        minlength={8}
+        hint={copy.passwordHint}
+        showLabel={copy.show}
+      />
+      <PasswordInput id="signup-confirm" name="confirm" label={copy.confirm} autocomplete="new-password" minlength={8} showLabel={copy.show} />
+      <div class="check">
+        <input id="signup-consent" name="consent" type="checkbox" required aria-describedby="signup-consent-error" />
+        <label for="signup-consent">
+          {copy.consentBefore}<a href={href.privacy} target="_blank" rel="noopener"
+            >{copy.consentLink}<span class="visually-hidden">{newTab}</span></a
+          >{copy.consentAfter}
+        </label>
+        <p class="field-error" id="signup-consent-error"></p>
+      </div>
+      <button type="submit" class="btn btn-primary btn-block">{copy.submit}</button>
+    </form>
+
+    <p class="auth-divider">{copy.or}</p>
+    <GoogleButton id="signup-google" label={copy.google} />
+
+    <p class="auth-switch">
+      {copy.haveAccount} <a href={href.signIn} data-keep-next>{copy.signIn}</a>
+    </p>
+
+    <p slot="below">{copy.below}</p>
+  </AuthShell>
+</BaseLayout>
+
+<script>
+  import '../lib/auth/sign-up';
+</script>
