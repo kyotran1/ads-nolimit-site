@@ -34,6 +34,10 @@ Kết quả build nằm ở **`dist/`**. Đây là toàn bộ website, có thể
 | Nội dung & bố cục từng trang (chữ Việt và Anh nằm cạnh nhau trong `copy`) | `src/views/*.astro` |
 | Hội thoại minh họa (tự phát như video) | `copy.chat` trong `src/views/HomePage.astro`, `src/views/AiAgentPage.astro`; khung chat ở `src/components/ChatDemo.astro` |
 | Màu sắc, cỡ chữ, khoảng cách, nút, thẻ | `src/styles/global.css` (biến ở đầu file) |
+| **Tài khoản khách hàng**: chữ trên trang đăng nhập/đăng ký/tài khoản | `src/views/SignInPage.astro`, `SignUpPage.astro`, `ForgotPasswordPage.astro`, `AccountPage.astro` |
+| Thông báo lỗi / thành công khi đăng nhập, lưu hồ sơ, gửi yêu cầu (hai ngôn ngữ) | `src/lib/auth/messages.ts` |
+| Cấu hình Firebase (công khai) | `src/config/firebase.ts` |
+| Luật bảo mật dữ liệu Firestore | `firestore.rules` (test: `firebase/`) |
 
 ### Giá
 
@@ -59,6 +63,26 @@ Site chưa có backend. Form ở `/lien-he/` chỉ soạn sẵn nội dung rồi
 ADS-NOLIMIT AI Office cũng mở email soạn sẵn. Khi có dịch vụ nhận form, xem ghi chú `TODO` trong
 `src/views/ContactPage.astro` và `src/components/AiOfficeTeaser.astro`.
 
+## Tài khoản khách hàng (Firebase)
+
+Dự án Firebase "ADS-Nolimit Web" (`ads-nolimit-web`). Đăng nhập bằng email/mật khẩu hoặc Google
+(Firebase Authentication); hồ sơ và yêu cầu dịch vụ lưu trong Cloud Firestore.
+
+- **Chỉ 4 trang tài khoản tải Firebase.** Các trang khác không tải gì của Firebase/Google. Header biết khách đã đăng nhập
+  nhờ một ghi nhớ nhỏ trong trình duyệt (`localStorage` khóa `adsnl-user`: tên, chữ cái đầu, ảnh), xem
+  `src/components/AccountLink.astro` và `src/lib/auth/user-cache.ts`.
+- **Dữ liệu Firestore:** `users/{uid}` (hồ sơ: tên hiển thị, điện thoại/Zalo, công ty, ngành hàng, nhận tin AI Office) và
+  `requests/{id}` (yêu cầu dịch vụ: gói, mô tả, cách liên hệ, ngôn ngữ, trạng thái, thời điểm gửi).
+- **Xử lý yêu cầu:** vào Firebase Console → Firestore → `requests`, đổi trường `status`:
+  `new` → `contacted` → `in_progress` → `done` (hoặc `cancelled`). Khách thấy trạng thái mới ở trang tài khoản.
+  Website **không tự báo** khi có yêu cầu mới: cần vào Console xem (hoặc thêm thông báo sau, ví dụ Cloud Functions).
+  Muốn biết email của khách: lấy `uid` của yêu cầu, tra ở Authentication → Users.
+- **Luật bảo mật:** `firestore.rules`. Sau khi sửa, chạy test trên máy (`cd firebase && npm ci && npm test`, cần Java),
+  rồi dán nội dung file vào Firebase Console → Firestore → Rules → Publish. Thêm gói mới trong `src/data/pricing.ts`
+  thì thêm id gói vào `planIds()` trong `firestore.rules`.
+- Link chọn sẵn gói: `/tai-khoan/?plan=<id gói>#yeu-cau` (trang Bảng giá đã dùng).
+- Mục "Tài khoản khách hàng" trong `src/views/PrivacyPage.astro` mô tả dữ liệu trên; thêm dữ liệu mới thì cập nhật mục này.
+
 ## Logo, favicon, ảnh chia sẻ
 
 - Logo gốc: `brand/logo-full-transparent.png`. Bản cắt chỉ biểu tượng vô cực: `src/assets/brand/logo-mark.png`
@@ -71,10 +95,12 @@ ADS-NOLIMIT AI Office cũng mở email soạn sẵn. Khi có dịch vụ nhận 
 ## Trang
 
 Tiếng Việt: `/`, `/giai-phap-ai-agent/`, `/tu-dong-hoa/`, `/quang-cao/`, `/thiet-ke-website/`, `/phan-mem/`, `/bang-gia/`,
-`/du-an/`, `/blog/` (+ 2 bài), `/ve-chung-toi/`, `/lien-he/`, `/chinh-sach-bao-mat/`, trang 404.
+`/du-an/`, `/blog/` (+ 2 bài), `/ve-chung-toi/`, `/lien-he/`, `/chinh-sach-bao-mat/`, trang 404,
+tài khoản: `/dang-nhap/`, `/dang-ky/`, `/quen-mat-khau/`, `/tai-khoan/`.
 
 Tiếng Anh: `/en/`, `/en/ai-agent/`, `/en/automation/`, `/en/advertising/`, `/en/web-design/`, `/en/software/`, `/en/pricing/`,
-`/en/projects/`, `/en/blog/` (+ 2 bài), `/en/about/`, `/en/contact/`, `/en/privacy/`.
+`/en/projects/`, `/en/blog/` (+ 2 bài), `/en/about/`, `/en/contact/`, `/en/privacy/`,
+tài khoản: `/en/sign-in/`, `/en/sign-up/`, `/en/forgot-password/`, `/en/account/`.
 
 - Mỗi cặp trang Việt/Anh dùng chung một file bố cục trong `src/views/`; `src/pages/` chỉ là các file mỏng gọi view với `lang="vi"` hoặc `lang="en"`.
 - Thêm trang mới: tạo view, hai file trong `src/pages/` (Việt + `en/`), rồi thêm một dòng vào `routes` trong `src/config/i18n.ts`
