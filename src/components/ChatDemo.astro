@@ -9,9 +9,12 @@
  * - Chiều cao khung chat = chiều cao hội thoại đầy đủ (mọi tin luôn chiếm chỗ) → không xô lệch bố cục.
  * - Âm thanh (public/sounds/chat-*.mp3, tự tổng hợp bằng scripts/make-chat-sounds.py):
  *   khách gửi tin → "send", AI đang soạn → "typing" (rất nhỏ), AI trả lời → "receive",
- *   thông báo hệ thống → "notify". Trình duyệt chặn tự phát tiếng nên mặc định TẮT;
- *   khách bấm "Bật tiếng" một lần, lựa chọn được nhớ cho các trang sau (localStorage).
- *   File âm thanh chỉ tải khi khách bật tiếng.
+ *   thông báo hệ thống → "notify". Mặc định BẬT (chủ doanh nghiệp yêu cầu 19/11/2026):
+ *   tiếng tự phát khi khung chat chạy, ngay khi trình duyệt cho phép. Trình duyệt chỉ cho
+ *   phát tiếng sau khi khách đã chạm/bấm/gõ phím trên trang (chỉ cuộn hoặc vuốt thì
+ *   KHÔNG tính) hoặc khi khách bấm link từ trang khác của site sang; trước lúc đó
+ *   nút loa hiện "Chạm để nghe tiếng". Khách bấm nút loa để tắt; lựa chọn tắt được nhớ
+ *   cho các trang sau (localStorage).
  */
 import Icon from './Icon.astro';
 import type { IconName } from './Icon.astro';
@@ -52,7 +55,9 @@ const copy = {
     play: 'Phát hội thoại minh họa',
     soundOn: 'Bật âm thanh hội thoại',
     soundOff: 'Tắt âm thanh hội thoại',
-    soundText: 'Bật tiếng',
+    soundUnlock: 'Chạm để nghe âm thanh hội thoại',
+    soundTapText: 'Chạm để nghe tiếng',
+    soundClickText: 'Bấm để nghe tiếng',
     pause: 'Tạm dừng hội thoại minh họa',
     replay: 'Phát lại từ đầu',
     caption: 'Hội thoại minh họa giữa khách hàng và AI Agent, không phải hội thoại thật.',
@@ -68,7 +73,9 @@ const copy = {
     play: 'Play the illustrative conversation',
     soundOn: 'Turn conversation sound on',
     soundOff: 'Turn conversation sound off',
-    soundText: 'Sound on',
+    soundUnlock: 'Tap to hear the conversation sound',
+    soundTapText: 'Tap to hear',
+    soundClickText: 'Click to hear',
     pause: 'Pause the illustrative conversation',
     replay: 'Replay from the start',
     caption: 'An illustrative conversation between a customer and an AI agent, not a real one.',
@@ -87,6 +94,7 @@ const clockTime = clock ?? messages.find((m) => m.time)?.time;
   data-label-pause={copy.pause}
   data-label-sound-on={copy.soundOn}
   data-label-sound-off={copy.soundOff}
+  data-label-sound-unlock={copy.soundUnlock}
 >
   <div class="chat-window">
     <div class="chat-head">
@@ -152,10 +160,13 @@ const clockTime = clock ?? messages.find((m) => m.time)?.time;
           <Icon name="play" class="i-play" />
         </button>
         <span class="cc-track" aria-hidden="true"><span class="cc-fill"></span></span>
-        <button type="button" class="cc-btn cc-sound" data-act="sound" aria-pressed="false" aria-label={copy.soundOn}>
+        <button type="button" class="cc-btn cc-sound" data-act="sound" aria-pressed="true" aria-label={copy.soundOff}>
           <Icon name="volume-off" class="i-sound-off" />
           <Icon name="volume" class="i-sound-on" />
-          <span class="cc-sound-text" aria-hidden="true">{copy.soundText}</span>
+          <span class="cc-sound-text" aria-hidden="true">
+            <span class="t-tap">{copy.soundTapText}</span>
+            <span class="t-click">{copy.soundClickText}</span>
+          </span>
         </button>
         <button type="button" class="cc-btn" data-act="replay" aria-label={copy.replay}>
           <Icon name="replay" />
@@ -188,11 +199,12 @@ const clockTime = clock ?? messages.find((m) => m.time)?.time;
   const SOUND_KEY = 'adsnl-chat-sound';
   const SOUND_EVENT = 'adsnl-chat-sound';
 
+  /** Mặc định bật; chỉ tắt khi khách đã tự bấm tắt (lưu 'off'). */
   const readPref = () => {
     try {
-      return localStorage.getItem(SOUND_KEY) === 'on';
+      return localStorage.getItem(SOUND_KEY) !== 'off';
     } catch {
-      return false;
+      return true;
     }
   };
   const writePref = (on: boolean) => {
@@ -210,7 +222,13 @@ const clockTime = clock ?? messages.find((m) => m.time)?.time;
     buffers: new Map<SoundName, AudioBuffer>(),
     loading: null as Promise<void> | null,
 
-    /** Tạo AudioContext + tải file. Chỉ gọi trong thao tác của người dùng (bấm/chạm/phím). */
+    /** Trình duyệt đã cho phát tiếng chưa. */
+    get running() {
+      return this.ctx?.state === 'running';
+    },
+
+    /** Tạo AudioContext (nếu chưa có), thử mở khóa và tải file. Gọi được bất cứ lúc nào;
+     *  trình duyệt chỉ thật sự cho chạy sau thao tác của khách. */
     unlock() {
       if (!this.ctx) {
         const Ctx: typeof AudioContext | undefined =
@@ -223,6 +241,7 @@ const clockTime = clock ?? messages.find((m) => m.time)?.time;
         const out = ctx.createGain();
         out.gain.value = 1;
         out.connect(comp).connect(ctx.destination);
+        ctx.addEventListener('statechange', () => document.dispatchEvent(new CustomEvent(SOUND_EVENT)));
         this.ctx = ctx;
         this.out = out;
       }
@@ -276,16 +295,14 @@ const clockTime = clock ?? messages.find((m) => m.time)?.time;
     },
   };
 
-  // Khách đã bật tiếng ở trang trước: mở khóa âm thanh ngay ở lần chạm/bấm/gõ phím đầu tiên.
-  if (sound.enabled) {
-    const kick = () => {
-      sound.unlock();
-      if (sound.ctx?.state === 'running') {
-        for (const ev of ['pointerdown', 'pointerup', 'touchend', 'keydown']) document.removeEventListener(ev, kick, true);
-      }
-    };
-    for (const ev of ['pointerdown', 'pointerup', 'touchend', 'keydown']) document.addEventListener(ev, kick, true);
-  }
+  // Mở khóa âm thanh ở lần chạm/bấm/gõ phím đầu tiên trên trang (khi tiếng đang bật).
+  const UNLOCK_EVENTS = ['pointerdown', 'pointerup', 'touchend', 'keydown', 'click'];
+  const kick = () => {
+    if (!sound.enabled) return;
+    sound.unlock();
+    if (sound.running) for (const ev of UNLOCK_EVENTS) document.removeEventListener(ev, kick, true);
+  };
+  for (const ev of UNLOCK_EVENTS) document.addEventListener(ev, kick, true);
 
   function setup(root: HTMLElement) {
     const items = Array.from(root.querySelectorAll<HTMLElement>('[data-step]'));
@@ -415,12 +432,28 @@ const clockTime = clock ?? messages.find((m) => m.time)?.time;
     document.addEventListener('visibilitychange', sync);
 
     const updateSound = () => {
+      const locked = sound.enabled && !sound.running;
       root.classList.toggle('is-sound', sound.enabled);
+      root.classList.toggle('is-sound-locked', locked);
       soundBtn.setAttribute('aria-pressed', String(sound.enabled));
-      soundBtn.setAttribute('aria-label', (sound.enabled ? root.dataset.labelSoundOff : root.dataset.labelSoundOn) ?? '');
+      soundBtn.setAttribute(
+        'aria-label',
+        (locked ? root.dataset.labelSoundUnlock : sound.enabled ? root.dataset.labelSoundOff : root.dataset.labelSoundOn) ?? '',
+      );
       if (!sound.enabled) endTyping();
     };
+    // Ghi nhận trạng thái "đang bị khóa" lúc khách nhấn xuống, để cú bấm mở khóa không bị hiểu là "tắt tiếng".
+    let lockedAtPress = false;
+    soundBtn.addEventListener('pointerdown', () => (lockedAtPress = sound.enabled && !sound.running), true);
+    soundBtn.addEventListener('keydown', () => (lockedAtPress = sound.enabled && !sound.running), true);
     soundBtn.addEventListener('click', () => {
+      if (lockedAtPress || (sound.enabled && !sound.running)) {
+        // Đang chờ trình duyệt cho phép: cú bấm này chỉ mở khóa, tiếng vẫn bật.
+        lockedAtPress = false;
+        sound.unlock();
+        sound.loading?.then(() => sound.play('send', 0.55));
+        return;
+      }
       const on = !sound.enabled;
       sound.set(on);
       if (on) {
@@ -435,6 +468,17 @@ const clockTime = clock ?? messages.find((m) => m.time)?.time;
     });
     document.addEventListener(SOUND_EVENT, updateSound);
     updateSound();
+
+    // Tiếng đang bật: chuẩn bị âm thanh khi khung chat còn cách màn hình ~1 màn hình.
+    new IntersectionObserver(
+      (entries, obs) => {
+        if (entries.some((e) => e.isIntersecting)) {
+          if (sound.enabled) sound.unlock();
+          obs.disconnect();
+        }
+      },
+      { rootMargin: '100% 0px' },
+    ).observe(root);
 
     // Tự phát khi ít nhất 1/4 khung chat nằm trong màn hình; ra ngoài thì tạm dừng.
     new IntersectionObserver(
@@ -781,42 +825,60 @@ const clockTime = clock ?? messages.find((m) => m.time)?.time;
     display: none;
   }
 
-  /* Nút âm thanh: khi tắt là viên thuốc "Bật tiếng" có vòng sáng nhẹ; khi bật thu về icon loa xanh */
+  /* Nút âm thanh — 3 trạng thái:
+     - đang phát (.is-sound): icon loa xanh trong vòng tròn, bấm để tắt;
+     - chờ trình duyệt cho phép (.is-sound.is-sound-locked): viên thuốc "Chạm để nghe tiếng" có vòng sáng;
+     - đã tắt (không .is-sound): icon loa gạch chéo, màu trung tính, bấm để bật lại. */
   .cc-sound {
+    display: grid;
+    place-items: center;
+    color: var(--text-2);
+  }
+  .cc-sound :global(.i-sound-on),
+  .cc-sound-text {
+    display: none;
+  }
+  .chat.is-sound .cc-sound {
+    border-color: rgb(46 232 154 / 0.55);
+    background: rgb(0 216 120 / 0.1);
+    color: var(--green-ink);
+  }
+  .chat.is-sound .cc-sound:hover {
+    background: rgb(0 216 120 / 0.18);
+    border-color: var(--green-ink);
+  }
+  .chat.is-sound .cc-sound :global(.i-sound-on) {
+    display: block;
+  }
+  .chat.is-sound .cc-sound :global(.i-sound-off) {
+    display: none;
+  }
+  .chat.is-sound-locked .cc-sound {
     display: inline-flex;
     align-items: center;
     gap: 0.4rem;
     width: auto;
     padding: 0 0.85rem 0 0.7rem;
     border-radius: 999px;
-    border-color: rgb(46 232 154 / 0.55);
-    background: rgb(0 216 120 / 0.1);
-    color: var(--green-ink);
     font: inherit;
     font-size: 0.8125rem;
     font-weight: 700;
     white-space: nowrap;
     animation: sound-hint 2.6s ease-out infinite;
   }
-  .cc-sound:hover {
-    background: rgb(0 216 120 / 0.18);
-    border-color: var(--green-ink);
+  .chat.is-sound-locked .cc-sound-text {
+    display: inline;
   }
-  .cc-sound :global(.i-sound-on) {
+  .cc-sound-text .t-click {
     display: none;
   }
-  .chat.is-sound .cc-sound {
-    width: 2.5rem;
-    padding: 0;
-    justify-content: center;
-    animation: none;
-  }
-  .chat.is-sound .cc-sound :global(.i-sound-on) {
-    display: block;
-  }
-  .chat.is-sound .cc-sound :global(.i-sound-off),
-  .chat.is-sound .cc-sound-text {
-    display: none;
+  @media (hover: hover) and (pointer: fine) {
+    .cc-sound-text .t-tap {
+      display: none;
+    }
+    .cc-sound-text .t-click {
+      display: inline;
+    }
   }
   @keyframes sound-hint {
     0% {
