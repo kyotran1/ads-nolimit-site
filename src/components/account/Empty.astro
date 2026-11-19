@@ -1,0 +1,30 @@
+---
+/** Khối "chưa có gì" của trang tài khoản: icon trong vòng sáng, tiêu đề, một dòng giải thích, nút (tùy chọn). */
+import Icon from '../Icon.astro';
+import type { IconName } from '../icon-paths';
+
+interface Props {
+  id?: string;
+  icon: IconName;
+  title: string;
+  text: string;
+  action?: { href: string; label: string; icon?: IconName; external?: boolean };
+  hidden?: boolean;
+}
+const { id, icon, title, text, action, hidden = false } = Astro.props;
+---
+
+<div class="empty" id={id} hidden={hidden}>
+  <span class="empty-icon" aria-hidden="true"><Icon name={icon} /></span>
+  <p class="empty-title">{title}</p>
+  <p class="empty-text">{text}</p>
+  <slot />
+  {
+    action && (
+      <a class="btn btn-sm" href={action.href} rel={action.external ? 'noopener' : undefined} target={action.external ? '_blank' : undefined}>
+        {action.icon && <Icon name={action.icon} />}
+        {action.label}
+      </a>
+    )
+  }
+</div>

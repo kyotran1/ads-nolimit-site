@@ -1,110 +1,55 @@
 ---
 /**
- * Trang Tài khoản (/tai-khoan/ và /en/account/) — chỉ xem được khi đã đăng nhập,
- * chưa đăng nhập thì chuyển sang trang Đăng nhập (?next= quay lại đây). Không đưa vào sitemap, gắn noindex.
+ * Trang Tài khoản V4 (/tai-khoan/ và /en/account/): bảng điều khiển của khách, một trang,
+ * chuyển mục bằng #neo (xem src/lib/account/routes.ts):
+ *   Tổng quan · Nạp tiền & Số dư · Đơn hàng · Dịch vụ · Khóa học · Hướng dẫn sử dụng · Key & máy · Hồ sơ · Bảo mật
  *
- * Gồm: hồ sơ (Firestore users/{uid}), gửi yêu cầu dịch vụ và danh sách yêu cầu (Firestore requests),
- * đăng nhập & bảo mật (xác minh email, đổi mật khẩu, đăng xuất), liên hệ nhanh, xóa tài khoản.
- * Xử lý: src/lib/auth/account.ts. Luật bảo mật dữ liệu: firestore.rules ở thư mục gốc.
- *
- * Link chọn sẵn gói: /tai-khoan/?plan=<id gói trong src/data/pricing.ts>#yeu-cau
+ * Chỉ xem được khi đã đăng nhập (chưa đăng nhập → trang Đăng nhập, ?next= quay lại đây). noindex, không có trong sitemap.
+ * Xử lý trên trình duyệt: src/lib/account/main.ts. Dữ liệu & luật bảo mật: firestore.rules ở thư mục gốc.
+ * Link chọn sẵn dịch vụ: /tai-khoan/?plan=<id gói trong src/data/pricing.ts>#dich-vu
  */
 import '../styles/auth.css';
+import '../styles/dashboard.css';
+import { Image } from 'astro:assets';
+import logoMark from '../assets/brand/logo-mark.png';
 import BaseLayout from '../layouts/BaseLayout.astro';
 import AuthConfig from '../components/auth/AuthConfig.astro';
-import Field from '../components/auth/Field.astro';
-import PasswordInput from '../components/auth/PasswordInput.astro';
 import Icon from '../components/Icon.astro';
-import type { IconName } from '../components/Icon.astro';
-import { contact, links } from '../config/site';
-import { homeOf, localize, t } from '../config/i18n';
+import Overview from '../components/account/Overview.astro';
+import TopUp from '../components/account/TopUp.astro';
+import Orders from '../components/account/Orders.astro';
+import Services from '../components/account/Services.astro';
+import Courses from '../components/account/Courses.astro';
+import Guides from '../components/account/Guides.astro';
+import Keys from '../components/account/Keys.astro';
+import Profile from '../components/account/Profile.astro';
+import Security from '../components/account/Security.astro';
+import { contact, links, primaryChannel } from '../config/site';
+import { homeOf, localize } from '../config/i18n';
 import type { Lang } from '../config/i18n';
-import { getPlans, priceInline } from '../data/pricing';
+import { navGroups, sections } from '../lib/account/routes';
+import { pickerGroups } from '../data/catalog';
 
 interface Props {
   lang: Lang;
 }
 const { lang } = Astro.props;
-const ui = t(lang);
-
-// Gói dịch vụ cho ô chọn, gom theo nhóm như trang Bảng giá.
-const plans = getPlans(lang);
-const groups = plans.reduce<{ name: string; plans: typeof plans }[]>((acc, plan) => {
-  const group = acc.find((g) => g.name === plan.group);
-  if (group) group.plans.push(plan);
-  else acc.push({ name: plan.group, plans: [plan] });
-  return acc;
-}, []);
-
-const quick: { icon: IconName; label: string; value: string; href: string; external?: boolean }[] = [
-  { icon: 'zalo', label: 'Zalo', value: contact.zaloPhone, href: links.zalo, external: true },
-  { icon: 'telegram', label: 'Telegram', value: `@${contact.telegramUser}`, href: links.telegram, external: true },
-  { icon: 'phone', label: ui.contactLabels.hotline, value: contact.hotline, href: links.hotline },
-  { icon: 'mail', label: ui.contactLabels.email, value: contact.email, href: links.email },
-];
-if (lang === 'en') quick.unshift(...quick.splice(1, 1)); // tiếng Anh: Telegram lên đầu
 
 const copy = {
   vi: {
     title: 'Tài khoản của bạn | ADS-Nolimit',
-    description: 'Hồ sơ, yêu cầu dịch vụ và cài đặt đăng nhập của bạn tại ADS-Nolimit.',
+    description: 'Số dư, đơn hàng, dịch vụ, khóa học và key phần mềm của bạn tại ADS-Nolimit.',
     loading: 'Đang tải tài khoản…',
     noscript: 'Trang tài khoản cần bật JavaScript.',
-    h1: 'Tài khoản của bạn',
-    profile: 'Hồ sơ',
-    profileLead: 'Thông tin giúp ADS-Nolimit tư vấn đúng nhu cầu của bạn. Chỉ bạn và ADS-Nolimit xem được.',
-    name: 'Tên hiển thị',
-    phone: 'Số điện thoại / Zalo',
-    company: 'Công ty / cửa hàng',
-    industry: 'Ngành hàng / lĩnh vực',
-    industryPlaceholder: 'Ví dụ: mỹ phẩm, nội thất, giáo dục',
-    optional: '(không bắt buộc)',
-    news: 'Báo tin cho tôi khi ADS-NOLIMIT AI Office ra mắt',
-    saveProfile: 'Lưu hồ sơ',
-    request: 'Gửi yêu cầu dịch vụ',
-    requestLead: 'Chọn dịch vụ bạn quan tâm. ADS-Nolimit sẽ liên hệ để tư vấn và báo giá chi tiết, chưa phát sinh chi phí.',
-    plan: 'Dịch vụ',
-    choosePlan: 'Chọn dịch vụ…',
-    other: 'Khác / chưa chắc chọn gói nào',
-    otherGroup: 'Khác',
-    priceLabel: 'Giá tham khảo:',
-    details: 'Xem chi tiết',
-    note: 'Mô tả nhu cầu',
-    notePlaceholder: 'Ví dụ: shop mỹ phẩm, khách nhắn nhiều qua fanpage buổi tối, cần trả lời nhanh hơn…',
-    contactPref: 'Cách liên hệ bạn muốn',
-    contactHint: 'Ví dụ: Zalo 0912 345 678, gọi sau 18h.',
-    sendRequest: 'Gửi yêu cầu',
-    myRequests: 'Yêu cầu của bạn',
-    security: 'Đăng nhập & bảo mật',
-    email: 'Email',
-    resend: 'Gửi lại email xác minh',
-    iVerified: 'Tôi đã xác minh',
-    provider: 'Cách đăng nhập',
-    created: 'Ngày tạo tài khoản',
-    lastSignIn: 'Đăng nhập gần nhất',
-    changePassword: 'Đổi mật khẩu',
-    currentPassword: 'Mật khẩu hiện tại',
-    newPassword: 'Mật khẩu mới',
-    newPasswordHint: 'Tối thiểu 8 ký tự, nên có cả chữ và số.',
-    confirmPassword: 'Nhập lại mật khẩu mới',
-    show: 'Hiện mật khẩu',
-    googleOnly: 'Bạn đăng nhập bằng Google nên không có mật khẩu riêng ở ADS-Nolimit.',
+    nav: 'Mục tài khoản',
+    crumb: 'Tài khoản ADS-Nolimit',
+    home: 'Trang chủ',
+    balance: 'Số dư',
+    support: 'Hỗ trợ qua Zalo',
+    supportValue: contact.zaloPhone,
     signOut: 'Đăng xuất',
-    quick: 'Liên hệ nhanh',
-    quickLead: 'Cần trao đổi ngay? Nhắn hoặc gọi ADS-Nolimit.',
-    pricing: 'Xem bảng giá',
-    pricingSub: 'Các gói dịch vụ và giá tham khảo',
-    danger: 'Xóa tài khoản',
-    dangerLead: 'Bạn có quyền xóa tài khoản và dữ liệu cá nhân của mình bất cứ lúc nào.',
-    dangerList: [
-      'Tài khoản đăng nhập và hồ sơ của bạn bị xóa vĩnh viễn, không khôi phục được.',
-      `Các yêu cầu dịch vụ đã gửi được giữ lại để đối chiếu. Muốn xóa cả những yêu cầu này, bạn email ${contact.email}.`,
-    ],
-    dangerOpen: 'Tôi muốn xóa tài khoản',
-    deleteGoogle: 'Khi bấm nút xóa, Google sẽ hỏi lại tài khoản của bạn để xác nhận.',
-    confirmWord: 'XÓA',
-    confirmLabel: 'Gõ chữ XÓA để xác nhận',
-    deleteButton: 'Xóa vĩnh viễn tài khoản',
+    soon: 'Sắp ra mắt',
+    locked: 'Chưa mở khóa',
     deletedTitle: 'Đã xóa tài khoản',
     deletedText:
       'Tài khoản và hồ sơ của bạn đã được xóa. Cảm ơn bạn đã dùng thử. Nếu cần ADS-Nolimit hỗ trợ, bạn vẫn có thể liên hệ qua Zalo, hotline hoặc email.',
@@ -112,325 +57,143 @@ const copy = {
   },
   en: {
     title: 'Your account | ADS-Nolimit',
-    description: 'Your ADS-Nolimit profile, service requests and sign-in settings.',
+    description: 'Your ADS-Nolimit balance, orders, services, courses and software keys.',
     loading: 'Loading your account…',
     noscript: 'The account page needs JavaScript.',
-    h1: 'Your account',
-    profile: 'Profile',
-    profileLead: 'Helps ADS-Nolimit advise you on what you actually need. Only you and ADS-Nolimit can see it.',
-    name: 'Display name',
-    phone: 'Phone / Zalo / WhatsApp',
-    company: 'Company or shop',
-    industry: 'Industry',
-    industryPlaceholder: 'For example: cosmetics, furniture, education',
-    optional: '(optional)',
-    news: 'Tell me when ADS-NOLIMIT AI Office launches',
-    saveProfile: 'Save profile',
-    request: 'Request a service',
-    requestLead: 'Choose the service you are interested in. ADS-Nolimit will contact you with advice and a detailed quote, with no obligation.',
-    plan: 'Service',
-    choosePlan: 'Choose a service…',
-    other: 'Other / not sure which plan',
-    otherGroup: 'Other',
-    priceLabel: 'Guide price:',
-    details: 'Details',
-    note: 'What do you need?',
-    notePlaceholder: 'For example: cosmetics shop, lots of evening messages on our Facebook page, we need faster replies…',
-    contactPref: 'Preferred way to contact you',
-    contactHint: 'For example: Telegram @yourname, or WhatsApp +84 912 345 678 after 6 pm.',
-    sendRequest: 'Send request',
-    myRequests: 'Your requests',
-    security: 'Sign-in & security',
-    email: 'Email',
-    resend: 'Resend verification email',
-    iVerified: 'I have verified',
-    provider: 'Sign-in method',
-    created: 'Account created',
-    lastSignIn: 'Last sign-in',
-    changePassword: 'Change password',
-    currentPassword: 'Current password',
-    newPassword: 'New password',
-    newPasswordHint: 'At least 8 characters, ideally with letters and numbers.',
-    confirmPassword: 'Repeat new password',
-    show: 'Show password',
-    googleOnly: 'You sign in with Google, so there is no separate ADS-Nolimit password.',
+    nav: 'Account sections',
+    crumb: 'ADS-Nolimit account',
+    home: 'Home',
+    balance: 'Balance',
+    support: 'Support on Telegram',
+    supportValue: `@${contact.telegramUser}`,
     signOut: 'Sign out',
-    quick: 'Quick contact',
-    quickLead: 'Need to talk now? Message or call ADS-Nolimit.',
-    pricing: 'See pricing',
-    pricingSub: 'Plans and guide prices',
-    danger: 'Delete account',
-    dangerLead: 'You can delete your account and personal data at any time.',
-    dangerList: [
-      'Your sign-in account and profile are deleted permanently and cannot be restored.',
-      `Service requests you have sent are kept for our records. To have those deleted too, email ${contact.email}.`,
-    ],
-    dangerOpen: 'I want to delete my account',
-    deleteGoogle: 'When you press delete, Google will ask you to confirm your account.',
-    confirmWord: 'DELETE',
-    confirmLabel: 'Type DELETE to confirm',
-    deleteButton: 'Delete my account permanently',
+    soon: 'Soon',
+    locked: 'Locked',
     deletedTitle: 'Account deleted',
     deletedText:
       'Your account and profile have been deleted. Thank you for trying ADS-Nolimit. If you need us, you can still reach us by Telegram, Zalo or email.',
     deletedHome: 'Back to the homepage',
   },
 }[lang];
+
+const byId = (id: string) => sections.find((s) => s.id === id)!;
+const supportHref = lang === 'en' ? links.telegram : links.zalo;
+
+// Cấu hình cho script: ô chọn dịch vụ (đã chuyển ngữ, giá từ src/data/pricing.ts), liên hệ, đường dẫn.
+const config = {
+  lang,
+  picker: pickerGroups(lang),
+  contact: { zalo: contact.zaloPhone, telegram: `@${contact.telegramUser}`, email: contact.email },
+  links: { zalo: links.zalo, telegram: links.telegram, primary: primaryChannel[lang].href },
+  paths: {
+    terms: localize('/dieu-khoan/', lang),
+    pricing: localize('/bang-gia/', lang),
+    software: localize('/phan-mem/', lang),
+  },
+};
+const configJson = JSON.stringify(config).replace(/</g, '\\u003c');
 ---
 
 <BaseLayout title={copy.title} description={copy.description} lang={lang} noindex>
-  <section class="account">
-    <div class="container">
-      <div class="acc-loading" id="acc-loading" role="status">
-        <span class="spinner" aria-hidden="true"></span>
-        <span>{copy.loading}</span>
-      </div>
-      <noscript><p class="auth-noscript">{copy.noscript}</p></noscript>
+  <section class="dash" id="dash">
+    <div class="acc-loading" id="acc-loading" role="status">
+      <span class="spinner" aria-hidden="true"></span>
+      <span>{copy.loading}</span>
+    </div>
+    <noscript><p class="auth-noscript">{copy.noscript}</p></noscript>
 
-      <div id="acc-app" hidden>
-        <div class="acc-head">
+    <div class="dash-shell" id="acc-app" hidden>
+      <!-- Menu bên trái (màn hình rộng) / thanh mục cuộn ngang (điện thoại) -->
+      <aside class="dash-side">
+        <div class="side-user">
           <div class="avatar" id="acc-avatar" aria-hidden="true"></div>
-          <div>
-            <h1>{copy.h1}</h1>
-            <p class="acc-hello" id="acc-hello"></p>
+          <div class="side-user-text">
+            <p class="side-name" id="side-name"></p>
+            <p class="side-email" id="side-email"></p>
           </div>
         </div>
+        <a class="side-balance" href={`#${byId('topup')[lang]}`} data-glow>
+          <span class="side-balance-label"><Icon name="wallet" />{copy.balance}</span>
+          <strong data-bind="balance">—</strong>
+        </a>
+        <nav class="side-nav" aria-label={copy.nav}>
+          {
+            navGroups.map((group) => (
+              <div class="side-group">
+                <p class="side-group-label">{group.label[lang]}</p>
+                <ul>
+                  {group.ids.map((id) => {
+                    const s = byId(id);
+                    return (
+                      <li>
+                        <a class="side-link" href={`#${s[lang]}`} data-route={s.id}>
+                          <Icon name={s.icon} />
+                          <span class="side-link-text">{s.label[lang]}</span>
+                          {s.id === 'keys' && <span class="side-soon">{copy.soon}</span>}
+                          {s.id === 'courses' && (
+                            <span class="side-lock" data-lock="courses" title={copy.locked} hidden>
+                              <Icon name="lock" />
+                            </span>
+                          )}
+                        </a>
+                      </li>
+                    );
+                  })}
+                </ul>
+              </div>
+            ))
+          }
+        </nav>
+        <div class="side-foot">
+          <a class="side-support" href={supportHref} rel="noopener" target="_blank">
+            <Icon name="support" />
+            <span><small>{copy.support}</small>{copy.supportValue}</span>
+          </a>
+          <button type="button" class="side-signout" data-signout>
+            <Icon name="logout" />
+            <span>{copy.signOut}</span>
+          </button>
+        </div>
+      </aside>
+
+      <div class="dash-main">
+        <header class="dash-top">
+          <div class="dash-top-text">
+            <p class="dash-crumb">
+              <Image src={logoMark} alt="" width={22} densities={[1, 2]} loading="eager" />
+              <span>{copy.crumb}</span>
+            </p>
+            <h1 id="dash-title" tabindex="-1">{byId('overview').label[lang]}</h1>
+          </div>
+          <a class="btn btn-sm dash-home" href={homeOf[lang]}><Icon name="home" />{copy.home}</a>
+        </header>
 
         <div id="acc-notice" class="auth-alert acc-notice" role="status"></div>
 
-        <div class="acc-grid">
-          <div class="acc-col">
-            <!-- Hồ sơ: Firestore users/{uid} -->
-            <section class="panel acc-panel" id="ho-so" aria-labelledby="ho-so-title">
-              <h2 id="ho-so-title">{copy.profile}</h2>
-              <p class="acc-panel-lead">{copy.profileLead}</p>
-              <form id="profile-form" class="acc-form" novalidate>
-                <div id="profile-alert" class="auth-alert" role="alert"></div>
-                <Field id="p-name" name="displayName" label={copy.name} autocomplete="name" maxlength={60} required />
-                <div class="acc-form-row">
-                  <Field
-                    id="p-phone"
-                    name="phone"
-                    type="tel"
-                    label={copy.phone}
-                    optional={copy.optional}
-                    autocomplete="tel"
-                    inputmode="tel"
-                    maxlength={20}
-                  />
-                  <Field id="p-company" name="company" label={copy.company} optional={copy.optional} autocomplete="organization" maxlength={120} />
-                </div>
-                <Field
-                  id="p-industry"
-                  name="industry"
-                  label={copy.industry}
-                  optional={copy.optional}
-                  maxlength={120}
-                  placeholder={copy.industryPlaceholder}
-                />
-                <div class="check">
-                  <input id="p-news" name="aiOfficeNews" type="checkbox" />
-                  <label for="p-news">{copy.news}</label>
-                </div>
-                <div class="acc-actions">
-                  <button type="submit" class="btn btn-primary">{copy.saveProfile}</button>
-                </div>
-                <div id="profile-status" class="auth-alert" role="status"></div>
-              </form>
-            </section>
-
-            <!-- Gửi yêu cầu dịch vụ: Firestore requests (chỉ tạo mới, trạng thái 'new') -->
-            <section class="panel acc-panel" id="yeu-cau" aria-labelledby="yeu-cau-title">
-              <h2 id="yeu-cau-title">{copy.request}</h2>
-              <p class="acc-panel-lead">{copy.requestLead}</p>
-              <form id="request-form" class="acc-form" novalidate>
-                <div id="request-alert" class="auth-alert" role="alert"></div>
-                <div class="field">
-                  <label for="r-plan">{copy.plan}</label>
-                  <select id="r-plan" name="planId" required aria-describedby="r-plan-price r-plan-error">
-                    <option value="">{copy.choosePlan}</option>
-                    {
-                      groups.map((group) => (
-                        <optgroup label={group.name}>
-                          {group.plans.map((plan) => (
-                            <option value={plan.id} data-price={priceInline(plan, lang)} data-href={plan.href}>
-                              {plan.name}
-                            </option>
-                          ))}
-                        </optgroup>
-                      ))
-                    }
-                    <optgroup label={copy.otherGroup}>
-                      <option value="other">{copy.other}</option>
-                    </optgroup>
-                  </select>
-                  <p class="plan-price-line" id="r-plan-price" data-label={copy.priceLabel} data-details={copy.details}></p>
-                  <p class="field-error" id="r-plan-error"></p>
-                </div>
-                <div class="field">
-                  <label for="r-note">{copy.note} <span class="optional" id="r-note-optional">{copy.optional}</span></label>
-                  <textarea
-                    id="r-note"
-                    name="note"
-                    rows="4"
-                    maxlength="1000"
-                    placeholder={copy.notePlaceholder}
-                    aria-describedby="r-note-count r-note-error"></textarea>
-                  <p class="char-count" id="r-note-count" aria-live="off">0/1000</p>
-                  <p class="field-error" id="r-note-error"></p>
-                </div>
-                <Field
-                  id="r-contact"
-                  name="contact"
-                  label={copy.contactPref}
-                  optional={copy.optional}
-                  maxlength={120}
-                  hint={copy.contactHint}
-                />
-                <div class="acc-actions">
-                  <button type="submit" class="btn btn-primary">{copy.sendRequest}</button>
-                </div>
-                <div id="request-status" class="auth-alert" role="status"></div>
-              </form>
-            </section>
-
-            <!-- Yêu cầu đã gửi: Firestore requests where uid == mình -->
-            <section class="panel acc-panel" id="yeu-cau-da-gui" aria-labelledby="yeu-cau-da-gui-title">
-              <h2 id="yeu-cau-da-gui-title">{copy.myRequests}</h2>
-              <div id="requests-alert" class="auth-alert" role="alert"></div>
-              <div id="requests-status" class="auth-alert" role="status"></div>
-              <ul class="req-list" id="req-list"></ul>
-              <p class="acc-empty" id="req-empty" hidden></p>
-            </section>
-
-            {
-              /*
-               * TODO: phần mở rộng sau này (ví dụ hóa đơn, tài liệu bàn giao, gói đang dùng)
-               * thêm thành <section class="panel acc-panel"> ở đây; dữ liệu mới cần thêm luật trong firestore.rules
-               * và cập nhật mục "Tài khoản khách hàng" trong src/views/PrivacyPage.astro.
-               */
-            }
-          </div>
-
-          <div class="acc-col">
-            <section class="panel acc-panel" id="bao-mat" aria-labelledby="bao-mat-title">
-              <h2 id="bao-mat-title">{copy.security}</h2>
-              <dl class="acc-facts">
-                <div>
-                  <dt>{copy.email}</dt>
-                  <dd><span id="acc-email"></span> <span class="badge" id="acc-verified"></span></dd>
-                  <div class="acc-verify" id="acc-verify" hidden>
-                    <button type="button" class="btn btn-sm" id="verify-resend">{copy.resend}</button>
-                    <button type="button" class="btn btn-ghost btn-sm" id="verify-reload">{copy.iVerified}</button>
-                  </div>
-                </div>
-                <div>
-                  <dt>{copy.provider}</dt>
-                  <dd id="acc-provider"></dd>
-                </div>
-                <div>
-                  <dt>{copy.created}</dt>
-                  <dd id="acc-created"></dd>
-                </div>
-                <div>
-                  <dt>{copy.lastSignIn}</dt>
-                  <dd id="acc-last"></dd>
-                </div>
-              </dl>
-              <div id="security-alert" class="auth-alert" role="alert"></div>
-              <div id="security-status" class="auth-alert" role="status"></div>
-
-              <details class="acc-sub" id="pw-section" hidden>
-                <summary>{copy.changePassword}</summary>
-                <form id="password-form" class="acc-form" novalidate>
-                  <PasswordInput id="pw-current" label={copy.currentPassword} autocomplete="current-password" showLabel={copy.show} />
-                  <PasswordInput
-                    id="pw-new"
-                    label={copy.newPassword}
-                    autocomplete="new-password"
-                    minlength={8}
-                    hint={copy.newPasswordHint}
-                    showLabel={copy.show}
-                  />
-                  <PasswordInput id="pw-confirm" label={copy.confirmPassword} autocomplete="new-password" minlength={8} showLabel={copy.show} />
-                  <div class="acc-actions">
-                    <button type="submit" class="btn btn-primary">{copy.changePassword}</button>
-                  </div>
-                </form>
-              </details>
-              <p class="acc-sub muted small" id="google-only" hidden>{copy.googleOnly}</p>
-
-              <div class="acc-sub">
-                <button type="button" class="btn btn-block" id="sign-out">{copy.signOut}</button>
-              </div>
-            </section>
-
-            <section class="panel acc-panel" aria-labelledby="lien-he-title">
-              <h2 id="lien-he-title">{copy.quick}</h2>
-              <p class="acc-panel-lead">{copy.quickLead}</p>
-              <ul class="quick-links">
-                {
-                  quick.map((q) => (
-                    <li>
-                      <a href={q.href} rel={q.external ? 'noopener' : undefined}>
-                        <Icon name={q.icon} />
-                        <span>
-                          <small>{q.label}</small>
-                          {q.value}
-                        </span>
-                      </a>
-                    </li>
-                  ))
-                }
-                <li>
-                  <a href={localize('/bang-gia/', lang)}>
-                    <Icon name="sheet" />
-                    <span>
-                      <small>{copy.pricingSub}</small>
-                      {copy.pricing}
-                    </span>
-                  </a>
-                </li>
-              </ul>
-            </section>
-
-            <section class="panel acc-panel acc-danger" id="xoa-tai-khoan" aria-labelledby="xoa-title">
-              <h2 id="xoa-title">{copy.danger}</h2>
-              <p class="acc-panel-lead">{copy.dangerLead}</p>
-              <ul>
-                {copy.dangerList.map((item) => <li>{item}</li>)}
-              </ul>
-              <details class="acc-sub" id="delete-section">
-                <summary>{copy.dangerOpen}</summary>
-                <form id="delete-form" class="acc-form" novalidate data-word={copy.confirmWord}>
-                  <div id="delete-alert" class="auth-alert" role="alert"></div>
-                  <div id="delete-password-wrap" hidden>
-                    <PasswordInput id="del-password" label={copy.currentPassword} autocomplete="current-password" showLabel={copy.show} />
-                  </div>
-                  <p class="muted small" id="delete-google-note" hidden>{copy.deleteGoogle}</p>
-                  <Field id="del-confirm" name="confirm" label={copy.confirmLabel} autocomplete="off" />
-                  <div class="acc-actions">
-                    <button type="submit" class="btn btn-danger-solid">{copy.deleteButton}</button>
-                  </div>
-                </form>
-              </details>
-            </section>
-          </div>
-        </div>
+        <Overview lang={lang} />
+        <TopUp lang={lang} />
+        <Orders lang={lang} />
+        <Services lang={lang} />
+        <Courses lang={lang} />
+        <Guides lang={lang} />
+        <Keys lang={lang} />
+        <Profile lang={lang} />
+        <Security lang={lang} />
       </div>
+    </div>
 
-      <div class="acc-deleted" id="acc-deleted" hidden tabindex="-1">
-        <h1>{copy.deletedTitle}</h1>
-        <p>{copy.deletedText}</p>
-        <div class="btn-row">
-          <a class="btn btn-primary" href={homeOf[lang]}>{copy.deletedHome}</a>
-        </div>
+    <div class="acc-deleted" id="acc-deleted" hidden tabindex="-1">
+      <h1>{copy.deletedTitle}</h1>
+      <p>{copy.deletedText}</p>
+      <div class="btn-row">
+        <a class="btn btn-primary" href={homeOf[lang]}>{copy.deletedHome}</a>
       </div>
     </div>
   </section>
+  <script is:inline type="application/json" id="dash-config" set:html={configJson} />
   <AuthConfig lang={lang} />
 </BaseLayout>
 
 <script>
-  import '../lib/auth/account';
+  import '../lib/account/main';
 </script>

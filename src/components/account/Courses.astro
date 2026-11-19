@@ -1,0 +1,43 @@
+---
+/** Khóa học: lưới khóa học (đã mở / chưa mở), trang khóa học với danh sách bài + trình phát video. Xử lý: src/lib/account/courses.ts */
+import Empty from './Empty.astro';
+import type { Lang } from '../../config/i18n';
+import { primaryChannel } from '../../config/site';
+
+interface Props {
+  lang: Lang;
+}
+const { lang } = Astro.props;
+
+const copy = {
+  vi: {
+    lead: 'Khóa học thực chiến về AI, AI Agent và quảng cáo do ADS-Nolimit biên soạn. Mở khóa bằng số dư, học lại không giới hạn.',
+    emptyTitle: 'Nội dung đang được cập nhật',
+    emptyText: 'ADS-Nolimit đang chuẩn bị các khóa học thực chiến. Khi có khóa học mới, bạn sẽ thấy ngay tại đây.',
+    emptyAction: 'Nhắn để được báo khi có khóa mới',
+  },
+  en: {
+    lead: 'Hands-on courses on AI, AI agents and advertising, written by ADS-Nolimit. Unlock with your balance and rewatch as often as you like.',
+    emptyTitle: 'Content is on its way',
+    emptyText: 'ADS-Nolimit is preparing practical courses. New courses will appear here as soon as they are ready.',
+    emptyAction: 'Ask to be notified',
+  },
+}[lang];
+---
+
+<section class="view" data-view="courses" hidden>
+  <div id="courses-index">
+    <p class="view-lead">{copy.lead}</p>
+    <div class="auth-alert" role="alert" id="courses-alert"></div>
+    <ul class="course-grid" id="course-grid"></ul>
+    <Empty
+      id="courses-empty"
+      icon="book"
+      title={copy.emptyTitle}
+      text={copy.emptyText}
+      action={{ href: primaryChannel[lang].href, label: copy.emptyAction, icon: primaryChannel[lang].icon, external: true }}
+      hidden
+    />
+  </div>
+  <div id="course-view" hidden></div>
+</section>

@@ -1,0 +1,46 @@
+---
+/** Hướng dẫn sử dụng: chủ đề + danh sách bài, trang đọc bài (chữ + video tùy chọn). Xử lý: src/lib/account/guides.ts */
+import Empty from './Empty.astro';
+import type { Lang } from '../../config/i18n';
+import { primaryChannel } from '../../config/site';
+
+interface Props {
+  lang: Lang;
+}
+const { lang } = Astro.props;
+
+const copy = {
+  vi: {
+    lead: 'Hướng dẫn từng bước dùng tài khoản, dịch vụ và phần mềm của ADS-Nolimit.',
+    cats: 'Chủ đề',
+    emptyTitle: 'Nội dung đang được cập nhật',
+    emptyText: 'Các bài hướng dẫn sử dụng đang được soạn. Trong lúc chờ, bạn cần gì cứ nhắn ADS-Nolimit để được hướng dẫn trực tiếp.',
+    emptyAction: 'Nhắn hỗ trợ',
+  },
+  en: {
+    lead: 'Step-by-step guides to your account and to ADS-Nolimit services and software.',
+    cats: 'Topics',
+    emptyTitle: 'Content is on its way',
+    emptyText: 'Our user guides are being written. In the meantime, message ADS-Nolimit and we will walk you through anything you need.',
+    emptyAction: 'Message support',
+  },
+}[lang];
+---
+
+<section class="view" data-view="guides" hidden>
+  <div id="guides-index">
+    <p class="view-lead">{copy.lead}</p>
+    <div class="auth-alert" role="alert" id="guides-alert"></div>
+    <div class="chips" role="group" aria-label={copy.cats} id="guide-cats" hidden></div>
+    <ul class="guide-list" id="guide-list"></ul>
+    <Empty
+      id="guides-empty"
+      icon="guide"
+      title={copy.emptyTitle}
+      text={copy.emptyText}
+      action={{ href: primaryChannel[lang].href, label: copy.emptyAction, icon: primaryChannel[lang].icon, external: true }}
+      hidden
+    />
+  </div>
+  <article id="guide-view" class="guide-article" hidden></article>
+</section>

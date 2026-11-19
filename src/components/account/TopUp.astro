@@ -1,0 +1,164 @@
+---
+/**
+ * Nạp tiền & Số dư: thẻ số dư, form tạo lệnh nạp, khung thanh toán VietQR, lịch sử nạp, sổ giao dịch.
+ * Xử lý: src/lib/account/topup.ts. Mã QR tạo trên trình duyệt (src/lib/vietqr.ts).
+ */
+import Icon from '../Icon.astro';
+import type { Lang } from '../../config/i18n';
+import { localize } from '../../config/i18n';
+import { formatVnd } from '../../lib/money';
+import { TOPUP_MAX, TOPUP_MIN } from '../../lib/ledger/ops';
+
+interface Props {
+  lang: Lang;
+}
+const { lang } = Astro.props;
+const presets = [500_000, 1_000_000, 2_000_000, 5_000_000, 10_000_000];
+const terms = localize('/dieu-khoan/', lang);
+
+const copy = {
+  vi: {
+    available: 'Số dư khả dụng',
+    use: 'Dùng để thanh toán dịch vụ, ngân sách quảng cáo, key phần mềm và khóa học của ADS-Nolimit.',
+    formTitle: 'Nạp tiền vào số dư',
+    formLead: 'Chọn số tiền, tạo lệnh nạp rồi chuyển khoản bằng mã VietQR. ADS-Nolimit xác nhận đã nhận tiền thì số dư được cộng.',
+    amount: 'Số tiền nạp',
+    custom: 'Hoặc nhập số tiền khác',
+    customPlaceholder: 'Ví dụ 3.000.000',
+    unit: 'đ',
+    hint: `Tối thiểu ${formatVnd(TOPUP_MIN, 'vi')}, tối đa ${formatVnd(TOPUP_MAX, 'vi')}, chẵn nghìn đồng.`,
+    sum: 'Bạn sẽ chuyển khoản',
+    create: 'Tạo lệnh nạp',
+    termsBefore: 'Khi nạp tiền, bạn đồng ý với ',
+    terms: 'Điều khoản nạp tiền & sử dụng số dư',
+    howTitle: 'Nạp tiền thế nào?',
+    how: [
+      ['Tạo lệnh nạp', 'Chọn số tiền rồi bấm “Tạo lệnh nạp”. Mỗi lệnh có một mã nội dung chuyển khoản riêng.'],
+      ['Quét mã VietQR', 'Mở app ngân hàng, quét mã: số tài khoản, số tiền và nội dung được điền sẵn.'],
+      ['Chờ xác nhận', 'ADS-Nolimit kiểm tra đã nhận tiền rồi duyệt lệnh, số dư được cộng ngay khi duyệt.'],
+    ],
+    history: 'Lịch sử nạp tiền',
+    ledger: 'Sổ giao dịch',
+    ledgerLead: 'Mọi khoản nạp, thanh toán, hoàn tiền và điều chỉnh số dư.',
+  },
+  en: {
+    available: 'Available balance',
+    use: 'Use it for ADS-Nolimit services, ad budgets, software keys and courses.',
+    formTitle: 'Top up your balance',
+    formLead: 'Choose an amount, create a top-up, then pay by bank transfer with the VietQR code. Your balance is credited once ADS-Nolimit confirms the payment.',
+    amount: 'Amount',
+    custom: 'Or enter another amount',
+    customPlaceholder: 'For example 3,000,000',
+    unit: 'VND',
+    hint: `From ${formatVnd(TOPUP_MIN, 'en')} to ${formatVnd(TOPUP_MAX, 'en')}, in whole thousands. Balances are held in Vietnamese dong.`,
+    sum: 'You will transfer',
+    create: 'Create top-up',
+    termsBefore: 'By topping up you agree to the ',
+    terms: 'balance top-up terms',
+    howTitle: 'How topping up works',
+    how: [
+      ['Create a top-up', 'Choose an amount and press “Create top-up”. Each top-up gets its own transfer reference.'],
+      ['Scan the VietQR code', 'Scan it with your Vietnamese banking app: account, amount and reference are filled in for you.'],
+      ['Wait for confirmation', 'ADS-Nolimit checks the payment and approves the top-up. Your balance updates as soon as it is approved.'],
+    ],
+    history: 'Top-up history',
+    ledger: 'Transactions',
+    ledgerLead: 'Every top-up, payment, refund and balance adjustment.',
+  },
+}[lang];
+---
+
+<section class="view" data-view="topup" hidden>
+  <div class="topup-grid">
+    <div class="topup-col">
+      <div class="balance-card">
+        <p class="balance-label"><Icon name="wallet" />{copy.available}</p>
+        <p class="balance-value" data-bind="balance">—</p>
+        <p class="balance-meta" id="tp-updated"></p>
+        <p class="balance-use">{copy.use}</p>
+      </div>
+
+      <form class="panel tp-form" id="tp-form" novalidate aria-labelledby="tp-form-title">
+        <h2 id="tp-form-title">{copy.formTitle}</h2>
+        <p class="panel-lead">{copy.formLead}</p>
+        <fieldset class="amounts">
+          <legend>{copy.amount}</legend>
+          <div class="amount-chips">
+            {
+              presets.map((a) => (
+                <label class="amount-chip">
+                  <input type="radio" name="tp-preset" value={a} />
+                  <span>{formatVnd(a, lang)}</span>
+                </label>
+              ))
+            }
+          </div>
+        </fieldset>
+        <div class="field">
+          <label for="tp-custom">{copy.custom}</label>
+          <div class="money-input">
+            <input
+              id="tp-custom"
+              name="amount"
+              type="text"
+              inputmode="numeric"
+              autocomplete="off"
+              placeholder={copy.customPlaceholder}
+              aria-describedby="tp-custom-hint tp-custom-error"
+            />
+            <span aria-hidden="true">{copy.unit}</span>
+          </div>
+          <p class="field-hint" id="tp-custom-hint">{copy.hint}</p>
+          <p class="field-error" id="tp-custom-error"></p>
+        </div>
+        <div id="tp-alert" class="auth-alert" role="alert"></div>
+        <div class="tp-submit">
+          <p class="tp-sum"><span>{copy.sum}</span><strong id="tp-sum">—</strong></p>
+          <button type="submit" class="btn btn-primary" id="tp-create"><Icon name="qr" />{copy.create}</button>
+        </div>
+        <p class="small muted">{copy.termsBefore}<a href={terms}>{copy.terms}</a>.</p>
+      </form>
+    </div>
+
+    <div class="topup-col">
+      <section class="panel pay-panel" id="pay-panel" aria-labelledby="pay-title" aria-live="polite">
+        <div id="pay-how">
+          <h2 id="pay-title">{copy.howTitle}</h2>
+          <ol class="how-list">
+            {
+              copy.how.map(([title, text], i) => (
+                <li>
+                  <span class="how-num">{i + 1}</span>
+                  <span>
+                    <strong>{title}</strong>
+                    <span>{text}</span>
+                  </span>
+                </li>
+              ))
+            }
+          </ol>
+        </div>
+        <div id="pay-body" hidden></div>
+      </section>
+    </div>
+  </div>
+
+  <section class="panel" aria-labelledby="tp-history-title">
+    <div class="panel-head">
+      <h2 id="tp-history-title">{copy.history}</h2>
+    </div>
+    <div class="auth-alert" role="alert" id="tp-history-alert"></div>
+    <ul class="rows" id="tp-history"></ul>
+  </section>
+
+  <section class="panel" aria-labelledby="tp-ledger-title" id="so-giao-dich">
+    <div class="panel-head">
+      <div>
+        <h2 id="tp-ledger-title">{copy.ledger}</h2>
+        <p class="panel-sub">{copy.ledgerLead}</p>
+      </div>
+    </div>
+    <div class="auth-alert" role="alert" id="tp-ledger-alert"></div>
+    <ul class="ledger" id="tp-ledger"></ul>
+  </section>
+</section>

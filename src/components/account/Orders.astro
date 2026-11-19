@@ -1,0 +1,82 @@
+---
+/** Đơn hàng: lọc theo trạng thái, danh sách, khung chi tiết (dialog). Xử lý: src/lib/account/orders.ts */
+import Icon from '../Icon.astro';
+import Empty from './Empty.astro';
+import type { Lang } from '../../config/i18n';
+import { hashFor } from '../../lib/account/routes';
+
+interface Props {
+  lang: Lang;
+}
+const { lang } = Astro.props;
+
+const copy = {
+  vi: {
+    lead: 'Mọi đơn bạn thanh toán bằng số dư. Bấm vào một đơn để xem chi tiết.',
+    filter: 'Lọc theo trạng thái',
+    filters: [
+      ['all', 'Tất cả'],
+      ['paid', 'Đã thanh toán'],
+      ['processing', 'Đang xử lý'],
+      ['done', 'Hoàn thành'],
+      ['cancelled', 'Đã hủy'],
+      ['refunded', 'Đã hoàn tiền'],
+    ],
+    emptyTitle: 'Bạn chưa có đơn hàng nào',
+    emptyText: 'Chọn dịch vụ và thanh toán bằng số dư, đơn sẽ hiện ở đây để bạn theo dõi tiến độ.',
+    emptyAction: 'Chọn dịch vụ',
+    close: 'Đóng',
+  },
+  en: {
+    lead: 'Every order you paid from your balance. Select an order to see its details.',
+    filter: 'Filter by status',
+    filters: [
+      ['all', 'All'],
+      ['paid', 'Paid'],
+      ['processing', 'In progress'],
+      ['done', 'Completed'],
+      ['cancelled', 'Cancelled'],
+      ['refunded', 'Refunded'],
+    ],
+    emptyTitle: 'No orders yet',
+    emptyText: 'Choose a service and pay from your balance. Your orders appear here so you can follow their progress.',
+    emptyAction: 'Choose a service',
+    close: 'Close',
+  },
+}[lang];
+---
+
+<section class="view" data-view="orders" hidden>
+  <p class="view-lead">{copy.lead}</p>
+  <div class="chips" role="group" aria-label={copy.filter} id="orders-filter">
+    {
+      copy.filters.map(([value, label], i) => (
+        <button type="button" class="chip" data-filter={value} aria-pressed={i === 0 ? 'true' : 'false'}>
+          {label}
+          <span class="chip-count" data-count={value} />
+        </button>
+      ))
+    }
+  </div>
+  <div class="auth-alert" role="alert" id="orders-alert"></div>
+  <ul class="rows orders-list" id="orders-list"></ul>
+  <p class="muted" id="orders-filtered-empty" hidden></p>
+  <Empty
+    id="orders-empty"
+    icon="bag"
+    title={copy.emptyTitle}
+    text={copy.emptyText}
+    action={{ href: hashFor('services', lang), label: copy.emptyAction, icon: 'spark' }}
+    hidden
+  />
+
+  <dialog class="drawer" id="order-drawer" aria-labelledby="order-drawer-title">
+    <div class="drawer-inner">
+      <div class="drawer-head">
+        <h2 id="order-drawer-title"></h2>
+        <button type="button" class="icon-btn" id="order-drawer-close" aria-label={copy.close}><Icon name="x" /></button>
+      </div>
+      <div class="drawer-body" id="order-drawer-body"></div>
+    </div>
+  </dialog>
+</section>

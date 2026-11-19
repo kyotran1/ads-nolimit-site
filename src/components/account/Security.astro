@@ -1,0 +1,154 @@
+---
+/**
+ * Đăng nhập & bảo mật: email, xác minh, cách đăng nhập, đổi mật khẩu, đăng xuất, xóa tài khoản (giữ nguyên chức năng V3).
+ * V4: không cho tự xóa tài khoản khi còn số dư (luật Firestore cũng chặn). Xử lý: src/lib/account/security.ts
+ */
+import Field from '../auth/Field.astro';
+import PasswordInput from '../auth/PasswordInput.astro';
+import Icon from '../Icon.astro';
+import { contact, primaryChannel } from '../../config/site';
+import type { Lang } from '../../config/i18n';
+
+interface Props {
+  lang: Lang;
+}
+const { lang } = Astro.props;
+
+const copy = {
+  vi: {
+    security: 'Thông tin đăng nhập',
+    email: 'Email',
+    resend: 'Gửi lại email xác minh',
+    iVerified: 'Tôi đã xác minh',
+    provider: 'Cách đăng nhập',
+    created: 'Ngày tạo tài khoản',
+    lastSignIn: 'Đăng nhập gần nhất',
+    changePassword: 'Đổi mật khẩu',
+    currentPassword: 'Mật khẩu hiện tại',
+    newPassword: 'Mật khẩu mới',
+    newPasswordHint: 'Tối thiểu 8 ký tự, nên có cả chữ và số.',
+    confirmPassword: 'Nhập lại mật khẩu mới',
+    show: 'Hiện mật khẩu',
+    googleOnly: 'Bạn đăng nhập bằng Google nên không có mật khẩu riêng ở ADS-Nolimit.',
+    signOut: 'Đăng xuất',
+    danger: 'Xóa tài khoản',
+    dangerLead: 'Bạn có quyền xóa tài khoản và dữ liệu cá nhân của mình bất cứ lúc nào.',
+    dangerList: [
+      'Tài khoản đăng nhập và hồ sơ của bạn bị xóa vĩnh viễn, không khôi phục được.',
+      'Tài khoản còn số dư thì chưa tự xóa được: bạn liên hệ ADS-Nolimit để được hỗ trợ xử lý số dư trước.',
+      `Yêu cầu, đơn hàng và giao dịch đã có được giữ lại để đối chiếu. Muốn xóa cả những dữ liệu này, bạn email ${contact.email}.`,
+    ],
+    contactSupport: 'Liên hệ ADS-Nolimit',
+    dangerOpen: 'Tôi muốn xóa tài khoản',
+    deleteGoogle: 'Khi bấm nút xóa, Google sẽ hỏi lại tài khoản của bạn để xác nhận.',
+    confirmWord: 'XÓA',
+    confirmLabel: 'Gõ chữ XÓA để xác nhận',
+    deleteButton: 'Xóa vĩnh viễn tài khoản',
+  },
+  en: {
+    security: 'Sign-in details',
+    email: 'Email',
+    resend: 'Resend verification email',
+    iVerified: 'I have verified',
+    provider: 'Sign-in method',
+    created: 'Account created',
+    lastSignIn: 'Last sign-in',
+    changePassword: 'Change password',
+    currentPassword: 'Current password',
+    newPassword: 'New password',
+    newPasswordHint: 'At least 8 characters, ideally with letters and numbers.',
+    confirmPassword: 'Repeat new password',
+    show: 'Show password',
+    googleOnly: 'You sign in with Google, so there is no separate ADS-Nolimit password.',
+    signOut: 'Sign out',
+    danger: 'Delete account',
+    dangerLead: 'You can delete your account and personal data at any time.',
+    dangerList: [
+      'Your sign-in account and profile are deleted permanently and cannot be restored.',
+      'An account that still has a balance cannot be deleted yourself: contact ADS-Nolimit to settle the balance first.',
+      `Requests, orders and transactions are kept for our records. To have those deleted too, email ${contact.email}.`,
+    ],
+    contactSupport: 'Contact ADS-Nolimit',
+    dangerOpen: 'I want to delete my account',
+    deleteGoogle: 'When you press delete, Google will ask you to confirm your account.',
+    confirmWord: 'DELETE',
+    confirmLabel: 'Type DELETE to confirm',
+    deleteButton: 'Delete my account permanently',
+  },
+}[lang];
+---
+
+<section class="view" data-view="security" hidden>
+  <div class="two-col">
+    <section class="panel acc-panel" aria-labelledby="bao-mat-title">
+      <h2 id="bao-mat-title">{copy.security}</h2>
+      <dl class="acc-facts">
+        <div>
+          <dt>{copy.email}</dt>
+          <dd><span id="acc-email"></span> <span class="badge" id="acc-verified"></span></dd>
+          <div class="acc-verify" id="acc-verify" hidden>
+            <button type="button" class="btn btn-sm" id="verify-resend">{copy.resend}</button>
+            <button type="button" class="btn btn-ghost btn-sm" id="verify-reload">{copy.iVerified}</button>
+          </div>
+        </div>
+        <div>
+          <dt>{copy.provider}</dt>
+          <dd id="acc-provider"></dd>
+        </div>
+        <div>
+          <dt>{copy.created}</dt>
+          <dd id="acc-created"></dd>
+        </div>
+        <div>
+          <dt>{copy.lastSignIn}</dt>
+          <dd id="acc-last"></dd>
+        </div>
+      </dl>
+      <div id="security-alert" class="auth-alert" role="alert"></div>
+      <div id="security-status" class="auth-alert" role="status"></div>
+
+      <details class="acc-sub" id="pw-section" hidden>
+        <summary>{copy.changePassword}</summary>
+        <form id="password-form" class="acc-form" novalidate>
+          <PasswordInput id="pw-current" label={copy.currentPassword} autocomplete="current-password" showLabel={copy.show} />
+          <PasswordInput id="pw-new" label={copy.newPassword} autocomplete="new-password" minlength={8} hint={copy.newPasswordHint} showLabel={copy.show} />
+          <PasswordInput id="pw-confirm" label={copy.confirmPassword} autocomplete="new-password" minlength={8} showLabel={copy.show} />
+          <div class="acc-actions">
+            <button type="submit" class="btn btn-primary">{copy.changePassword}</button>
+          </div>
+        </form>
+      </details>
+      <p class="acc-sub muted small" id="google-only" hidden>{copy.googleOnly}</p>
+
+      <div class="acc-sub">
+        <button type="button" class="btn btn-block" id="sign-out" data-signout><Icon name="logout" />{copy.signOut}</button>
+      </div>
+    </section>
+
+    <section class="panel acc-panel acc-danger" id="xoa-tai-khoan" aria-labelledby="xoa-title">
+      <h2 id="xoa-title">{copy.danger}</h2>
+      <p class="acc-panel-lead">{copy.dangerLead}</p>
+      <ul>
+        {copy.dangerList.map((item) => <li>{item}</li>)}
+      </ul>
+      <div class="auth-alert" role="alert" data-kind="info" id="delete-blocked" hidden></div>
+      <a class="btn btn-sm" id="delete-contact" href={primaryChannel[lang].href} rel="noopener" target="_blank" hidden
+        ><Icon name={primaryChannel[lang].icon} />{copy.contactSupport}</a
+      >
+      <details class="acc-sub" id="delete-section">
+        <summary>{copy.dangerOpen}</summary>
+        <form id="delete-form" class="acc-form" novalidate data-word={copy.confirmWord}>
+          <div id="delete-alert" class="auth-alert" role="alert"></div>
+          <div id="delete-password-wrap" hidden>
+            <PasswordInput id="del-password" label={copy.currentPassword} autocomplete="current-password" showLabel={copy.show} />
+          </div>
+          <p class="muted small" id="delete-google-note" hidden>{copy.deleteGoogle}</p>
+          <Field id="del-confirm" name="confirm" label={copy.confirmLabel} autocomplete="off" />
+          <div class="acc-actions">
+            <button type="submit" class="btn btn-danger-solid">{copy.deleteButton}</button>
+          </div>
+        </form>
+      </details>
+    </section>
+  </div>
+</section>

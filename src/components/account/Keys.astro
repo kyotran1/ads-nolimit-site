@@ -1,0 +1,67 @@
+---
+/** Key & máy: giới thiệu ADS-NOLIMIT AI Office (sắp ra mắt), danh sách key, máy đã kích hoạt, yêu cầu đổi máy. Xử lý: src/lib/account/keys.ts */
+import Icon from '../Icon.astro';
+import Empty from './Empty.astro';
+import type { Lang } from '../../config/i18n';
+import { localize } from '../../config/i18n';
+
+interface Props {
+  lang: Lang;
+}
+const { lang } = Astro.props;
+
+const copy = {
+  vi: {
+    badge: 'Sắp ra mắt',
+    title: 'ADS-NOLIMIT AI Office',
+    text: 'Phần mềm văn phòng tích hợp AI Agent giúp cá nhân và doanh nghiệp tự động hóa việc lặp lại. Khi ra mắt, key bản quyền và các máy đã kích hoạt của bạn được quản lý ngay tại đây.',
+    more: 'Tìm hiểu phần mềm',
+    points: ['Mỗi key dùng cho số máy theo gói', 'Tự xem máy đã kích hoạt', 'Đổi máy nhanh khi thay thiết bị'],
+    yourKeys: 'Key của bạn',
+    emptyTitle: 'Bạn chưa có key nào',
+    emptyText: 'Khi bạn mua ADS-NOLIMIT AI Office, key bản quyền sẽ hiện ở đây cùng danh sách máy đã kích hoạt.',
+  },
+  en: {
+    badge: 'Coming soon',
+    title: 'ADS-NOLIMIT AI Office',
+    text: 'Office software with built-in AI agents that helps people and businesses automate repetitive work. Once it launches, your licence keys and activated devices are managed right here.',
+    more: 'About the software',
+    points: ['Each key covers the devices in your plan', 'See every activated device', 'Quick device reset when you switch computers'],
+    yourKeys: 'Your keys',
+    emptyTitle: 'No keys yet',
+    emptyText: 'When you buy ADS-NOLIMIT AI Office, your licence key appears here with the list of activated devices.',
+  },
+}[lang];
+---
+
+<section class="view" data-view="keys" hidden>
+  <div class="ai-hero">
+    <div class="ai-hero-text">
+      <span class="tag tag--sun"><Icon name="clock" />{copy.badge}</span>
+      <h2>{copy.title}</h2>
+      <p>{copy.text}</p>
+      <ul class="checklist">
+        {copy.points.map((p) => <li>{p}</li>)}
+      </ul>
+      <a class="text-link" href={localize('/phan-mem/', lang)}>{copy.more}<Icon name="arrow" /></a>
+    </div>
+    <div class="ai-hero-art" aria-hidden="true">
+      <div class="mock-window">
+        <span class="mock-dots"><i></i><i></i><i></i></span>
+        <span class="mock-line w80"></span>
+        <span class="mock-line w60"></span>
+        <span class="mock-key">AINO-••••-••••-••••</span>
+        <span class="mock-row"><i></i><span class="mock-line w70"></span></span>
+        <span class="mock-row"><i></i><span class="mock-line w60"></span></span>
+      </div>
+    </div>
+  </div>
+
+  <section aria-labelledby="keys-title">
+    <h2 class="sub-title" id="keys-title">{copy.yourKeys}</h2>
+    <div class="auth-alert" role="alert" id="keys-alert"></div>
+    <div class="auth-alert" role="status" id="keys-status"></div>
+    <ul class="key-list" id="key-list"></ul>
+    <Empty id="keys-empty" icon="key" title={copy.emptyTitle} text={copy.emptyText} hidden />
+  </section>
+</section>

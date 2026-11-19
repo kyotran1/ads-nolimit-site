@@ -1,0 +1,113 @@
+---
+/** Hồ sơ (Firestore users/{uid}) + liên hệ nhanh. Xử lý: src/lib/account/profile.ts (giữ nguyên chức năng V3). */
+import Icon from '../Icon.astro';
+import type { IconName } from '../Icon.astro';
+import Field from '../auth/Field.astro';
+import { contact, links } from '../../config/site';
+import { localize, t } from '../../config/i18n';
+import type { Lang } from '../../config/i18n';
+
+interface Props {
+  lang: Lang;
+}
+const { lang } = Astro.props;
+const ui = t(lang);
+
+const quick: { icon: IconName; label: string; value: string; href: string; external?: boolean }[] = [
+  { icon: 'zalo', label: 'Zalo', value: contact.zaloPhone, href: links.zalo, external: true },
+  { icon: 'telegram', label: 'Telegram', value: `@${contact.telegramUser}`, href: links.telegram, external: true },
+  { icon: 'phone', label: ui.contactLabels.hotline, value: contact.hotline, href: links.hotline },
+  { icon: 'mail', label: ui.contactLabels.email, value: contact.email, href: links.email },
+];
+if (lang === 'en') quick.unshift(...quick.splice(1, 1)); // tiếng Anh: Telegram lên đầu
+
+const copy = {
+  vi: {
+    profile: 'Thông tin của bạn',
+    profileLead: 'Giúp ADS-Nolimit tư vấn đúng nhu cầu của bạn. Chỉ bạn và ADS-Nolimit xem được.',
+    name: 'Tên hiển thị',
+    phone: 'Số điện thoại / Zalo',
+    company: 'Công ty / cửa hàng',
+    industry: 'Ngành hàng / lĩnh vực',
+    industryPlaceholder: 'Ví dụ: mỹ phẩm, nội thất, giáo dục',
+    optional: '(không bắt buộc)',
+    news: 'Báo tin cho tôi khi ADS-NOLIMIT AI Office ra mắt',
+    saveProfile: 'Lưu hồ sơ',
+    quick: 'Liên hệ nhanh',
+    quickLead: 'Cần trao đổi ngay? Nhắn hoặc gọi ADS-Nolimit.',
+    pricing: 'Xem bảng giá',
+    pricingSub: 'Các gói dịch vụ và giá tham khảo',
+  },
+  en: {
+    profile: 'Your details',
+    profileLead: 'Helps ADS-Nolimit advise you on what you actually need. Only you and ADS-Nolimit can see it.',
+    name: 'Display name',
+    phone: 'Phone / Zalo / WhatsApp',
+    company: 'Company or shop',
+    industry: 'Industry',
+    industryPlaceholder: 'For example: cosmetics, furniture, education',
+    optional: '(optional)',
+    news: 'Tell me when ADS-NOLIMIT AI Office launches',
+    saveProfile: 'Save profile',
+    quick: 'Quick contact',
+    quickLead: 'Need to talk now? Message or call ADS-Nolimit.',
+    pricing: 'See pricing',
+    pricingSub: 'Plans and guide prices',
+  },
+}[lang];
+---
+
+<section class="view" data-view="profile" hidden>
+  <div class="two-col">
+    <section class="panel acc-panel" aria-labelledby="ho-so-title">
+      <h2 id="ho-so-title">{copy.profile}</h2>
+      <p class="acc-panel-lead">{copy.profileLead}</p>
+      <form id="profile-form" class="acc-form" novalidate>
+        <div id="profile-alert" class="auth-alert" role="alert"></div>
+        <Field id="p-name" name="displayName" label={copy.name} autocomplete="name" maxlength={60} required />
+        <div class="acc-form-row">
+          <Field id="p-phone" name="phone" type="tel" label={copy.phone} optional={copy.optional} autocomplete="tel" inputmode="tel" maxlength={20} />
+          <Field id="p-company" name="company" label={copy.company} optional={copy.optional} autocomplete="organization" maxlength={120} />
+        </div>
+        <Field id="p-industry" name="industry" label={copy.industry} optional={copy.optional} maxlength={120} placeholder={copy.industryPlaceholder} />
+        <div class="check">
+          <input id="p-news" name="aiOfficeNews" type="checkbox" />
+          <label for="p-news">{copy.news}</label>
+        </div>
+        <div class="acc-actions">
+          <button type="submit" class="btn btn-primary">{copy.saveProfile}</button>
+        </div>
+        <div id="profile-status" class="auth-alert" role="status"></div>
+      </form>
+    </section>
+
+    <section class="panel acc-panel" aria-labelledby="lien-he-title">
+      <h2 id="lien-he-title">{copy.quick}</h2>
+      <p class="acc-panel-lead">{copy.quickLead}</p>
+      <ul class="quick-links">
+        {
+          quick.map((q) => (
+            <li>
+              <a href={q.href} rel={q.external ? 'noopener' : undefined}>
+                <Icon name={q.icon} />
+                <span>
+                  <small>{q.label}</small>
+                  {q.value}
+                </span>
+              </a>
+            </li>
+          ))
+        }
+        <li>
+          <a href={localize('/bang-gia/', lang)}>
+            <Icon name="sheet" />
+            <span>
+              <small>{copy.pricingSub}</small>
+              {copy.pricing}
+            </span>
+          </a>
+        </li>
+      </ul>
+    </section>
+  </div>
+</section>

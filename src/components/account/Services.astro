@@ -1,0 +1,149 @@
+---
+/**
+ * Dịch vụ: ô chọn dịch vụ dạng thẻ (nhóm AI Agent / Quảng cáo / Tự động hóa / Website & phần mềm / Đào tạo / Khác),
+ * khung đặt dịch vụ (thanh toán bằng số dư hoặc gửi yêu cầu tư vấn), danh sách yêu cầu tư vấn đã gửi.
+ * Danh mục & giá: src/data/catalog.ts (giá lấy từ src/data/pricing.ts). Xử lý: src/lib/account/services.ts
+ */
+import Icon from '../Icon.astro';
+import Field from '../auth/Field.astro';
+import type { Lang } from '../../config/i18n';
+import { pickerGroups } from '../../data/catalog';
+import type { GroupId } from '../../data/catalog';
+
+interface Props {
+  lang: Lang;
+}
+const { lang } = Astro.props;
+const groups = pickerGroups(lang);
+const tones: Record<GroupId, string> = {
+  ai: 'tone-violet',
+  ads: 'tone-blue',
+  automation: 'tone-teal',
+  web: 'tone-green',
+  training: 'tone-sun',
+  other: 'tone-teal',
+};
+
+const copy = {
+  vi: {
+    lead: 'Chọn dịch vụ bạn cần. Gói có giá cố định thanh toán ngay bằng số dư; gói báo giá theo nhu cầu thì gửi yêu cầu, ADS-Nolimit tư vấn miễn phí.',
+    pick: 'Danh sách dịch vụ',
+    payTag: 'Trả bằng số dư',
+    detailTitle: 'Đặt dịch vụ',
+    detailEmpty: 'Chọn một dịch vụ bên trái để xem giá và đặt.',
+    detailEmptyMobile: 'Chọn một dịch vụ ở trên để xem giá và đặt.',
+    consultTitle: 'Gửi yêu cầu tư vấn',
+    note: 'Mô tả nhu cầu',
+    notePlaceholder: 'Ví dụ: shop mỹ phẩm, khách nhắn nhiều qua fanpage buổi tối, cần trả lời nhanh hơn…',
+    optional: '(không bắt buộc)',
+    contactPref: 'Cách liên hệ bạn muốn',
+    contactHint: 'Ví dụ: Zalo 0912 345 678, gọi sau 18h.',
+    send: 'Gửi yêu cầu',
+    myRequests: 'Yêu cầu tư vấn đã gửi',
+  },
+  en: {
+    lead: 'Choose the service you need. Fixed-price plans can be paid straight from your balance; plans quoted to your needs start with a free consultation request.',
+    pick: 'Services',
+    payTag: 'Pay from balance',
+    detailTitle: 'Order',
+    detailEmpty: 'Choose a service on the left to see prices and order.',
+    detailEmptyMobile: 'Choose a service above to see prices and order.',
+    consultTitle: 'Request a consultation',
+    note: 'What do you need?',
+    notePlaceholder: 'For example: cosmetics shop, lots of evening messages on our Facebook page, we need faster replies…',
+    optional: '(optional)',
+    contactPref: 'Preferred way to contact you',
+    contactHint: 'For example: Telegram @yourname, or WhatsApp +84 912 345 678 after 6 pm.',
+    send: 'Send request',
+    myRequests: 'Your consultation requests',
+  },
+}[lang];
+---
+
+<section class="view" data-view="services" hidden>
+  <p class="view-lead">{copy.lead}</p>
+  <div class="svc-layout">
+    <div class="picker" role="radiogroup" aria-label={copy.pick} id="svc-picker">
+      {
+        groups.map((g) => (
+          <div class="picker-group">
+            <h2 class="picker-group-title" id={`pg-${g.id}`}>
+              {g.label}
+            </h2>
+            <div class="picker-cards">
+              {g.cards.map((c) => (
+                <div
+                  class:list={['pick-card', tones[c.group]]}
+                  role="radio"
+                  aria-checked="false"
+                  tabindex="-1"
+                  data-card={c.id}
+                  aria-describedby={`pc-${c.id}-price`}
+                  data-glow
+                >
+                  <span class="icon-tile">
+                    <Icon name={c.icon} />
+                  </span>
+                  <span class="pick-body">
+                    <span class="pick-name">{c.name}</span>
+                    <span class="pick-summary">{c.summary}</span>
+                    <span class="pick-price" id={`pc-${c.id}-price`}>
+                      {c.priceLine}
+                    </span>
+                    {(c.mode === 'buy' || c.mode === 'budget') && (
+                      <span class="pick-tag">
+                        <Icon name="wallet" />
+                        {copy.payTag}
+                      </span>
+                    )}
+                  </span>
+                  <span class="pick-check" aria-hidden="true">
+                    <Icon name="check" />
+                  </span>
+                </div>
+              ))}
+            </div>
+          </div>
+        ))
+      }
+    </div>
+
+    <aside class="svc-detail panel" id="svc-detail" aria-labelledby="svc-detail-title" tabindex="-1">
+      <p class="eyebrow">{copy.detailTitle}</p>
+      <h2 id="svc-detail-title" class="svc-detail-title"></h2>
+      <p class="muted svc-detail-empty" id="svc-detail-empty">
+        <span class="only-wide">{copy.detailEmpty}</span><span class="only-narrow">{copy.detailEmptyMobile}</span>
+      </p>
+      <div id="svc-detail-body"></div>
+
+      <!-- Yêu cầu tư vấn: Firestore requests (chỉ tạo mới, trạng thái 'new') -->
+      <form id="request-form" class="acc-form svc-consult" novalidate hidden>
+        <h3 class="svc-consult-title">{copy.consultTitle}</h3>
+        <input type="hidden" id="r-plan" name="planId" value="" />
+        <div id="request-alert" class="auth-alert" role="alert"></div>
+        <div class="field">
+          <label for="r-note">{copy.note} <span class="optional" id="r-note-optional">{copy.optional}</span></label>
+          <textarea id="r-note" name="note" rows="4" maxlength="1000" placeholder={copy.notePlaceholder} aria-describedby="r-note-count r-note-error"
+          ></textarea>
+          <p class="char-count" id="r-note-count" aria-live="off">0/1000</p>
+          <p class="field-error" id="r-note-error"></p>
+        </div>
+        <Field id="r-contact" name="contact" label={copy.contactPref} optional={copy.optional} maxlength={120} hint={copy.contactHint} />
+        <div class="acc-actions">
+          <button type="submit" class="btn btn-primary"><Icon name="mail" />{copy.send}</button>
+        </div>
+        <div id="request-status" class="auth-alert" role="status"></div>
+      </form>
+    </aside>
+  </div>
+
+  <section class="panel" aria-labelledby="yeu-cau-da-gui-title">
+    <div class="panel-head">
+      <h2 id="yeu-cau-da-gui-title">{copy.myRequests}</h2>
+    </div>
+    <div id="requests-alert" class="auth-alert" role="alert"></div>
+    <div id="requests-status" class="auth-alert" role="status"></div>
+    <ul class="req-list" id="req-list"></ul>
+    <p class="acc-empty" id="req-empty" hidden></p>
+  </section>
+</section>
