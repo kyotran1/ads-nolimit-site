@@ -1,0 +1,149 @@
+---
+/**
+ * Trang quản trị của chủ: /quan-tri/ (chỉ tiếng Việt, noindex, không có trong sitemap).
+ * Chỉ dùng được khi tài khoản đang đăng nhập có tài liệu admins/<uid> trong Firestore (tạo bằng tay trong Firebase Console).
+ * Người khác mở trang chỉ thấy "Không có quyền truy cập"; luật firestore.rules chặn mọi thao tác của họ.
+ * Xử lý: src/lib/admin/*.ts
+ */
+import '@fontsource/be-vietnam-pro/400.css';
+import '@fontsource/be-vietnam-pro/600.css';
+import '@fontsource/be-vietnam-pro/700.css';
+import '@fontsource/be-vietnam-pro/800.css';
+import '../styles/global.css';
+import '../styles/fx.css';
+import '../styles/auth.css';
+import '../styles/dashboard.css';
+import { Image } from 'astro:assets';
+import logoMark from '../assets/brand/logo-mark.png';
+import AuthConfig from '../components/auth/AuthConfig.astro';
+import Icon from '../components/Icon.astro';
+import type { IconName } from '../components/icon-paths';
+import { banks } from '../data/banks';
+import { catalogProducts, pickerGroups } from '../data/catalog';
+import { localize } from '../config/i18n';
+
+const nav: { id: string; label: string; icon: IconName }[] = [
+  { id: 'tong-quan', label: 'Tổng quan', icon: 'grid' },
+  { id: 'nap-tien', label: 'Nạp tiền', icon: 'wallet' },
+  { id: 'don-hang', label: 'Đơn hàng', icon: 'bag' },
+  { id: 'yeu-cau', label: 'Yêu cầu dịch vụ', icon: 'inbox' },
+  { id: 'khach-hang', label: 'Khách hàng', icon: 'users' },
+  { id: 'key-may', label: 'Key & máy', icon: 'key' },
+  { id: 'noi-dung', label: 'Khóa học & Hướng dẫn', icon: 'book' },
+  { id: 'cai-dat', label: 'Cài đặt thanh toán', icon: 'settings' },
+];
+
+const planNames: Record<string, string> = {};
+pickerGroups('vi').forEach((g) => g.cards.forEach((c) => (planNames[c.id] = c.name)));
+planNames['agency-account'] ??= 'Tài khoản quảng cáo Agency (BM2500)';
+
+const config = {
+  catalog: catalogProducts(),
+  banks,
+  planNames,
+  accountPath: localize('/tai-khoan/', 'vi'),
+};
+const configJson = JSON.stringify(config).replace(/</g, '\\u003c');
+---
+
+<!doctype html>
+<html lang="vi">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <meta name="theme-color" content="#070a1a" />
+    <meta name="robots" content="noindex, nofollow" />
+    <title>Quản trị | ADS-Nolimit</title>
+    <link rel="icon" href="/favicon.ico" sizes="48x48" />
+    <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png" />
+  </head>
+  <body class="admin-body">
+    <header class="adm-top">
+      <div class="adm-top-inner">
+        <a class="adm-brand" href="/">
+          <Image src={logoMark} alt="" width={40} densities={[1, 2]} loading="eager" />
+          <span>ADS-Nolimit <small>Quản trị</small></span>
+        </a>
+        <a class="btn btn-sm btn-ghost" href={config.accountPath}><Icon name="user" />Trang tài khoản</a>
+      </div>
+    </header>
+
+    <main class="dash admin" id="noi-dung">
+      <div class="acc-loading" id="adm-loading" role="status">
+        <span class="spinner" aria-hidden="true"></span>
+        <span>Đang kiểm tra quyền quản trị…</span>
+      </div>
+      <noscript><p class="auth-noscript">Trang quản trị cần bật JavaScript.</p></noscript>
+
+      <div class="adm-denied panel" id="adm-denied" hidden>
+        <span class="empty-icon" aria-hidden="true"><Icon name="lock" /></span>
+        <h1>Không có quyền truy cập</h1>
+        <p>Tài khoản <strong id="adm-denied-email"></strong> chưa phải quản trị viên của ADS-Nolimit.</p>
+        <p class="muted small" id="adm-denied-reason"></p>
+        <div class="adm-howto">
+          <p><strong>Bạn là chủ ADS-Nolimit?</strong> Thêm mình làm quản trị viên một lần:</p>
+          <ol>
+            <li>Mở Firebase Console → dự án <code>ads-nolimit-web</code> → Firestore Database → Data.</li>
+            <li>Bấm "Start collection" (hoặc mở bộ sưu tập <code>admins</code>), tên bộ sưu tập: <code>admins</code>.</li>
+            <li>Document ID: dán UID dưới đây, thêm một trường bất kỳ (ví dụ <code>name</code> = tên bạn), bấm Save.</li>
+            <li>Tải lại trang này.</li>
+          </ol>
+          <p class="adm-uid" id="adm-denied-uid"></p>
+        </div>
+        <div class="btn-row">
+          <a class="btn btn-primary" href={config.accountPath}>Về trang tài khoản</a>
+          <button type="button" class="btn" data-signout>Đăng xuất</button>
+        </div>
+      </div>
+
+      <div class="dash-shell" id="adm-app" hidden>
+        <aside class="dash-side">
+          <div class="side-user">
+            <div class="avatar" aria-hidden="true"><Icon name="shield" /></div>
+            <div class="side-user-text">
+              <p class="side-name" id="adm-name"></p>
+              <p class="side-email" id="adm-email"></p>
+            </div>
+          </div>
+          <nav class="side-nav" aria-label="Mục quản trị">
+            <div class="side-group">
+              <p class="side-group-label">Quản trị</p>
+              <ul>
+                {
+                  nav.map((n) => (
+                    <li>
+                      <a class="side-link" href={`#${n.id}`} data-tab={n.id}>
+                        <Icon name={n.icon} />
+                        <span class="side-link-text">{n.label}</span>
+                      </a>
+                    </li>
+                  ))
+                }
+              </ul>
+            </div>
+          </nav>
+          <div class="side-foot">
+            <button type="button" class="side-signout" data-signout><Icon name="logout" /><span>Đăng xuất</span></button>
+          </div>
+        </aside>
+        <div class="dash-main">
+          <header class="dash-top">
+            <div class="dash-top-text">
+              <p class="dash-crumb"><span>Quản trị ADS-Nolimit</span></p>
+              <h1 id="dash-title" tabindex="-1">Tổng quan</h1>
+            </div>
+          </header>
+          <div class="view" id="adm-view"></div>
+        </div>
+      </div>
+    </main>
+    <script is:inline type="application/json" id="admin-config" set:html={configJson} />
+    <AuthConfig lang="vi" />
+    <script>
+      import '../lib/admin/main';
+    </script>
+    <script>
+      import '../scripts/glow';
+    </script>
+  </body>
+</html>
