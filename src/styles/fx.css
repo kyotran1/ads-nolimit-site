@@ -45,12 +45,12 @@
   );
   /* mặt nạ: vòng viền hiện đủ, phần trong chỉ hiện --glow-fill (mờ) */
   -webkit-mask:
-    linear-gradient(rgb(0 0 0 / var(--glow-fill, 0.22)) 0 0),
+    linear-gradient(rgb(0 0 0 / var(--glow-fill, 0.34)) 0 0),
     linear-gradient(#000 0 0) content-box,
     linear-gradient(#000 0 0);
   -webkit-mask-composite: source-over, xor, source-over;
   mask:
-    linear-gradient(rgb(0 0 0 / var(--glow-fill, 0.22)) 0 0),
+    linear-gradient(rgb(0 0 0 / var(--glow-fill, 0.34)) 0 0),
     linear-gradient(#000 0 0) content-box,
     linear-gradient(#000 0 0);
   mask-composite: add, exclude, add;
@@ -66,8 +66,8 @@
   border-radius: var(--r-lg);
   background: radial-gradient(
     var(--glow-size, 20rem) circle at calc(var(--mx, 50%) - var(--_in)) calc(var(--my, 0%) - var(--_in)),
-    rgb(var(--glow-1) / 0.15),
-    rgb(var(--glow-2) / 0.06) 42%,
+    rgb(var(--glow-1) / 0.22),
+    rgb(var(--glow-2) / 0.09) 42%,
     transparent 72%
   );
   /* mép mờ dần, không lộ khung chữ nhật */
@@ -84,6 +84,22 @@
 @media (hover: hover) and (pointer: fine) {
   [data-glow]:hover::after {
     opacity: 1;
+  }
+  /* Thẻ có viền: nổi nhẹ + quầng tím-xanh dưới thẻ khi rê chuột (v3.1: sáng rõ hơn) */
+  [data-glow]:not([data-glow='soft']) {
+    transition:
+      box-shadow 0.35s ease,
+      translate 0.35s cubic-bezier(0.2, 0.7, 0.2, 1);
+  }
+  [data-glow]:not([data-glow='soft']):hover {
+    box-shadow:
+      0 22px 50px -28px rgb(124 92 255 / 0.9),
+      0 10px 30px -22px rgb(46 232 154 / 0.55);
+  }
+}
+@media (hover: hover) and (pointer: fine) and (prefers-reduced-motion: no-preference) {
+  [data-glow]:not([data-glow='soft']):not([data-tilt]):hover {
+    translate: 0 -2px;
   }
 }
 /* Bàn phím: sáng như khi rê chuột */
@@ -129,8 +145,8 @@
     z-index: -1;
     background: radial-gradient(
       46rem circle at var(--mx, 50%) var(--my, 0%),
-      rgb(124 92 255 / 0.075),
-      rgb(0 216 120 / 0.028) 42%,
+      rgb(124 92 255 / 0.1),
+      rgb(0 216 120 / 0.04) 42%,
       transparent 70%
     );
     opacity: 0;
