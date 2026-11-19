@@ -623,6 +623,7 @@ a.card:hover,
 
 .grid-2 {
   display: grid;
+  grid-template-columns: minmax(0, 1fr);
   gap: 1rem;
 }
 @media (min-width: 768px) {
@@ -634,6 +635,7 @@ a.card:hover,
 
 .grid-3 {
   display: grid;
+  grid-template-columns: minmax(0, 1fr);
   gap: 1rem;
 }
 @media (min-width: 768px) {
@@ -645,6 +647,7 @@ a.card:hover,
 
 .split {
   display: grid;
+  grid-template-columns: minmax(0, 1fr);
   gap: 2rem;
   align-items: start;
 }

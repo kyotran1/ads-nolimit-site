@@ -101,6 +101,7 @@ const detailsLink = showLink && !/(^|\/)(bang-gia|pricing)\//.test(plan.href.spl
 <style>
   .plan {
     position: relative;
+    min-width: 0;
     display: flex;
     flex-direction: column;
     gap: 1.25rem;
@@ -165,7 +166,6 @@ const detailsLink = showLink && !/(^|\/)(bang-gia|pricing)\//.test(plan.href.spl
   }
 
   .price-value {
-    white-space: nowrap;
     font-size: clamp(1.35rem, 1.05rem + 1.1vw, 1.875rem);
     font-weight: 800;
     letter-spacing: -0.025em;
@@ -177,6 +177,11 @@ const detailsLink = showLink && !/(^|\/)(bang-gia|pricing)\//.test(plan.href.spl
     color: var(--text-2);
     font-size: 0.9375rem;
     white-space: nowrap;
+  }
+  @media (min-width: 420px) {
+    .price-value {
+      white-space: nowrap;
+    }
   }
 
   .plan-prices {
