@@ -296,6 +296,24 @@ export const getPlan = (id: string, lang: Lang = 'vi'): Plan => {
   return toPlan(spec, lang);
 };
 
+/**
+ * Một dòng giá ở dạng số (VNĐ + USD) và chữ hai ngôn ngữ — cho danh mục bán bằng số dư
+ * (src/data/catalog.ts). Báo lỗi khi build nếu dòng giá không tồn tại.
+ */
+export const getRawPrice = (planId: string, index: number) => {
+  const spec = specs.find((p) => p.id === planId);
+  const price = spec?.prices[index];
+  if (!spec || !price) throw new Error(`Không có dòng giá ${index} của gói "${planId}" trong src/data/pricing.ts`);
+  return {
+    planName: spec.name,
+    label: price.label,
+    unit: price.unit,
+    amount: price.amount,
+    usd: price.usd,
+    from: Boolean(price.from),
+  };
+};
+
 /** Ưu đãi thí điểm. Đặt `active: false` khi đã đủ 3 khách (ẩn ở mọi nơi, cả tiếng Anh). */
 const pilot = {
   active: true,
