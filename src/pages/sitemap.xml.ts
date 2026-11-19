@@ -1,11 +1,11 @@
 import type { APIRoute } from 'astro';
 import { getCollection } from 'astro:content';
 import { site } from '../config/site';
-import { pairFor } from '../config/i18n';
+import { pairFor, unlistedPaths } from '../config/i18n';
 
 /**
- * /sitemap.xml — tự liệt kê mọi trang .astro trong src/pages (cả /en/, trừ 404 và trang động)
- * và mọi bài blog hai ngôn ngữ. Trang có bản ngôn ngữ còn lại (theo src/config/i18n.ts)
+ * /sitemap.xml — tự liệt kê mọi trang .astro trong src/pages (cả /en/, trừ 404, trang động
+ * và các trang trong `unlistedPaths` của src/config/i18n.ts như trang tài khoản) và mọi bài blog hai ngôn ngữ. Trang có bản ngôn ngữ còn lại (theo src/config/i18n.ts)
  * được kèm liên kết hreflang vi / en / x-default.
  */
 const pageModules = import.meta.glob('./**/*.astro');
@@ -15,7 +15,8 @@ const staticPaths = Object.keys(pageModules)
   .map((file) => {
     const route = file.replace(/^\.\//, '').replace(/\.astro$/, '').replace(/(^|\/)index$/, '');
     return route ? `/${route}/` : '/';
-  });
+  })
+  .filter((path) => !unlistedPaths.includes(path));
 
 const abs = (path: string) => new URL(path, site.url).href;
 

@@ -1,0 +1,176 @@
+---
+/**
+ * Nút tài khoản ở header: "Đăng nhập" khi chưa đăng nhập, ảnh đại diện/chữ cái đầu + "Tài khoản" khi đã đăng nhập.
+ * variant="desktop": nút cạnh nút "Tư vấn miễn phí" (màn hình rộng). variant="mobile": một dòng trong menu điện thoại.
+ *
+ * Không tải Firebase. Trạng thái đăng nhập đọc từ localStorage "adsnl-user" do các trang tài khoản ghi
+ * (src/lib/auth/user-cache.ts). Không có JS hoặc localStorage bị chặn: luôn hiện "Đăng nhập", vẫn dùng được.
+ */
+import Icon from './Icon.astro';
+import { localize, t } from '../config/i18n';
+import type { Lang } from '../config/i18n';
+
+interface Props {
+  lang: Lang;
+  variant: 'desktop' | 'mobile';
+}
+const { lang, variant } = Astro.props;
+const s = t(lang);
+const signIn = localize('/dang-nhap/', lang);
+const account = localize('/tai-khoan/', lang);
+---
+
+<a
+  href={signIn}
+  class:list={['acct', `acct--${variant}`, { 'btn btn-ghost btn-sm': variant === 'desktop' }]}
+  data-href-out={signIn}
+  data-href-in={account}
+  data-label-out={s.signIn}
+  data-label-in={s.account}
+>
+  <span class="acct-avatar" aria-hidden="true"><Icon name="user" /></span>
+  <span class="acct-text">
+    <span class="acct-label">{s.signIn}</span>
+    {variant === 'mobile' && <span class="acct-name"></span>}
+  </span>
+</a>
+<script is:inline>
+  (function (a) {
+    if (!a) return;
+    var avatar = a.querySelector('.acct-avatar');
+    var label = a.querySelector('.acct-label');
+    var nameEl = a.querySelector('.acct-name');
+    var icon = avatar.innerHTML;
+    function read() {
+      try {
+        var u = JSON.parse(localStorage.getItem('adsnl-user') || 'null');
+        return u && typeof u.name === 'string' && u.name ? u : null;
+      } catch (e) {
+        return null;
+      }
+    }
+    function render() {
+      var u = read();
+      var inside = !!u;
+      a.href = a.getAttribute(inside ? 'data-href-in' : 'data-href-out');
+      label.textContent = a.getAttribute(inside ? 'data-label-in' : 'data-label-out');
+      a.classList.toggle('is-in', inside);
+      if (nameEl) nameEl.textContent = inside ? u.name : '';
+      if (inside) a.setAttribute('aria-label', label.textContent + ': ' + u.name);
+      else a.removeAttribute('aria-label');
+      if (!inside) {
+        avatar.innerHTML = icon;
+        return;
+      }
+      var initial = String(u.initial || u.name.charAt(0) || '?').slice(0, 2);
+      avatar.textContent = initial;
+      if (u.photoURL && /^https:\/\//.test(u.photoURL)) {
+        var img = new Image();
+        img.alt = '';
+        img.referrerPolicy = 'no-referrer';
+        img.onload = function () {
+          avatar.textContent = '';
+          avatar.appendChild(img);
+        };
+        img.src = u.photoURL;
+      }
+    }
+    render();
+    window.addEventListener('adsnl-user', render);
+    window.addEventListener('storage', function (e) {
+      if (!e.key || e.key === 'adsnl-user') render();
+    });
+  })(document.currentScript && document.currentScript.previousElementSibling);
+</script>
+
+<style>
+  .acct-avatar {
+    display: grid;
+    place-items: center;
+    flex: none;
+    width: 1.75rem;
+    height: 1.75rem;
+    border-radius: 50%;
+    overflow: hidden;
+    color: var(--text-2);
+    background: rgb(255 255 255 / 0.06);
+    box-shadow: inset 0 0 0 1px var(--line-strong);
+    font-size: 0.8125rem;
+    font-weight: 800;
+    line-height: 1;
+  }
+  .acct-avatar :global(svg) {
+    width: 1.05rem;
+    height: 1.05rem;
+  }
+  .acct-avatar :global(img) {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+  .acct.is-in .acct-avatar {
+    color: #fff;
+    background: var(--grad);
+    box-shadow: 0 0 0 2px rgb(0 216 120 / 0.45);
+  }
+
+  .acct-text {
+    display: grid;
+    min-width: 0;
+    line-height: 1.25;
+  }
+
+  /* Màn hình rộng: chỉ hiện khi đã có thanh điều hướng đầy đủ (≥ 1080px) */
+  .acct--desktop {
+    display: none;
+    gap: 0.5rem;
+    padding-inline: 0.5rem 0.75rem;
+    white-space: nowrap;
+  }
+  @media (min-width: 1080px) {
+    .acct--desktop {
+      display: inline-flex;
+    }
+  }
+  /* 1080–1279px: thanh điều hướng còn chật, chỉ hiện biểu tượng / ảnh đại diện */
+  @media (min-width: 1080px) and (max-width: 1279.98px) {
+    .acct--desktop {
+      padding-inline: 0.4rem;
+    }
+    .acct--desktop .acct-text {
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      overflow: hidden;
+      clip: rect(0 0 0 0);
+      white-space: nowrap;
+    }
+  }
+
+  /* Trong menu điện thoại */
+  .acct--mobile {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.7rem 0;
+    border-bottom: 1px solid var(--line);
+    color: var(--text);
+    font-weight: 600;
+    text-decoration: none;
+  }
+  .acct--mobile .acct-avatar {
+    width: 2rem;
+    height: 2rem;
+  }
+  .acct-name {
+    font-size: 0.8125rem;
+    font-weight: 400;
+    color: var(--text-3);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .acct-name:empty {
+    display: none;
+  }
+</style>
