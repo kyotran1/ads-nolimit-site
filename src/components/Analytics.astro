@@ -1,0 +1,22 @@
+---
+/**
+ * Chỗ gắn Google Analytics / Meta Pixel. Mặc định TẮT — xem src/config/analytics.ts.
+ * Khi `analytics.enabled` là false hoặc ID trống, component này không xuất ra gì.
+ */
+import { analytics } from '../config/analytics';
+
+const gaId = analytics.enabled ? analytics.googleAnalyticsId.trim() : '';
+const pixelId = analytics.enabled ? analytics.metaPixelId.trim() : '';
+
+const gaInit = gaId
+  ? `window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments)}gtag('js',new Date());gtag('config',${JSON.stringify(gaId)});`
+  : '';
+
+const pixelInit = pixelId
+  ? `!function(f,b,e,v,n,t,s){if(f.fbq)return;n=f.fbq=function(){n.callMethod?n.callMethod.apply(n,arguments):n.queue.push(arguments)};if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';n.queue=[];t=b.createElement(e);t.async=!0;t.src=v;s=b.getElementsByTagName(e)[0];s.parentNode.insertBefore(t,s)}(window,document,'script','https://connect.facebook.net/en_US/fbevents.js');fbq('init',${JSON.stringify(pixelId)});fbq('track','PageView');`
+  : '';
+---
+
+{gaId && <script is:inline async src={`https://www.googletagmanager.com/gtag/js?id=${encodeURIComponent(gaId)}`}></script>}
+{gaInit && <script is:inline set:html={gaInit}></script>}
+{pixelInit && <script is:inline set:html={pixelInit}></script>}

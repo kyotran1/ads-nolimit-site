@@ -1,0 +1,561 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import HeroLoop from '../components/HeroLoop.astro';
+import ChatDemo from '../components/ChatDemo.astro';
+import type { ChatMessage } from '../components/ChatDemo.astro';
+import ProcessSteps from '../components/ProcessSteps.astro';
+import ReportBotCase from '../components/ReportBotCase.astro';
+import AiOfficeTeaser from '../components/AiOfficeTeaser.astro';
+import PricingSummary from '../components/PricingSummary.astro';
+import Faq from '../components/Faq.astro';
+import CtaBand from '../components/CtaBand.astro';
+import PartnerStrip from '../components/PartnerStrip.astro';
+import Icon from '../components/Icon.astro';
+import { site, links } from '../config/site';
+import { getPlan, priceInline } from '../data/pricing';
+import { homeFaq } from '../data/faq';
+
+const ads = getPlan('ads');
+const starter = getPlan('ai-starter');
+const automation = getPlan('automation');
+const training = getPlan('training');
+
+const pains = [
+  {
+    cue: '22:30',
+    tone: 'violet',
+    title: 'Khách nhắn hỏi giá, sáng hôm sau mới có người trả lời',
+    text: 'Ban đêm, cuối tuần, giờ cao điểm: tin nhắn chờ lâu thì khách đi hỏi shop khác.',
+  },
+  {
+    cue: 'Mỗi sáng',
+    tone: 'teal',
+    title: 'Một người ngồi chép số liệu sang bảng tính',
+    text: 'Báo cáo quảng cáo, đơn hàng, lịch hẹn làm bằng tay: mất thời gian, dễ sai, và chẳng còn sức để đọc số.',
+  },
+  {
+    cue: 'Cuối tháng',
+    tone: 'green',
+    title: 'Chi phí quảng cáo tăng mà không biết cắt ở đâu',
+    text: 'Ngân sách rải cho nhiều chiến dịch, không rõ nhóm nào mang khách về, nhóm nào chỉ tốn tiền.',
+  },
+];
+
+const bigSolutions = [
+  {
+    tone: 'violet',
+    icon: 'chat' as const,
+    title: 'AI Agent bán hàng & chăm sóc khách',
+    text: 'Trả lời tin nhắn trên Messenger, Zalo OA hoặc website theo tài liệu của chính anh/chị, kể cả lúc nửa đêm.',
+    points: ['Trả lời câu hỏi thường gặp', 'Xin số điện thoại, lưu khách vào Google Sheet', 'Báo khách mới qua Telegram/Zalo'],
+    price: `${starter.name}: ${priceInline(starter)}`,
+    href: '/giai-phap-ai-agent/',
+  },
+  {
+    tone: 'blue',
+    icon: 'chart' as const,
+    title: 'Quảng cáo hiệu suất',
+    text: 'Chạy và tối ưu Facebook Ads, Google Ads, TikTok Ads mỗi ngày, báo cáo rõ tiền đã chi vào đâu.',
+    points: ['Tối ưu hằng ngày', 'Báo cáo minh bạch', 'Tài khoản quảng cáo Agency doanh nghiệp (BM2500)'],
+    price: priceInline(ads),
+    href: '/quang-cao/',
+  },
+  {
+    tone: 'green',
+    icon: 'bolt' as const,
+    title: 'Tự động hóa quy trình',
+    text: 'Biến việc lặp lại hằng ngày thành quy trình tự chạy, kết nối các phần mềm anh/chị đang dùng.',
+    points: ['Báo cáo quảng cáo tự động mỗi sáng', 'Đồng bộ đơn hàng', 'Soạn nội dung hàng loạt, nhắc lịch khách'],
+    price: priceInline(automation),
+    href: '/tu-dong-hoa/',
+  },
+];
+
+const chat: ChatMessage[] = [
+  { from: 'customer', text: 'Gói chăm sóc da cơ bản bên mình giá bao nhiêu vậy shop?', time: '22:41' },
+  {
+    from: 'ai',
+    text: 'Dạ chào chị! Gói chăm sóc da cơ bản bên em là 350.000đ/buổi, khoảng 60 phút ạ. Chị muốn đặt lịch hôm nào để em báo lễ tân giữ chỗ ạ?',
+  },
+  { from: 'customer', text: 'Tối thứ 7 được không em?' },
+  {
+    from: 'ai',
+    text: 'Dạ, để lễ tân kiểm tra lịch tối thứ 7 rồi gọi xác nhận cho chị. Chị cho em xin tên và số điện thoại nhé?',
+  },
+  { from: 'customer', text: 'Chị Lan, 09xx xxx 123' },
+  { from: 'event', text: 'Đã lưu khách vào Google Sheet' },
+  { from: 'event', text: 'Đã báo lễ tân qua Zalo' },
+  {
+    from: 'ai',
+    text: 'Em ghi nhận rồi ạ. Sáng mai lễ tân sẽ gọi chị trong giờ làm việc. Chị cần em gửi thêm bảng giá các gói khác không ạ?',
+  },
+];
+---
+
+<BaseLayout
+  title="ADS-Nolimit | Quảng cáo & AI Agent cho doanh nghiệp"
+  description={site.defaultDescription}
+  alternate={{ vi: '/', en: '/en/' }}
+>
+  <!-- 1. Hero -->
+  <section class="hero">
+    <div class="container hero-grid">
+      <div class="hero-copy">
+        <h1>Nhân viên AI làm việc 24/7. Quảng cáo được tối ưu mỗi ngày.</h1>
+        <p class="lead hero-lead">
+          ADS-Nolimit dựng AI Agent trả lời khách, tự động hóa việc lặp lại và chạy quảng cáo Facebook, Google, TikTok,
+          để shop và doanh nghiệp nhỏ làm được nhiều việc hơn với ít người hơn.
+        </p>
+        <div class="btn-row btn-row--stack-mobile">
+          <a class="btn btn-primary" href={links.zalo} rel="noopener">
+            <Icon name="zalo" /> Tư vấn miễn phí qua Zalo
+          </a>
+          <a class="btn" href="/giai-phap-ai-agent/">Xem giải pháp AI Agent</a>
+        </div>
+
+        <dl class="stats">
+          <div>
+            <dt>10 năm làm quảng cáo</dt>
+            <dd>Từ 2016</dd>
+          </div>
+          <div>
+            <dt>khách hàng đã phục vụ</dt>
+            <dd>800+</dd>
+          </div>
+          <div>
+            <dt>quảng cáo đa kênh</dt>
+            <dd class="stats-platforms">Facebook · Google · TikTok</dd>
+          </div>
+        </dl>
+
+        <PartnerStrip />
+      </div>
+
+      <div class="hero-art">
+        <HeroLoop />
+      </div>
+    </div>
+  </section>
+
+  <!-- 2. Ba nỗi đau -->
+  <section class="section" aria-labelledby="pains-title">
+    <div class="container">
+      <div class="section-head">
+        <h2 id="pains-title">Ba chỗ đang làm shop mất khách và mất thời gian</h2>
+      </div>
+      <ul class="pains">
+        {
+          pains.map((p) => (
+            <li class={`pain tone-${p.tone}`}>
+              <span class="pain-cue">{p.cue}</span>
+              <h3>{p.title}</h3>
+              <p>{p.text}</p>
+            </li>
+          ))
+        }
+      </ul>
+    </div>
+  </section>
+
+  <!-- 3. Giải pháp -->
+  <section class="section section--raise" aria-labelledby="solutions-title">
+    <div class="container">
+      <div class="section-head">
+        <h2 id="solutions-title">ADS-Nolimit làm gì cho anh/chị</h2>
+        <p>Ba mảng chính, có thể làm riêng hoặc ghép lại. Thêm hai dịch vụ hỗ trợ cho shop muốn tự chủ hơn.</p>
+      </div>
+
+      <div class="solutions-big">
+        {
+          bigSolutions.map((s) => (
+            <article class={`sol tone-${s.tone}`}>
+              <span class="sol-icon">
+                <Icon name={s.icon} />
+              </span>
+              <h3>{s.title}</h3>
+              <p class="sol-text">{s.text}</p>
+              <ul class="checklist sol-points">
+                {s.points.map((pt) => (
+                  <li>{pt}</li>
+                ))}
+              </ul>
+              <p class="sol-price">{s.price}</p>
+              <a class="sol-link" href={s.href}>
+                Xem chi tiết<span class="visually-hidden"> {s.title}</span>
+              </a>
+            </article>
+          ))
+        }
+      </div>
+
+      <div class="solutions-small">
+        <a class="sol-small" href="/thiet-ke-website/">
+          <span class="sol-icon sm"><Icon name="code" /></span>
+          <span>
+            <strong>Website & phần mềm bán hàng</strong>
+            <span class="muted">Website, landing page, phần mềm hỗ trợ bán hàng trên mạng xã hội. Liên hệ báo giá.</span>
+          </span>
+        </a>
+        <a class="sol-small" href="/bang-gia/#training">
+          <span class="sol-icon sm"><Icon name="school" /></span>
+          <span>
+            <strong>{training.name}</strong>
+            <span class="muted">Workshop 1 buổi kèm bộ mẫu câu lệnh. {priceInline(training)}.</span>
+          </span>
+        </a>
+      </div>
+    </div>
+  </section>
+
+  <!-- 4. Hội thoại minh họa -->
+  <section class="section" aria-labelledby="demo-title">
+    <div class="container split demo">
+      <div class="demo-copy">
+        <h2 id="demo-title">Một tin nhắn lúc 22:41 được xử lý thế nào</h2>
+        <p class="lead demo-lead">
+          Cuộc trò chuyện mẫu cho một spa. AI Agent trả lời theo bảng giá spa cung cấp, xin số điện thoại, lưu khách và báo
+          lễ tân. Việc cần người thật, như xác nhận lịch, vẫn do người thật làm.
+        </p>
+        <ul class="checklist demo-points">
+          <li>Trả lời đúng giá, đúng giọng của cửa hàng</li>
+          <li>Khách được lưu vào Google Sheet, không thất lạc trong hộp thư</li>
+          <li>Lễ tân nhận thông báo qua Zalo, sáng mai gọi lại</li>
+        </ul>
+        <a class="btn" href="/giai-phap-ai-agent/">Xem AI Agent làm được gì</a>
+      </div>
+      <div class="demo-chat">
+        <ChatDemo agentName="Trợ lý AI của Spa Mẫu" channel="Messenger" messages={chat} />
+      </div>
+    </div>
+  </section>
+
+  <!-- 5. Cách làm việc -->
+  <section class="section section--raise" aria-labelledby="process-title">
+    <div class="container">
+      <div class="section-head">
+        <h2 id="process-title">Cách ADS-Nolimit làm việc</h2>
+        <p>Bốn bước, anh/chị duyệt ở từng bước trước khi đi tiếp.</p>
+      </div>
+      <ProcessSteps />
+    </div>
+  </section>
+
+  <!-- 6. Case study nội bộ -->
+  <section class="section" aria-label="Case study nội bộ">
+    <div class="container">
+      <ReportBotCase moreLink={{ href: '/du-an/', label: 'Xem dự án và case study' }} />
+    </div>
+  </section>
+
+  <!-- 7. AI Office -->
+  <section class="section section--tight" aria-label="ADS-NOLIMIT AI Office">
+    <div class="container">
+      <AiOfficeTeaser />
+    </div>
+  </section>
+
+  <!-- 8. Bảng giá rút gọn -->
+  <section class="section" aria-labelledby="pricing-title">
+    <div class="container">
+      <div class="section-head">
+        <h2 id="pricing-title">Bảng giá rút gọn</h2>
+        <p>Giá công khai để anh/chị ước lượng trước khi trao đổi.</p>
+      </div>
+      <PricingSummary />
+    </div>
+  </section>
+
+  <!-- 9. FAQ -->
+  <section class="section section--raise" aria-labelledby="faq-title">
+    <div class="container">
+      <div class="section-head">
+        <h2 id="faq-title">Câu hỏi thường gặp</h2>
+      </div>
+      <Faq items={homeFaq} />
+    </div>
+  </section>
+
+  <!-- 10. CTA cuối -->
+  <CtaBand />
+</BaseLayout>
+
+<style>
+  /* ---------- Hero ---------- */
+  .hero {
+    position: relative;
+    padding-block: clamp(2.25rem, 1.5rem + 4vw, 5.5rem) clamp(3rem, 2rem + 4vw, 5.5rem);
+    background:
+      radial-gradient(60% 70% at 90% 10%, rgb(72 0 168 / 0.42), transparent 65%),
+      radial-gradient(45% 55% at 0% 100%, rgb(24 144 144 / 0.16), transparent 70%);
+    overflow: hidden;
+  }
+
+  .hero-grid {
+    display: grid;
+    gap: 2.5rem;
+    align-items: center;
+  }
+
+  @media (min-width: 1024px) {
+    .hero-grid {
+      grid-template-columns: minmax(0, 1.08fr) minmax(0, 0.92fr);
+      gap: 3.5rem;
+    }
+  }
+
+  .hero h1 {
+    max-width: 15em;
+  }
+
+  .hero-lead {
+    margin: 1.25rem 0 1.75rem;
+  }
+
+  .stats {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 1rem 1.5rem;
+    margin: 2.25rem 0 0;
+    padding-top: 1.5rem;
+    border-top: 1px solid var(--line);
+  }
+
+  .stats > div {
+    display: flex;
+    flex-direction: column;
+    gap: 0.15rem;
+  }
+
+  .stats dd {
+    order: -1;
+  }
+
+  .stats > div:last-child {
+    grid-column: 1 / -1;
+  }
+
+  .stats dd {
+    margin: 0;
+    font-size: clamp(1.4rem, 1.1rem + 1.2vw, 1.9rem);
+    font-weight: 800;
+    letter-spacing: -0.02em;
+    line-height: 1.2;
+  }
+
+  .stats dd.stats-platforms {
+    font-size: clamp(1.1rem, 0.95rem + 0.7vw, 1.35rem);
+    line-height: 1.4;
+  }
+
+  .stats dt {
+    color: var(--text-2);
+    font-size: 0.9375rem;
+  }
+
+  .hero-copy > :global(.partners) {
+    margin-top: 2rem;
+  }
+
+  @media (min-width: 640px) {
+    .stats {
+      grid-template-columns: auto auto;
+      justify-content: start;
+      gap: 1.25rem 3rem;
+    }
+  }
+
+  /* ---------- Pains ---------- */
+  .pains {
+    list-style: none;
+    display: grid;
+    gap: 1rem;
+  }
+
+  @media (min-width: 900px) {
+    .pains {
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 2.5rem;
+    }
+  }
+
+  .pain {
+    padding-top: 1.25rem;
+    border-top: 2px solid var(--tone);
+  }
+  .pain + .pain {
+    margin-top: 1rem;
+  }
+  @media (min-width: 900px) {
+    .pain + .pain {
+      margin-top: 0;
+    }
+  }
+
+  .pain-cue {
+    display: block;
+    margin-bottom: 0.75rem;
+    font-size: clamp(1.6rem, 1.3rem + 1.2vw, 2.2rem);
+    font-weight: 800;
+    letter-spacing: -0.02em;
+    line-height: 1.2;
+    color: var(--tone);
+    font-variant-numeric: tabular-nums;
+  }
+
+  .pain h3 {
+    font-size: var(--step-1);
+  }
+  .pain p {
+    margin-top: 0.5rem;
+    color: var(--text-2);
+  }
+
+  .tone-violet {
+    --tone: var(--violet-ink);
+    --tone-fill: var(--violet);
+  }
+  .tone-blue {
+    --tone: var(--blue-ink);
+    --tone-fill: var(--blue);
+  }
+  .tone-teal {
+    --tone: var(--teal-ink);
+    --tone-fill: var(--teal);
+  }
+  .tone-green {
+    --tone: var(--green);
+    --tone-fill: #00a85d;
+  }
+
+  /* ---------- Solutions ---------- */
+  .solutions-big {
+    display: grid;
+    gap: 1rem;
+  }
+
+  @media (min-width: 960px) {
+    .solutions-big {
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 1.25rem;
+    }
+  }
+
+  .sol {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    gap: 0.85rem;
+    padding: clamp(1.4rem, 1.1rem + 1vw, 2rem);
+    padding-top: clamp(1.75rem, 1.4rem + 1vw, 2.25rem);
+    border-radius: var(--r-lg);
+    background: var(--bg);
+    border: 1px solid var(--line);
+    overflow: hidden;
+  }
+
+  .sol::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: 0;
+    height: 4px;
+    background: var(--tone-fill);
+  }
+
+  .sol-icon {
+    display: grid;
+    place-items: center;
+    width: 3rem;
+    height: 3rem;
+    border-radius: 14px;
+    background: color-mix(in srgb, var(--tone-fill, var(--violet)) 28%, transparent);
+    color: var(--tone, var(--text));
+  }
+  .sol-icon svg {
+    width: 1.5rem;
+    height: 1.5rem;
+  }
+  .sol-icon.sm {
+    width: 2.75rem;
+    height: 2.75rem;
+    flex: none;
+    background: var(--bg-raise-2);
+    color: var(--sun);
+  }
+
+  .sol h3 {
+    font-size: var(--step-2);
+  }
+
+  .sol-text {
+    color: var(--text-2);
+  }
+
+  .sol-points {
+    font-size: 0.9688rem;
+  }
+
+  .sol-price {
+    margin-top: auto;
+    padding-top: 0.85rem;
+    border-top: 1px dashed var(--line-strong);
+    font-weight: 600;
+    font-size: 0.9375rem;
+  }
+
+  .sol-link {
+    font-weight: 600;
+  }
+
+  .solutions-small {
+    display: grid;
+    gap: 1rem;
+    margin-top: 1rem;
+  }
+
+  @media (min-width: 768px) {
+    .solutions-small {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 1.25rem;
+      margin-top: 1.25rem;
+    }
+  }
+
+  .sol-small {
+    display: flex;
+    gap: 1rem;
+    align-items: flex-start;
+    padding: 1.25rem;
+    border-radius: var(--r-md);
+    border: 1px solid var(--line);
+    background: var(--bg);
+    color: var(--text);
+    text-decoration: none;
+  }
+  .sol-small:hover {
+    border-color: var(--line-strong);
+  }
+  .sol-small strong {
+    display: block;
+    margin-bottom: 0.2rem;
+  }
+  .sol-small .muted {
+    font-size: 0.9375rem;
+  }
+
+  /* ---------- Demo ---------- */
+  .demo {
+    align-items: center;
+  }
+  .demo-lead {
+    margin: 1rem 0 1.25rem;
+  }
+  .demo-points {
+    margin-bottom: 1.75rem;
+  }
+  .demo-chat {
+    display: flex;
+    justify-content: center;
+  }
+</style>

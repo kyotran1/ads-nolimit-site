@@ -1,0 +1,118 @@
+---
+/** Khối kêu gọi liên hệ cuối trang + các kênh liên hệ. */
+import Icon from './Icon.astro';
+import { contact, links } from '../config/site';
+
+interface Props {
+  title?: string;
+  text?: string;
+}
+
+const {
+  title = 'Kể cho ADS-Nolimit nghe việc đang tốn thời gian nhất của anh/chị',
+  text = 'Tư vấn miễn phí, không ràng buộc. Chúng tôi sẽ nói thẳng việc nào AI làm tốt, việc nào chưa nên làm.',
+} = Astro.props;
+---
+
+<section class="cta section" aria-labelledby="cta-title">
+  <div class="container">
+    <div class="cta-box">
+      <div class="cta-main">
+        <h2 id="cta-title">{title}</h2>
+        <p class="cta-text">{text}</p>
+        <div class="btn-row btn-row--stack-mobile">
+          <a class="btn btn-primary" href={links.zalo} rel="noopener">
+            <Icon name="zalo" /> Tư vấn miễn phí qua Zalo
+          </a>
+          <a class="btn" href={links.hotline}>
+            <Icon name="phone" /> Gọi {contact.hotline}
+          </a>
+        </div>
+      </div>
+
+      <ul class="cta-channels">
+        <li>
+          <span>Messenger</span>
+          <a href={links.messenger} rel="noopener">Nhắn fanpage {contact.facebookName}</a>
+        </li>
+        <li>
+          <span>Telegram</span>
+          <a href={links.telegram} rel="noopener">@{contact.telegramUser}</a>
+        </li>
+        <li>
+          <span>Điện thoại & Zalo</span>
+          <a href={links.phone}>{contact.zaloPhone}</a>
+        </li>
+        <li>
+          <span>Trợ lý</span>
+          <a href={links.assistant}>{contact.assistantPhone}</a>
+        </li>
+        <li>
+          <span>Email</span>
+          <a href={links.email}>{contact.email}</a>
+        </li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<style>
+  .cta-box {
+    display: grid;
+    gap: 2rem;
+    padding: clamp(1.5rem, 1rem + 3vw, 3.5rem);
+    border-radius: var(--r-lg);
+    background:
+      radial-gradient(80% 100% at 0% 100%, rgb(0 216 120 / 0.14), transparent 60%),
+      radial-gradient(70% 90% at 100% 0%, rgb(72 0 168 / 0.4), transparent 60%),
+      var(--bg-raise);
+    border: 1px solid var(--line-strong);
+  }
+
+  @media (min-width: 960px) {
+    .cta-box {
+      grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr);
+      gap: 3.5rem;
+      align-items: center;
+    }
+  }
+
+  .cta-text {
+    margin: 1rem 0 1.75rem;
+    color: var(--text-2);
+    font-size: var(--step-1);
+    max-width: 36rem;
+  }
+
+  .cta-channels {
+    list-style: none;
+    display: grid;
+    gap: 0.85rem;
+  }
+
+  .cta-channels li {
+    display: grid;
+    gap: 0.1rem;
+    padding-bottom: 0.85rem;
+    border-bottom: 1px solid var(--line);
+  }
+  .cta-channels li:last-child {
+    border-bottom: 0;
+    padding-bottom: 0;
+  }
+
+  .cta-channels span {
+    font-size: 0.8125rem;
+    color: var(--text-3);
+  }
+
+  .cta-channels a {
+    color: var(--text);
+    font-weight: 600;
+    text-decoration: none;
+    overflow-wrap: anywhere;
+  }
+  .cta-channels a:hover {
+    text-decoration: underline;
+  }
+</style>

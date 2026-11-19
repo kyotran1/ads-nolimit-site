@@ -1,0 +1,77 @@
+---
+import Icon from './Icon.astro';
+import { links } from '../config/site';
+
+interface Props {
+  lang?: 'vi' | 'en';
+}
+const { lang = 'vi' } = Astro.props;
+---
+
+<nav class="contact-bar" aria-label={lang === 'en' ? 'Quick contact' : 'Liên hệ nhanh'}>
+  <a href={links.zalo} class="cb-zalo" rel="noopener">
+    <Icon name="zalo" />
+    <span>Zalo</span>
+  </a>
+  <a href={links.hotline}>
+    <Icon name="phone" />
+    <span>{lang === 'en' ? 'Call' : 'Gọi'}</span>
+  </a>
+  <a href={links.messenger} rel="noopener">
+    <Icon name="messenger" />
+    <span>Messenger</span>
+  </a>
+</nav>
+
+<style>
+  .contact-bar {
+    position: fixed;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 60;
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 8px;
+    padding: 8px 12px calc(8px + env(safe-area-inset-bottom, 0px));
+    background: rgb(7 10 26 / 0.94);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border-top: 1px solid var(--line);
+  }
+
+  .contact-bar a {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.35rem;
+    min-width: 0;
+    min-height: 48px;
+    padding-inline: 4px;
+    border-radius: 12px;
+    border: 1.5px solid var(--line-strong);
+    color: var(--text);
+    font-weight: 700;
+    font-size: 0.875rem;
+    text-decoration: none;
+    white-space: nowrap;
+  }
+
+  .contact-bar svg {
+    width: 1.15rem;
+    height: 1.15rem;
+    flex: none;
+  }
+
+  .contact-bar .cb-zalo {
+    background: var(--green);
+    border-color: var(--green);
+    color: #04140c;
+  }
+
+  @media (min-width: 960px) {
+    .contact-bar {
+      display: none;
+    }
+  }
+</style>

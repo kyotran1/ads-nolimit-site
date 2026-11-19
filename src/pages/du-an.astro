@@ -1,0 +1,107 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import PageHero from '../components/PageHero.astro';
+import ReportBotCase from '../components/ReportBotCase.astro';
+import CtaBand from '../components/CtaBand.astro';
+import Icon from '../components/Icon.astro';
+import { links } from '../config/site';
+import { pilotOffer } from '../data/pricing';
+
+const slots = [1, 2, 3];
+---
+
+<BaseLayout
+  title="Dự án & case study | ADS-Nolimit"
+  description="Case study nội bộ của ADS-Nolimit: bot Telegram tự nhập báo cáo quảng cáo Meta vào bảng tính mỗi ngày. Đang nhận 3 khách thí điểm AI Agent."
+>
+  <PageHero
+    title="Dự án & case study"
+    lead="ADS-Nolimit đã phục vụ hơn 800 khách hàng quảng cáo từ 2016. Với mảng AI, chúng tôi bắt đầu từ chính mình: dưới đây là case study nội bộ, và chỗ dành cho những khách thí điểm đầu tiên."
+  />
+
+  <section class="section" aria-label="Case study nội bộ">
+    <div class="container">
+      <ReportBotCase detailed />
+    </div>
+  </section>
+
+  <section class="section section--raise" aria-labelledby="pilot-title">
+    <div class="container">
+      <div class="section-head">
+        <h2 id="pilot-title">Case study AI Agent thí điểm</h2>
+        <p>
+          Case study với khách hàng thật sẽ được đăng ở đây khi dự án chạy đủ lâu và khách đồng ý công bố. Chúng tôi không
+          đăng số liệu hay lời nhận xét chưa được khách cho phép.
+        </p>
+      </div>
+      <ol class="slots">
+        {
+          slots.map((n) => (
+            <li class="slot">
+              <span class="slot-num">Vị trí thí điểm {n}</span>
+              <span class="slot-state">Đang mở</span>
+            </li>
+          ))
+        }
+      </ol>
+      {
+        pilotOffer.active && (
+          <p class="pilot">
+            <strong>{pilotOffer.title}:</strong> {pilotOffer.text}
+          </p>
+        )
+      }
+      <div class="btn-row slot-actions">
+        <a class="btn btn-primary" href={links.zalo} rel="noopener"><Icon name="zalo" /> Đăng ký thí điểm qua Zalo</a>
+        <a class="btn" href="/giai-phap-ai-agent/">Xem gói AI Agent</a>
+      </div>
+    </div>
+  </section>
+
+  <CtaBand />
+</BaseLayout>
+
+<style>
+  .slots {
+    list-style: none;
+    display: grid;
+    gap: 1rem;
+  }
+  @media (min-width: 768px) {
+    .slots {
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 1.25rem;
+    }
+  }
+
+  .slot {
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    gap: 2.5rem;
+    min-height: 9rem;
+    padding: 1.25rem 1.4rem;
+    border-radius: var(--r-lg);
+    border: 1.5px dashed var(--line-strong);
+    background: var(--bg);
+  }
+
+  .slot-num {
+    font-weight: 700;
+    font-size: var(--step-1);
+  }
+
+  .slot-state {
+    align-self: flex-start;
+    padding: 0.15rem 0.7rem;
+    border-radius: 999px;
+    border: 1px solid rgb(0 216 120 / 0.5);
+    color: var(--green-ink);
+    font-size: 0.875rem;
+    font-weight: 600;
+  }
+
+  .slot-actions {
+    margin-top: 1.5rem;
+  }
+</style>

@@ -1,0 +1,74 @@
+---
+/** Đầu trang cho các trang con. Slot mặc định = nút hành động. */
+interface Props {
+  title: string;
+  lead?: string;
+  /** Dòng nhỏ phía trên tiêu đề, chỉ dùng khi thật sự có ích (ví dụ tên nhóm dịch vụ) */
+  kicker?: string;
+}
+
+const { title, lead, kicker } = Astro.props;
+---
+
+<section class="page-hero">
+  <div class="container">
+    {kicker && <p class="kicker">{kicker}</p>}
+    <h1>{title}</h1>
+    {lead && <p class="lead page-lead">{lead}</p>}
+    {
+      Astro.slots.has('default') && (
+        <div class="page-actions">
+          <slot />
+        </div>
+      )
+    }
+  </div>
+</section>
+
+<style>
+  .page-hero {
+    position: relative;
+    padding-block: clamp(2.75rem, 2rem + 4vw, 5.5rem) clamp(2rem, 1.5rem + 2.5vw, 3.5rem);
+    background: radial-gradient(70% 120% at 85% -20%, rgb(72 0 168 / 0.35), transparent 60%);
+  }
+
+  .page-hero::after {
+    content: '';
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    height: 1px;
+    background: var(--grad);
+    opacity: 0.6;
+  }
+
+  .page-hero h1 {
+    max-width: 52rem;
+    font-size: clamp(1.95rem, 1.3rem + 2.9vw, 3.4rem);
+  }
+
+  .kicker {
+    margin-bottom: 0.75rem;
+    font-weight: 600;
+    color: var(--green-ink);
+  }
+
+  .page-lead {
+    margin-top: 1.1rem;
+    max-width: 44rem;
+  }
+
+  .page-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+    margin-top: 1.75rem;
+  }
+
+  @media (max-width: 479.98px) {
+    .page-actions > :global(.btn) {
+      flex: 1 1 100%;
+    }
+  }
+</style>

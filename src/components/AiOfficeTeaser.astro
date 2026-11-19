@@ -1,0 +1,86 @@
+---
+/**
+ * ADS-NOLIMIT AI Office — chỉ được nói "Sắp ra mắt" + đăng ký nhận tin.
+ * KHÔNG mô tả tính năng chi tiết.
+ * Site tĩnh chưa có backend: nút đăng ký mở email soạn sẵn hoặc Zalo.
+ * TODO: thay bằng dịch vụ form/newsletter khi có.
+ */
+import { contact, links } from '../config/site';
+
+interface Props {
+  headingLevel?: 'h2' | 'h3';
+}
+const { headingLevel = 'h2' } = Astro.props;
+const Heading = headingLevel;
+
+const subject = 'Đăng ký nhận tin ADS-NOLIMIT AI Office';
+const body = [
+  'Chào ADS-Nolimit,',
+  '',
+  'Tôi muốn nhận tin khi ADS-NOLIMIT AI Office ra mắt.',
+  '',
+  'Họ tên:',
+  'Số điện thoại / Zalo:',
+  'Lĩnh vực kinh doanh:',
+].join('\r\n');
+const mailto = `mailto:${contact.email}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+---
+
+<div class="office">
+  <div class="office-inner">
+    <span class="tag tag--sun">Sắp ra mắt</span>
+    <Heading class="office-title">ADS-NOLIMIT AI Office</Heading>
+    <p class="office-text">
+      Phần mềm văn phòng AI do ADS-Nolimit phát triển. Để lại liên hệ, chúng tôi báo anh/chị ngay khi ra mắt.
+    </p>
+    <div class="btn-row btn-row--stack-mobile">
+      <a class="btn btn-sun" href={mailto}>Đăng ký nhận tin qua email</a>
+      <a class="btn" href={links.zalo} rel="noopener">Nhắn Zalo để nhận tin</a>
+    </div>
+    <p class="office-fine">
+      Email đăng ký chỉ dùng để báo tin ra mắt. Xem <a href="/chinh-sach-bao-mat/">chính sách bảo mật</a>.
+    </p>
+  </div>
+</div>
+
+<style>
+  .office {
+    position: relative;
+    border-radius: var(--r-lg);
+    padding: 1.5px;
+    background: var(--grad);
+  }
+
+  .office-inner {
+    border-radius: calc(var(--r-lg) - 1.5px);
+    padding: clamp(1.5rem, 1rem + 2.5vw, 3rem);
+    background:
+      radial-gradient(90% 120% at 100% 0%, rgb(238 214 90 / 0.08), transparent 55%),
+      var(--bg-raise);
+  }
+
+  .office-title {
+    margin-top: 1rem;
+    font-size: var(--step-3);
+    line-height: 1.18;
+    letter-spacing: -0.02em;
+    font-weight: 800;
+  }
+
+  .office-text {
+    margin-top: 0.75rem;
+    margin-bottom: 1.5rem;
+    max-width: 36rem;
+    color: var(--text-2);
+    font-size: var(--step-1);
+  }
+
+  .office-fine {
+    margin-top: 1rem;
+    font-size: 0.8125rem;
+    color: var(--text-3);
+  }
+  .office-fine a {
+    color: var(--text-2);
+  }
+</style>

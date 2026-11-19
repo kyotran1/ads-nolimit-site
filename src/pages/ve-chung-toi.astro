@@ -1,0 +1,234 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import PageHero from '../components/PageHero.astro';
+import CtaBand from '../components/CtaBand.astro';
+import PartnerStrip from '../components/PartnerStrip.astro';
+
+const before = [
+  'Chạy và tối ưu quảng cáo đa kênh: Facebook Ads, Google Ads, TikTok Ads',
+  'Cung cấp tài khoản quảng cáo Agency doanh nghiệp (BM2500)',
+  'Lập trình và thiết kế website',
+  'Phần mềm hỗ trợ khách bán hàng online trên mạng xã hội',
+];
+
+const now = [
+  'AI Agent bán hàng & chăm sóc khách',
+  'Tự động hóa quy trình theo yêu cầu',
+  'Công cụ & phần mềm AI, trong đó có ADS-NOLIMIT AI Office (sắp ra mắt)',
+  'Đào tạo AI cho chủ shop',
+];
+
+const principles = [
+  {
+    title: 'Nói thẳng việc AI làm được và chưa làm được',
+    text: 'Không phải việc nào cũng nên giao cho AI. Nếu chưa nên, chúng tôi nói chưa nên.',
+  },
+  {
+    title: 'Không cam kết doanh thu',
+    text: 'Chúng tôi cam kết cách làm và báo cáo trung thực, không hứa con số mình không kiểm soát được.',
+  },
+  {
+    title: 'Chạy đúng chính sách',
+    text: 'Quảng cáo tuân thủ chính sách của nền tảng và pháp luật Việt Nam. Nội dung do AI tạo được gắn nhãn khi cần.',
+  },
+  {
+    title: 'Tự dùng trước khi bán',
+    text: 'Chúng tôi thử cách làm trên chính công việc của mình trước, như bot báo cáo quảng cáo đang chạy mỗi ngày.',
+  },
+  {
+    title: 'Dữ liệu của khách thuộc về khách',
+    text: 'Dữ liệu khách hàng của anh/chị nằm trong tài khoản của anh/chị, không phải của chúng tôi.',
+  },
+];
+---
+
+<BaseLayout
+  title="Về ADS-Nolimit | Làm quảng cáo từ 2016, nay thêm AI Agent"
+  description="ADS-Nolimit làm quảng cáo từ 2016, đã phục vụ hơn 800 khách hàng. Nay mở rộng sang AI Agent, tự động hóa quy trình và phần mềm AI cho cá nhân, doanh nghiệp nhỏ Việt Nam."
+>
+  <PageHero
+    title="Về ADS-Nolimit"
+    lead="Từ một đội chạy quảng cáo năm 2016 đến đội dựng nhân viên AI cho cá nhân và doanh nghiệp nhỏ Việt Nam."
+  />
+
+  <PartnerStrip band />
+
+  <section class="section" aria-labelledby="story-title">
+    <div class="container story">
+      <div class="prose">
+        <h2 id="story-title">Câu chuyện</h2>
+        <p>
+          ADS-Nolimit bắt đầu làm quảng cáo từ năm 2016. Mười năm qua, chúng tôi đã phục vụ hơn 800 khách hàng: chạy và tối
+          ưu quảng cáo trên Facebook, Google, TikTok, cung cấp tài khoản quảng cáo Agency doanh nghiệp, làm website và phần
+          mềm hỗ trợ bán hàng online.
+        </p>
+        <p>
+          Làm quảng cáo đủ lâu, ai cũng thấy một chuyện lặp lại: doanh nghiệp bỏ tiền để có tin nhắn, rồi tin nhắn nguội đi
+          vì không ai trả lời kịp; báo cáo làm tay ngốn cả buổi sáng. Quảng cáo tốt thôi là chưa đủ, phần việc phía sau cũng
+          phải chạy được.
+        </p>
+        <p>
+          Vì vậy ADS-Nolimit mở rộng sang AI. Chúng tôi dùng cho chính mình trước: một bot Telegram tự nhập báo cáo quảng cáo
+          Meta vào bảng tính mỗi ngày. Giờ chúng tôi mang cách làm đó đến cho cá nhân và doanh nghiệp, để họ làm được nhiều
+          việc hơn với ít người hơn.
+        </p>
+      </div>
+
+      <dl class="facts">
+        <div>
+          <dt>Bắt đầu làm quảng cáo</dt>
+          <dd>2016</dd>
+        </div>
+        <div>
+          <dt>Khách hàng đã phục vụ</dt>
+          <dd>800+</dd>
+        </div>
+      </dl>
+    </div>
+  </section>
+
+  <section class="section section--raise" aria-labelledby="shift-title">
+    <div class="container">
+      <div class="section-head">
+        <h2 id="shift-title">Từ quảng cáo đến AI</h2>
+      </div>
+      <div class="shift">
+        <div class="shift-col">
+          <h3>Từ 2016</h3>
+          <ul class="checklist">{before.map((b) => <li>{b}</li>)}</ul>
+        </div>
+        <div class="shift-col shift-now">
+          <h3>Và bây giờ</h3>
+          <ul class="checklist">{now.map((n) => <li>{n}</li>)}</ul>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="section" aria-labelledby="principles-title">
+    <div class="container">
+      <div class="section-head">
+        <h2 id="principles-title">Cách chúng tôi làm việc</h2>
+      </div>
+      <ul class="principles">
+        {
+          principles.map((p) => (
+            <li>
+              <h3>{p.title}</h3>
+              <p>{p.text}</p>
+            </li>
+          ))
+        }
+      </ul>
+    </div>
+  </section>
+
+  <CtaBand />
+</BaseLayout>
+
+<style>
+  .story {
+    display: grid;
+    gap: 2.5rem;
+    align-items: start;
+  }
+  @media (min-width: 960px) {
+    .story {
+      grid-template-columns: minmax(0, 1fr) 16rem;
+      gap: 5rem;
+    }
+  }
+  .story .prose h2 {
+    margin-top: 0;
+    font-size: var(--step-3);
+  }
+  .story .prose p {
+    color: var(--text-2);
+    font-size: var(--step-1);
+  }
+
+  .facts {
+    margin: 0;
+    display: grid;
+    gap: 1.5rem;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  @media (min-width: 960px) {
+    .facts {
+      grid-template-columns: 1fr;
+      padding-left: 2rem;
+      border-left: 1px solid var(--line);
+    }
+  }
+  .facts div {
+    display: flex;
+    flex-direction: column;
+  }
+  .facts dd {
+    order: -1;
+    margin: 0;
+    font-size: clamp(2.2rem, 1.6rem + 2.5vw, 3.4rem);
+    font-weight: 800;
+    letter-spacing: -0.03em;
+    line-height: 1.1;
+  }
+  .facts dt {
+    color: var(--text-2);
+  }
+
+  .shift {
+    display: grid;
+    gap: 1rem;
+  }
+  @media (min-width: 768px) {
+    .shift {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 1.25rem;
+    }
+  }
+  .shift-col {
+    padding: clamp(1.25rem, 1rem + 1vw, 2rem);
+    border-radius: var(--r-lg);
+    border: 1px solid var(--line);
+    background: var(--bg);
+  }
+  .shift-col h3 {
+    font-size: var(--step-2);
+    margin-bottom: 1rem;
+  }
+  .shift-now {
+    border-color: transparent;
+    background:
+      linear-gradient(var(--bg), var(--bg)) padding-box,
+      var(--grad) border-box;
+    border: 1.5px solid transparent;
+  }
+
+  .principles {
+    list-style: none;
+    display: grid;
+    gap: 1.75rem;
+  }
+  @media (min-width: 768px) {
+    .principles {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 2.25rem 3rem;
+    }
+  }
+  @media (min-width: 1100px) {
+    .principles {
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+  }
+  .principles li {
+    padding-top: 1rem;
+    border-top: 1px solid var(--line-strong);
+  }
+  .principles h3 {
+    font-size: var(--step-1);
+  }
+  .principles p {
+    margin-top: 0.4rem;
+    color: var(--text-2);
+  }
+</style>

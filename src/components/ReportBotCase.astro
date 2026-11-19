@@ -1,0 +1,212 @@
+---
+/**
+ * Case study nội bộ: bot Telegram tự nhập báo cáo quảng cáo Meta vào bảng tính mỗi ngày.
+ * Chỉ mô tả cách làm — KHÔNG đưa số liệu kết quả (chưa có số liệu được phép công bố).
+ */
+import Icon from './Icon.astro';
+
+interface Props {
+  /** Bản đầy đủ cho trang /du-an/ và /tu-dong-hoa/ */
+  detailed?: boolean;
+  headingLevel?: 'h2' | 'h3';
+  /** Link xem thêm hiện dưới đoạn mở đầu */
+  moreLink?: { href: string; label: string };
+}
+
+const { detailed = false, headingLevel = 'h2', moreLink } = Astro.props;
+const Heading = headingLevel;
+
+const nodes = [
+  {
+    icon: 'chart' as const,
+    title: 'Tài khoản quảng cáo Meta',
+    text: 'Nơi có số liệu các chiến dịch đang chạy.',
+  },
+  {
+    icon: 'telegram' as const,
+    title: 'Bot Telegram',
+    text: 'Chạy theo lịch mỗi ngày: lấy số liệu và nhập vào bảng tính.',
+  },
+  {
+    icon: 'sheet' as const,
+    title: 'Bảng tính báo cáo',
+    text: 'Số liệu theo một mẫu cố định, sẵn để lọc, so sánh, theo dõi.',
+  },
+];
+---
+
+<div class="case">
+  <div class="case-text">
+    <span class="tag tag--green">Case study nội bộ</span>
+    <Heading class="case-title">Bot tự nhập báo cáo quảng cáo mỗi ngày</Heading>
+    <p class="case-lead">
+      ADS-Nolimit dùng tự động hóa cho chính mình trước khi làm cho khách. Chúng tôi đang vận hành một bot Telegram,
+      mỗi ngày tự lấy số liệu quảng cáo Meta và nhập vào bảng tính, thay cho việc chép số bằng tay.
+    </p>
+    {
+      moreLink && (
+        <p class="case-more">
+          <a href={moreLink.href}>{moreLink.label}</a>
+        </p>
+      )
+    }
+    {
+      detailed && (
+        <div class="case-detail">
+          <div>
+            <h3>Vấn đề</h3>
+            <p>
+              Mở trình quản lý quảng cáo, chép số liệu từng chiến dịch sang bảng tính: việc nhỏ nhưng lặp lại mỗi ngày,
+              dễ sót, dễ gõ nhầm, và lấy mất thời gian lẽ ra dùng để đọc số và ra quyết định.
+            </p>
+          </div>
+          <div>
+            <h3>Cách làm</h3>
+            <ul class="checklist">
+              <li>Chốt một mẫu bảng tính cố định: cột nào, thứ tự nào, mỗi ngày ghi thế nào.</li>
+              <li>Bot kết nối tài khoản quảng cáo Meta, chạy theo lịch hằng ngày.</li>
+              <li>Bot nhập số liệu vào đúng mẫu; người trong nhóm làm việc với bot ngay trên Telegram.</li>
+            </ul>
+          </div>
+          <div>
+            <h3>Áp dụng cho khách hàng</h3>
+            <p>
+              Cùng cách làm này, ADS-Nolimit dựng quy trình “báo cáo quảng cáo tự động mỗi sáng” cho doanh nghiệp, theo
+              mẫu báo cáo anh/chị đang dùng. Xem <a href="/tu-dong-hoa/">dịch vụ tự động hóa</a>.
+            </p>
+          </div>
+        </div>
+      )
+    }
+  </div>
+
+  <ol class="flow" aria-label="Luồng hoạt động của bot báo cáo">
+    {
+      nodes.map((n, i) => (
+        <li class="flow-node">
+          <span class="flow-icon">
+            <Icon name={n.icon} />
+          </span>
+          <span class="flow-body">
+            <strong>{n.title}</strong>
+            <span>{n.text}</span>
+          </span>
+          {i < nodes.length - 1 && (
+            <span class="flow-arrow" aria-hidden="true">
+              <Icon name="arrow" />
+            </span>
+          )}
+        </li>
+      ))
+    }
+  </ol>
+</div>
+
+<style>
+  .case {
+    display: grid;
+    gap: 2rem;
+    align-items: start;
+  }
+
+  @media (min-width: 960px) {
+    .case {
+      grid-template-columns: minmax(0, 1.1fr) minmax(0, 0.9fr);
+      gap: 4rem;
+    }
+  }
+
+  .case-title {
+    margin-top: 0.85rem;
+    font-size: var(--step-3);
+    line-height: 1.18;
+    letter-spacing: -0.022em;
+    font-weight: 800;
+  }
+
+  .case-lead {
+    margin-top: 1rem;
+    color: var(--text-2);
+    font-size: var(--step-1);
+    max-width: 38rem;
+  }
+
+  .case-more {
+    margin-top: 1.25rem;
+    font-weight: 600;
+  }
+
+  .case-detail {
+    display: grid;
+    gap: 1.5rem;
+    margin-top: 2rem;
+    max-width: 38rem;
+  }
+  .case-detail h3 {
+    font-size: var(--step-1);
+    margin-bottom: 0.5rem;
+  }
+  .case-detail p {
+    color: var(--text-2);
+  }
+
+  .flow {
+    list-style: none;
+    display: grid;
+    gap: 2.25rem;
+    padding: clamp(1.25rem, 1rem + 1vw, 1.75rem);
+    border-radius: var(--r-lg);
+    border: 1px solid var(--line);
+    background: var(--bg-raise);
+  }
+
+  .flow-node {
+    position: relative;
+    display: grid;
+    grid-template-columns: 3rem 1fr;
+    gap: 1rem;
+    align-items: start;
+  }
+
+  .flow-icon {
+    display: grid;
+    place-items: center;
+    width: 3rem;
+    height: 3rem;
+    border-radius: 14px;
+    background: var(--bg);
+    border: 1px solid var(--line-strong);
+    color: var(--teal-ink);
+  }
+  .flow-node:nth-child(2) .flow-icon {
+    color: var(--violet-ink);
+  }
+  .flow-node:nth-child(3) .flow-icon {
+    color: var(--green-ink);
+  }
+  .flow-icon svg {
+    width: 1.4rem;
+    height: 1.4rem;
+  }
+
+  .flow-body {
+    display: grid;
+    gap: 0.2rem;
+  }
+  .flow-body span {
+    color: var(--text-2);
+    font-size: 0.9375rem;
+  }
+
+  .flow-arrow {
+    position: absolute;
+    left: 0.85rem;
+    bottom: -1.95rem;
+    color: var(--text-3);
+    transform: rotate(90deg);
+  }
+  .flow-arrow svg {
+    width: 1.3rem;
+    height: 1.3rem;
+  }
+</style>

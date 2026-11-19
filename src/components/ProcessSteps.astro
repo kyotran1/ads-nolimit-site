@@ -1,0 +1,130 @@
+---
+/**
+ * 4 bước làm việc: Khảo sát → Thiết kế → Triển khai → Đo và tối ưu.
+ * Có thể truyền `steps` riêng cho từng trang.
+ */
+import { starterLeadTime } from '../data/pricing';
+
+interface Step {
+  title: string;
+  text: string;
+}
+
+interface Props {
+  steps?: Step[];
+}
+
+const defaultSteps: Step[] = [
+  {
+    title: 'Khảo sát',
+    text: 'Anh/chị kể cách đang bán hàng, chăm sóc khách và chạy quảng cáo. ADS-Nolimit chỉ ra việc nào nên giao cho AI, việc nào chưa nên. Bước này miễn phí.',
+  },
+  {
+    title: 'Thiết kế',
+    text: 'Thống nhất kênh, kịch bản trả lời, dữ liệu cần lưu và lúc nào chuyển cho người thật. Anh/chị duyệt trước khi làm.',
+  },
+  {
+    title: 'Triển khai',
+    text: `Cài đặt, nạp tài liệu, chạy thử nội bộ rồi mới mở cho khách. Gói AI Agent Khởi đầu thường mất ${starterLeadTime}.`,
+  },
+  {
+    title: 'Đo và tối ưu',
+    text: 'Theo dõi câu hỏi AI chưa trả lời được, bổ sung tài liệu, chỉnh kịch bản. Quảng cáo được tối ưu hằng ngày và báo cáo định kỳ.',
+  },
+];
+
+const { steps = defaultSteps } = Astro.props;
+---
+
+<ol class="steps">
+  {
+    steps.map((step, i) => (
+      <li class="step">
+        <span class="step-num" aria-hidden="true">
+          {i + 1}
+        </span>
+        <h3>{step.title}</h3>
+        <p>{step.text}</p>
+      </li>
+    ))
+  }
+</ol>
+
+<style>
+  .steps {
+    list-style: none;
+    display: grid;
+    gap: 0;
+    counter-reset: step;
+  }
+
+  .step {
+    position: relative;
+    padding: 0 0 2rem 3.5rem;
+  }
+  .step:last-child {
+    padding-bottom: 0;
+  }
+
+  /* đường nối dọc trên mobile */
+  .step::before {
+    content: '';
+    position: absolute;
+    left: 1.125rem;
+    top: 2.5rem;
+    bottom: 0.25rem;
+    width: 2px;
+    background: linear-gradient(var(--line-strong), var(--line));
+  }
+  .step:last-child::before {
+    display: none;
+  }
+
+  .step-num {
+    position: absolute;
+    left: 0;
+    top: 0;
+    display: grid;
+    place-items: center;
+    width: 2.25rem;
+    height: 2.25rem;
+    border-radius: 50%;
+    border: 2px solid var(--green);
+    color: var(--green-ink);
+    font-weight: 800;
+    font-size: 1rem;
+    background: var(--bg);
+  }
+
+  .step h3 {
+    font-size: var(--step-1);
+    line-height: 2.25rem;
+  }
+
+  .step p {
+    margin-top: 0.35rem;
+    color: var(--text-2);
+  }
+
+  @media (min-width: 900px) {
+    .steps {
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 2rem;
+    }
+    .step {
+      padding: 3.5rem 0 0;
+    }
+    .step::before {
+      left: 2.75rem;
+      right: -1.25rem;
+      top: 1.125rem;
+      bottom: auto;
+      width: auto;
+      height: 2px;
+      background: linear-gradient(90deg, var(--line-strong), var(--line));
+    }
+    .step h3 {
+      line-height: 1.35;
+    }
+  }
+</style>

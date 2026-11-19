@@ -1,0 +1,63 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import Icon from '../components/Icon.astro';
+import { links, solutionsNav } from '../config/site';
+---
+
+<BaseLayout
+  title="Không tìm thấy trang | ADS-Nolimit"
+  description="Trang anh/chị tìm không tồn tại hoặc đã được chuyển. Quay về trang chủ ADS-Nolimit hoặc liên hệ qua Zalo."
+  noindex
+>
+  <section class="nf">
+    <div class="container">
+      <p class="nf-code" aria-hidden="true">404</p>
+      <h1>Không tìm thấy trang này</h1>
+      <p class="lead nf-lead">
+        Đường dẫn có thể đã cũ hoặc gõ nhầm. Anh/chị thử một trong các trang dưới đây, hoặc nhắn Zalo để được hỗ trợ ngay.
+      </p>
+      <div class="btn-row btn-row--stack-mobile">
+        <a class="btn btn-primary" href="/">Về trang chủ</a>
+        <a class="btn" href={links.zalo} rel="noopener"><Icon name="zalo" /> Nhắn Zalo</a>
+      </div>
+      <ul class="nf-links">
+        {
+          solutionsNav.map((item) => (
+            <li>
+              <a href={item.href}>{item.label}</a>
+            </li>
+          ))
+        }
+        <li><a href="/bang-gia/">Bảng giá</a></li>
+        <li><a href="/lien-he/">Liên hệ</a></li>
+      </ul>
+    </div>
+  </section>
+</BaseLayout>
+
+<style>
+  .nf {
+    padding-block: clamp(3rem, 2rem + 6vw, 7rem);
+  }
+  .nf-code {
+    font-size: clamp(4rem, 3rem + 6vw, 8rem);
+    font-weight: 800;
+    line-height: 1;
+    letter-spacing: -0.04em;
+    background: var(--grad);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+    margin-bottom: 1rem;
+  }
+  .nf-lead {
+    margin: 1rem 0 1.75rem;
+  }
+  .nf-links {
+    list-style: none;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem 1.5rem;
+    margin-top: 2.5rem;
+  }
+</style>

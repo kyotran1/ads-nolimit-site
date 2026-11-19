@@ -1,0 +1,223 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import PageHero from '../components/PageHero.astro';
+import PlanCard from '../components/PlanCard.astro';
+import CtaBand from '../components/CtaBand.astro';
+import PartnerStrip from '../components/PartnerStrip.astro';
+import Icon from '../components/Icon.astro';
+import { links } from '../config/site';
+import { getPlan, priceNote } from '../data/pricing';
+
+const ads = getPlan('ads');
+const agency = getPlan('agency-account');
+
+const channels = [
+  {
+    name: 'Facebook Ads',
+    text: 'Tiếp cận khách theo sở thích, độ tuổi, khu vực. Hợp với việc tạo nhu cầu và kéo tin nhắn về fanpage, Messenger, Instagram.',
+  },
+  {
+    name: 'Google Ads',
+    text: 'Xuất hiện khi khách đang chủ động tìm kiếm. Hợp với dịch vụ và sản phẩm khách đã biết mình cần.',
+  },
+  {
+    name: 'TikTok Ads',
+    text: 'Quảng cáo dạng video ngắn. Hợp với sản phẩm cần trình diễn, dùng thử, trước–sau.',
+  },
+];
+
+const daily = [
+  'Kiểm tra chi tiêu và ngân sách của từng chiến dịch',
+  'Tắt hoặc giảm nhóm quảng cáo kém, dồn ngân sách cho nhóm tốt hơn',
+  'Thử mẫu quảng cáo mới và so sánh với mẫu đang chạy',
+  'Đối chiếu tin nhắn, đơn hàng thực tế với số liệu trên nền tảng',
+  'Ghi lại mọi thay đổi để cuối tuần nhìn lại cùng anh/chị',
+];
+
+const report = [
+  'Tiền đã chi vào đâu, cho chiến dịch nào',
+  'Kết quả theo mục tiêu đã thống nhất từ đầu: tin nhắn, khách để lại số, đơn hàng',
+  'Việc đã làm trong kỳ và kế hoạch kỳ tới',
+];
+---
+
+<BaseLayout
+  title="Quảng cáo hiệu suất Facebook, Google, TikTok | ADS-Nolimit"
+  description="ADS-Nolimit chạy và tối ưu quảng cáo Facebook, Google, TikTok mỗi ngày, báo cáo minh bạch. Phí quản lý 10–15% ngân sách, dùng thử 7 ngày. Tài khoản quảng cáo Agency doanh nghiệp (BM2500)."
+>
+  <PageHero
+    title="Quảng cáo hiệu suất trên Facebook, Google, TikTok"
+    lead="ADS-Nolimit làm quảng cáo từ 2016. Chúng tôi lên kế hoạch, dựng chiến dịch, tối ưu mỗi ngày và báo cáo rõ ràng để anh/chị biết từng đồng ngân sách đi đâu."
+  >
+    <a class="btn btn-primary" href={links.zalo} rel="noopener"><Icon name="zalo" /> Đăng ký dùng thử 7 ngày</a>
+    <a class="btn" href="#gia">Xem phí dịch vụ</a>
+  </PageHero>
+
+  <PartnerStrip band />
+
+  <section class="section" aria-labelledby="channels-title">
+    <div class="container">
+      <div class="section-head">
+        <h2 id="channels-title">Đa kênh, chọn kênh theo sản phẩm</h2>
+        <p>Không phải shop nào cũng cần chạy cả ba. Chúng tôi chọn kênh theo sản phẩm, khách hàng và ngân sách của anh/chị.</p>
+      </div>
+      <ul class="channels">
+        {
+          channels.map((c) => (
+            <li>
+              <h3>{c.name}</h3>
+              <p>{c.text}</p>
+            </li>
+          ))
+        }
+      </ul>
+    </div>
+  </section>
+
+  <section class="section section--raise" aria-labelledby="daily-title">
+    <div class="container grid-2 two-lists">
+      <div>
+        <h2 id="daily-title">Tối ưu hằng ngày</h2>
+        <p class="muted list-lead">Quảng cáo không phải bật lên rồi để đó. Mỗi ngày, ADS-Nolimit làm những việc sau với tài khoản của anh/chị:</p>
+        <ul class="checklist">{daily.map((d) => <li>{d}</li>)}</ul>
+      </div>
+      <div>
+        <h2 id="report-title">Báo cáo minh bạch</h2>
+        <p class="muted list-lead">Báo cáo định kỳ lấy số liệu từ chính nền tảng quảng cáo, kèm giải thích ngắn, dễ hiểu:</p>
+        <ul class="checklist">{report.map((r) => <li>{r}</li>)}</ul>
+        <p class="note">
+          Báo cáo có thể tự động hóa giống bot báo cáo ADS-Nolimit đang dùng nội bộ.
+          <a href="/du-an/">Xem case study</a>.
+        </p>
+      </div>
+    </div>
+  </section>
+
+  <section class="section" aria-labelledby="honest-title">
+    <div class="container">
+      <div class="honest">
+        <h2 id="honest-title">ADS-Nolimit không cam kết doanh thu</h2>
+        <p>
+          Kết quả quảng cáo phụ thuộc sản phẩm, giá bán, nội dung, mùa vụ và cả đối thủ. Điều chúng tôi cam kết là cách làm: tối ưu mỗi ngày, báo cáo trung thực, và nói thẳng khi một kênh không hợp với
+          sản phẩm của anh/chị.
+        </p>
+      </div>
+    </div>
+  </section>
+
+  <section class="section section--raise" id="tai-khoan-agency" aria-labelledby="agency-title">
+    <div class="container split">
+      <div>
+        <h2 id="agency-title">Tài khoản quảng cáo Agency doanh nghiệp (BM2500)</h2>
+        <p class="lead agency-lead">
+          ADS-Nolimit cung cấp tài khoản quảng cáo Agency dành cho doanh nghiệp. Đây là tài khoản doanh nghiệp, dùng để chạy
+          quảng cáo đúng chính sách quảng cáo của nền tảng.
+        </p>
+        <ul class="checklist">
+          <li>Sản phẩm, nội dung quảng cáo và trang đích phải tuân thủ chính sách của nền tảng và pháp luật Việt Nam về quảng cáo</li>
+          <li>ADS-Nolimit trao đổi trước về sản phẩm và nội dung dự định chạy, chỉ nhận những gì được phép quảng cáo</li>
+          <li>Có thể dùng kèm dịch vụ quản lý quảng cáo hoặc để đội của anh/chị tự chạy</li>
+        </ul>
+      </div>
+      <aside class="panel price-aside" aria-label="Giá tài khoản quảng cáo Agency">
+        <p class="price-aside-label">Giá</p>
+        <p class="price-aside-value">{agency.prices[0].value}</p>
+        <a class="btn btn-primary" href={links.zalo} rel="noopener"><Icon name="zalo" /> Hỏi giá qua Zalo</a>
+      </aside>
+    </div>
+  </section>
+
+  <section class="section" id="gia" aria-labelledby="price-title">
+    <div class="container split">
+      <div>
+        <h2 id="price-title">Dùng thử 7 ngày trước khi quyết định</h2>
+        <p class="lead agency-lead">
+          Làm việc thật với ADS-Nolimit trong 7 ngày: xem cách chúng tôi dựng chiến dịch, tối ưu và báo cáo. Sau đó anh/chị
+          mới quyết định có hợp tác lâu dài hay không. Điều kiện dùng thử được trao đổi cụ thể khi tư vấn.
+        </p>
+        <p class="note">{priceNote}</p>
+      </div>
+      <PlanCard plan={ads} showLink={false} />
+    </div>
+  </section>
+
+  <CtaBand
+    title="Đang chạy quảng cáo mà chưa rõ hiệu quả?"
+    text="Nhắn Zalo cho ADS-Nolimit biết anh/chị đang chạy kênh nào, ngân sách khoảng bao nhiêu. Tư vấn miễn phí, góp ý thẳng thắn trước khi bàn chuyện hợp tác."
+  />
+</BaseLayout>
+
+<style>
+  .channels {
+    list-style: none;
+    display: grid;
+    gap: 1.5rem;
+  }
+  @media (min-width: 900px) {
+    .channels {
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 2.5rem;
+    }
+  }
+  .channels li {
+    padding-top: 1.1rem;
+    border-top: 2px solid var(--blue-ink);
+  }
+  .channels li:nth-child(2) {
+    border-color: var(--teal-ink);
+  }
+  .channels li:nth-child(3) {
+    border-color: var(--green);
+  }
+  .channels h3 {
+    font-size: var(--step-2);
+  }
+  .channels p {
+    margin-top: 0.5rem;
+    color: var(--text-2);
+  }
+
+  .two-lists {
+    gap: 3rem;
+  }
+  .two-lists h2 {
+    font-size: var(--step-2);
+  }
+  .list-lead {
+    margin: 0.75rem 0 1.25rem;
+  }
+
+  .honest {
+    max-width: 48rem;
+    padding-left: clamp(1rem, 0.5rem + 2vw, 2rem);
+    border-left: 4px solid var(--sun);
+  }
+  .honest h2 {
+    font-size: var(--step-2);
+  }
+  .honest p {
+    margin-top: 0.75rem;
+    color: var(--text-2);
+    font-size: var(--step-1);
+  }
+
+  .price-aside {
+    display: grid;
+    gap: 0.5rem;
+    justify-items: start;
+  }
+  .price-aside-label {
+    color: var(--text-2);
+  }
+  .price-aside-value {
+    margin-bottom: 1rem;
+    font-size: var(--step-3);
+    font-weight: 800;
+    letter-spacing: -0.02em;
+    line-height: 1.2;
+  }
+
+  .agency-lead {
+    margin: 1rem 0 1.5rem;
+  }
+</style>

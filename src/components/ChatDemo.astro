@@ -1,0 +1,184 @@
+---
+/**
+ * Khung chat mô phỏng AI Agent. LUÔN có nhãn "Hội thoại minh họa".
+ */
+import Icon from './Icon.astro';
+
+export interface ChatMessage {
+  from: 'customer' | 'ai' | 'event';
+  text: string;
+  time?: string;
+}
+
+interface Props {
+  /** Tên hiển thị của trợ lý trong khung chat */
+  agentName: string;
+  /** Kênh hiển thị, ví dụ "Messenger" */
+  channel: string;
+  messages: ChatMessage[];
+  /** Ghi chú nhỏ bên dưới nhãn */
+  note?: string;
+}
+
+const { agentName, channel, messages, note = 'Tên cửa hàng, sản phẩm và giá trong hội thoại là ví dụ.' } = Astro.props;
+---
+
+<figure class="chat">
+  <div class="chat-label">
+    <span class="tag tag--sun">Hội thoại minh họa</span>
+    <span class="chat-note">{note}</span>
+  </div>
+
+  <div class="chat-window">
+    <div class="chat-head">
+      <span class="chat-avatar" aria-hidden="true">AI</span>
+      <span class="chat-who">
+        <strong>{agentName}</strong>
+        <span>Trả lời qua {channel}</span>
+      </span>
+    </div>
+
+    <ol class="chat-log">
+      {
+        messages.map((m) =>
+          m.from === 'event' ? (
+            <li class="msg-event">
+              <Icon name="bolt" />
+              <span>{m.text}</span>
+            </li>
+          ) : (
+            <li class:list={['msg', m.from === 'ai' ? 'msg-ai' : 'msg-customer']}>
+              <span class="visually-hidden">{m.from === 'ai' ? 'AI Agent:' : 'Khách:'}</span>
+              <p>{m.text}</p>
+              {m.time && <span class="msg-time">{m.time}</span>}
+            </li>
+          ),
+        )
+      }
+    </ol>
+  </div>
+  <figcaption class="visually-hidden">Hội thoại minh họa giữa khách hàng và AI Agent, không phải hội thoại thật.</figcaption>
+</figure>
+
+<style>
+  .chat {
+    margin: 0;
+    max-width: 30rem;
+    width: 100%;
+  }
+
+  .chat-label {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.4rem 0.75rem;
+    margin-bottom: 0.75rem;
+  }
+
+  .chat-note {
+    font-size: 0.8125rem;
+    color: var(--text-3);
+  }
+
+  .chat-window {
+    border-radius: 26px;
+    border: 1px solid var(--line-strong);
+    background: #0b1028;
+    overflow: hidden;
+    box-shadow: 0 30px 60px -30px rgb(24 0 240 / 0.45);
+  }
+
+  .chat-head {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.9rem 1rem;
+    border-bottom: 1px solid var(--line);
+    background: var(--bg-raise);
+  }
+
+  .chat-avatar {
+    display: grid;
+    place-items: center;
+    width: 2.4rem;
+    height: 2.4rem;
+    border-radius: 50%;
+    background: var(--grad);
+    color: #fff;
+    font-weight: 800;
+    font-size: 0.85rem;
+    flex: none;
+  }
+
+  .chat-who {
+    display: grid;
+    line-height: 1.35;
+  }
+  .chat-who strong {
+    font-size: 0.9688rem;
+  }
+  .chat-who span {
+    font-size: 0.8125rem;
+    color: var(--text-3);
+  }
+
+  .chat-log {
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+    gap: 0.6rem;
+    padding: 1rem;
+  }
+
+  .msg {
+    max-width: 86%;
+    padding: 0.6rem 0.85rem;
+    border-radius: 18px;
+    font-size: 0.9375rem;
+    line-height: 1.5;
+  }
+
+  .msg-customer {
+    align-self: flex-end;
+    background: #232c66;
+    border-bottom-right-radius: 6px;
+  }
+
+  .msg-ai {
+    align-self: flex-start;
+    background: var(--bg-raise-2);
+    border: 1px solid var(--line);
+    border-bottom-left-radius: 6px;
+  }
+
+  .msg-time {
+    display: block;
+    margin-top: 0.2rem;
+    font-size: 0.75rem;
+    color: var(--text-3);
+    text-align: right;
+  }
+
+  .msg-customer .msg-time {
+    color: var(--text-2);
+  }
+
+  .msg-event {
+    align-self: center;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    padding: 0.3rem 0.75rem;
+    border-radius: 999px;
+    border: 1px dashed rgb(0 216 120 / 0.55);
+    color: var(--green-ink);
+    font-size: 0.8125rem;
+    font-weight: 600;
+    text-align: center;
+  }
+  .msg-event svg {
+    width: 0.95rem;
+    height: 0.95rem;
+    flex: none;
+  }
+</style>

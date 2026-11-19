@@ -1,0 +1,218 @@
+---
+/**
+ * Hình minh họa ở hero: vòng vô cực (gợi logo) với một chấm sáng chạy liên tục
+ * = công việc chạy 24/7. Vẽ bằng SVG, không dùng ảnh.
+ * Các mốc giờ chỉ là minh họa, không phải số liệu thật.
+ */
+const events = [
+  {
+    time: '07:00',
+    text: 'Số liệu quảng cáo hôm qua đã nằm sẵn trong bảng tính.',
+    service: 'Tự động hóa',
+    tone: 'teal',
+  },
+  {
+    time: '09:15',
+    text: 'Khách hỏi kỹ về liệu trình, AI chuyển cho nhân viên tư vấn.',
+    service: 'AI Agent',
+    tone: 'violet',
+  },
+  {
+    time: '14:30',
+    text: 'Nhóm quảng cáo kém được tắt, ngân sách dồn sang nhóm tốt hơn.',
+    service: 'Quảng cáo',
+    tone: 'green',
+  },
+  {
+    time: '23:47',
+    text: 'Khách hỏi giá lúc gần nửa đêm, AI trả lời và xin số điện thoại.',
+    service: 'AI Agent',
+    tone: 'violet',
+  },
+];
+
+// Vị trí 4 mốc trên đường vô cực (tính từ các đường cong Bézier bên dưới)
+const markers = [
+  { x: 312.5, y: 40, label: '07:00', dx: 0, dy: -16 },
+  { x: 312.5, y: 160, label: '09:15', dx: 0, dy: 28 },
+  { x: 87.5, y: 40, label: '14:30', dx: 0, dy: -16 },
+  { x: 87.5, y: 160, label: '23:47', dx: 0, dy: 28 },
+];
+
+const loopPath =
+  'M200 100 C260 20 380 20 380 100 C380 180 260 180 200 100 C140 20 20 20 20 100 C20 180 140 180 200 100 Z';
+---
+
+<figure class="loop-card">
+  <figcaption class="loop-caption">Minh họa: một ngày của cửa hàng khi có ADS-Nolimit</figcaption>
+
+  <div class="loop-art">
+    <svg viewBox="-10 -14 420 230" role="img" aria-labelledby="loop-title">
+      <title id="loop-title">Vòng vô cực tượng trưng cho công việc chạy liên tục 24/7</title>
+      <defs>
+        <linearGradient id="loop-grad" x1="0" y1="0" x2="1" y2="0">
+          <stop offset="0" stop-color="#1800f0"></stop>
+          <stop offset="0.3" stop-color="#4800a8"></stop>
+          <stop offset="0.55" stop-color="#6a2bd8"></stop>
+          <stop offset="0.78" stop-color="#189090"></stop>
+          <stop offset="1" stop-color="#00d878"></stop>
+        </linearGradient>
+        <radialGradient id="dot-glow">
+          <stop offset="0" stop-color="#eed65a" stop-opacity="0.85"></stop>
+          <stop offset="1" stop-color="#eed65a" stop-opacity="0"></stop>
+        </radialGradient>
+      </defs>
+
+      <path id="loop-path" d={loopPath} fill="none" stroke="url(#loop-grad)" stroke-width="15" stroke-linejoin="round"></path>
+      <path
+        d={loopPath}
+        fill="none"
+        stroke="#00d878"
+        stroke-width="1.6"
+        stroke-opacity="0.55"
+        transform="translate(200 100) scale(1.075 1.16) translate(-200 -100)"></path>
+      <path
+        d={loopPath}
+        fill="none"
+        stroke="#7d8bff"
+        stroke-width="1.2"
+        stroke-opacity="0.45"
+        transform="translate(200 100) scale(0.93 0.84) translate(-200 -100)"></path>
+
+      {
+        markers.map((m) => (
+          <g class="marker">
+            <circle cx={m.x} cy={m.y} r="6.5" fill="#070a1a" stroke="#edeffb" stroke-width="2"></circle>
+            <text x={m.x + m.dx} y={m.y + m.dy} text-anchor="middle">
+              {m.label}
+            </text>
+          </g>
+        ))
+      }
+
+      <g class="runner">
+        <circle r="16" fill="url(#dot-glow)">
+          <animateMotion dur="12s" repeatCount="indefinite">
+            <mpath href="#loop-path"></mpath>
+          </animateMotion>
+        </circle>
+        <circle r="5.5" fill="#eed65a">
+          <animateMotion dur="12s" repeatCount="indefinite">
+            <mpath href="#loop-path"></mpath>
+          </animateMotion>
+        </circle>
+      </g>
+      <circle class="runner-static" cx="200" cy="100" r="5.5" fill="#eed65a"></circle>
+    </svg>
+  </div>
+
+  <ol class="loop-events">
+    {
+      events.map((e) => (
+        <li class={`tone-${e.tone}`}>
+          <span class="ev-time">{e.time}</span>
+          <span class="ev-body">
+            <span class="ev-text">{e.text}</span>
+            <span class="ev-service">{e.service}</span>
+          </span>
+        </li>
+      ))
+    }
+  </ol>
+</figure>
+
+<style>
+  .loop-card {
+    margin: 0;
+    padding: clamp(1rem, 0.8rem + 1vw, 1.5rem);
+    border-radius: var(--r-lg);
+    background:
+      radial-gradient(120% 80% at 50% 0%, rgb(72 0 168 / 0.28), transparent 60%),
+      var(--bg-raise);
+    border: 1px solid var(--line);
+  }
+
+  .loop-caption {
+    font-size: var(--step--1);
+    color: var(--text-3);
+  }
+
+  .loop-art {
+    margin: 0.75rem auto 0.5rem;
+    max-width: 30rem;
+  }
+
+  .loop-art svg {
+    width: 100%;
+    height: auto;
+    overflow: visible;
+  }
+
+  .marker text {
+    fill: var(--text-2);
+    font-family: var(--font);
+    font-size: 13px;
+    font-weight: 600;
+  }
+
+  .runner-static {
+    display: none;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .runner {
+      display: none;
+    }
+    .runner-static {
+      display: inline;
+    }
+  }
+
+  .loop-events {
+    list-style: none;
+    display: grid;
+    gap: 0.5rem;
+    margin-top: 0.75rem;
+  }
+
+  .loop-events li {
+    display: grid;
+    grid-template-columns: 3.4rem 1fr;
+    gap: 0.75rem;
+    align-items: start;
+    padding: 0.7rem 0.85rem;
+    border-radius: var(--r-md);
+    background: rgb(7 10 26 / 0.6);
+    border: 1px solid var(--line);
+    border-left: 3px solid var(--tone);
+    font-size: 0.9375rem;
+    line-height: 1.5;
+  }
+
+  .tone-teal {
+    --tone: var(--teal-ink);
+  }
+  .tone-violet {
+    --tone: var(--violet-ink);
+  }
+  .tone-green {
+    --tone: var(--green);
+  }
+
+  .ev-time {
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+    color: var(--text);
+  }
+
+  .ev-body {
+    display: grid;
+    gap: 0.15rem;
+  }
+
+  .ev-service {
+    font-size: 0.8125rem;
+    font-weight: 600;
+    color: var(--tone);
+  }
+</style>

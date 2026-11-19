@@ -1,0 +1,278 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import PageHero from '../components/PageHero.astro';
+import ChatDemo from '../components/ChatDemo.astro';
+import type { ChatMessage } from '../components/ChatDemo.astro';
+import ProcessSteps from '../components/ProcessSteps.astro';
+import PlanCard from '../components/PlanCard.astro';
+import Faq from '../components/Faq.astro';
+import CtaBand from '../components/CtaBand.astro';
+import Icon from '../components/Icon.astro';
+import { links } from '../config/site';
+import { getPlan, pilotOffer, priceNote, starterLeadTime } from '../data/pricing';
+import { agentFaq } from '../data/faq';
+
+const starter = getPlan('ai-starter');
+const sales = getPlan('ai-sales');
+
+const can = [
+  'Trả lời câu hỏi thường gặp dựa trên tài liệu của cửa hàng: giá, giờ mở cửa, chính sách đổi trả, phí giao hàng',
+  'Xin số điện thoại, lưu khách vào Google Sheet',
+  'Báo khách mới cho anh/chị qua Telegram hoặc Zalo',
+  'Tra bảng giá, tồn kho và tạo đơn nháp (gói Bán hàng)',
+  'Chuyển cuộc trò chuyện cho nhân viên khi cần (gói Bán hàng)',
+  'Gửi báo cáo hằng tuần (gói Bán hàng)',
+];
+
+const cannot = [
+  'Tự hứa giảm giá hay ưu đãi ngoài chính sách anh/chị đưa',
+  'Tư vấn chuyên môn nhạy cảm như sức khỏe, pháp lý: chuyển cho người thật',
+  'Tự chốt đơn: đơn nháp luôn chờ nhân viên xác nhận',
+  'Nhắn tin hàng loạt hay làm phiền khách chưa hỏi',
+];
+
+const chat: ChatMessage[] = [
+  { from: 'customer', text: 'Serum vitamin C loại 30ml còn hàng không shop?', time: '21:05' },
+  { from: 'ai', text: 'Dạ còn ạ. Serum vitamin C 30ml giá 420.000đ/chai. Chị muốn lấy mấy chai ạ?' },
+  { from: 'customer', text: 'Lấy 2 chai, giao về quận 7 nha.' },
+  { from: 'event', text: 'Đã tạo đơn nháp: 2 chai serum vitamin C 30ml' },
+  {
+    from: 'ai',
+    text: 'Dạ em đã lên đơn nháp 2 chai, tổng 840.000đ, chưa gồm phí giao hàng. Chị cho em xin tên, số điện thoại và địa chỉ để nhân viên xác nhận đơn nhé.',
+  },
+  { from: 'customer', text: 'Mà da chị đang bị kích ứng thì dùng được không em?' },
+  {
+    from: 'ai',
+    text: 'Trường hợp da đang kích ứng, em xin chuyển chị sang nhân viên tư vấn để được hỗ trợ kỹ hơn ạ.',
+  },
+  { from: 'event', text: 'Đã chuyển cuộc trò chuyện cho nhân viên' },
+];
+
+const steps = [
+  {
+    title: 'Khảo sát',
+    text: 'Xem khách hay nhắn ở kênh nào, câu hỏi nào lặp lại nhiều nhất, ai đang trả lời và trả lời mất bao lâu. Miễn phí.',
+  },
+  {
+    title: 'Thiết kế',
+    text: 'Gom bảng giá, chính sách, câu hỏi thường gặp. Thống nhất giọng trả lời, thông tin cần xin của khách và lúc nào chuyển cho người thật.',
+  },
+  {
+    title: 'Triển khai',
+    text: `Kết nối kênh chat, nạp tài liệu, chạy thử nội bộ rồi mới mở cho khách. Gói ${starter.name} thường mất ${starterLeadTime}.`,
+  },
+  {
+    title: 'Đo và tối ưu',
+    text: 'Xem lại những câu AI chưa trả lời được, bổ sung tài liệu, chỉnh kịch bản. Anh/chị góp ý trực tiếp qua Zalo hoặc Telegram.',
+  },
+];
+
+const security = [
+  {
+    icon: 'sheet' as const,
+    title: 'Dữ liệu nằm trong tài khoản của anh/chị',
+    text: 'Danh sách khách được lưu vào Google Sheet, fanpage, Zalo OA do chính doanh nghiệp sở hữu.',
+  },
+  {
+    icon: 'chat' as const,
+    title: 'Chỉ hỏi điều cần thiết',
+    text: 'AI Agent chỉ xin thông tin phục vụ việc chăm sóc khách: tên, số điện thoại, nhu cầu. Không hỏi giấy tờ tùy thân hay số tài khoản.',
+  },
+  {
+    icon: 'lock' as const,
+    title: 'Quyền truy cập thu hồi được',
+    text: 'ADS-Nolimit dùng quyền quản trị để cài đặt và bảo trì. Anh/chị có thể thu hồi bất cứ lúc nào.',
+  },
+  {
+    icon: 'bolt' as const,
+    title: 'Minh bạch về dịch vụ AI',
+    text: 'Để tạo câu trả lời, nội dung tin nhắn được xử lý bởi dịch vụ AI. ADS-Nolimit nói rõ dùng dịch vụ nào ngay ở bước thiết kế.',
+  },
+];
+---
+
+<BaseLayout
+  title="Giải pháp AI Agent bán hàng & chăm sóc khách | ADS-Nolimit"
+  description={`AI Agent trả lời khách 24/7 trên Messenger, Zalo OA, website theo tài liệu của cửa hàng; xin số điện thoại, lưu Google Sheet, báo khách mới. Gói Khởi đầu cài đặt ${starter.prices[0].value}.`}
+>
+  <PageHero
+    title="AI Agent: nhân viên trực tin nhắn không nghỉ, trả lời theo tài liệu của chính anh/chị"
+    lead="AI Agent trả lời khách trên Messenger, Zalo OA hoặc website. Nó dựa vào bảng giá, chính sách và câu hỏi thường gặp của cửa hàng, giữ lại thông tin khách và báo anh/chị khi có khách mới."
+  >
+    <a class="btn btn-primary" href={links.zalo} rel="noopener"><Icon name="zalo" /> Tư vấn miễn phí qua Zalo</a>
+    <a class="btn" href="#goi-gia">Xem gói & giá</a>
+  </PageHero>
+
+  <section class="section" aria-labelledby="can-title">
+    <div class="container">
+      <div class="section-head">
+        <h2 id="can-title">AI Agent làm được gì</h2>
+        <p>Và quan trọng không kém: những việc nó được cài để không làm.</p>
+      </div>
+      <div class="grid-2">
+        <div class="panel">
+          <h3 class="list-title">Làm được</h3>
+          <ul class="checklist">{can.map((item) => <li>{item}</li>)}</ul>
+        </div>
+        <div class="panel">
+          <h3 class="list-title">Không tự làm</h3>
+          <ul class="crosslist">{cannot.map((item) => <li>{item}</li>)}</ul>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="section section--raise" aria-labelledby="demo-title">
+    <div class="container split demo">
+      <div>
+        <h2 id="demo-title">Hội thoại minh họa: shop mỹ phẩm trên Zalo OA</h2>
+        <p class="lead demo-lead">
+          Khách hỏi hàng lúc 9 giờ tối. AI tra giá và tồn kho, lên đơn nháp, rồi chuyển cho nhân viên khi khách hỏi chuyện
+          da kích ứng: câu hỏi cần người có chuyên môn trả lời.
+        </p>
+        <ul class="checklist">
+          <li>Giá và tồn kho lấy từ bảng của shop, không phải AI tự đoán</li>
+          <li>Đơn nháp chờ nhân viên xác nhận trước khi giao</li>
+          <li>Câu hỏi nhạy cảm được chuyển cho người thật</li>
+        </ul>
+      </div>
+      <div class="demo-chat">
+        <ChatDemo agentName="Trợ lý AI của Shop Mỹ Phẩm Mẫu" channel="Zalo OA" messages={chat} />
+      </div>
+    </div>
+  </section>
+
+  <section class="section" aria-labelledby="steps-title">
+    <div class="container">
+      <div class="section-head">
+        <h2 id="steps-title">Triển khai trong 4 bước</h2>
+        <p>Anh/chị duyệt kịch bản trước khi AI nói chuyện với khách thật.</p>
+      </div>
+      <ProcessSteps steps={steps} />
+    </div>
+  </section>
+
+  <section class="section section--raise" aria-labelledby="security-title">
+    <div class="container">
+      <div class="section-head">
+        <h2 id="security-title">Bảo mật dữ liệu khách hàng</h2>
+        <p>
+          Luật Bảo vệ dữ liệu cá nhân (91/2025/QH15) có hiệu lực từ 01/01/2026. AI Agent được thiết kế để anh/chị chủ động
+          với dữ liệu của khách.
+        </p>
+      </div>
+      <ul class="security">
+        {
+          security.map((s) => (
+            <li>
+              <span class="sec-icon">
+                <Icon name={s.icon} />
+              </span>
+              <h3>{s.title}</h3>
+              <p>{s.text}</p>
+            </li>
+          ))
+        }
+      </ul>
+      <p class="note">
+        Khi khách yêu cầu xóa dữ liệu, anh/chị xóa được ngay trong bảng tính của mình. Đọc thêm:
+        <a href="/blog/luat-tri-tue-nhan-tao-va-bao-ve-du-lieu-ca-nhan-2026/">chủ shop cần biết gì về Luật AI và Luật Bảo vệ dữ liệu cá nhân</a>.
+      </p>
+    </div>
+  </section>
+
+  <section class="section" id="goi-gia" aria-labelledby="plans-title">
+    <div class="container">
+      <div class="section-head">
+        <h2 id="plans-title">Gói & giá</h2>
+        <p>Phí cài đặt trả khi triển khai, phí duy trì trả hằng tháng trong giới hạn hội thoại của gói.</p>
+      </div>
+      <div class="grid-2">
+        <PlanCard plan={starter} showLink={false} />
+        <PlanCard plan={sales} showLink={false} />
+      </div>
+      {
+        pilotOffer.active && (
+          <p class="pilot">
+            <strong>{pilotOffer.title}:</strong> {pilotOffer.text}
+          </p>
+        )
+      }
+      <p class="note">{priceNote}</p>
+    </div>
+  </section>
+
+  <section class="section section--raise" aria-labelledby="faq-title">
+    <div class="container">
+      <div class="section-head">
+        <h2 id="faq-title">Câu hỏi thường gặp về AI Agent</h2>
+      </div>
+      <Faq items={agentFaq} />
+    </div>
+  </section>
+
+  <CtaBand
+    title="Muốn biết AI Agent trả lời khách của anh/chị thế nào?"
+    text="Gửi vài câu khách hay hỏi qua Zalo. ADS-Nolimit sẽ cho anh/chị xem bản nháp cách AI trả lời trước khi quyết định."
+  />
+</BaseLayout>
+
+<style>
+  .list-title {
+    font-size: var(--step-1);
+    margin-bottom: 1rem;
+  }
+
+  .demo {
+    align-items: center;
+  }
+  .demo-lead {
+    margin: 1rem 0 1.25rem;
+  }
+  .demo-chat {
+    display: flex;
+    justify-content: center;
+  }
+
+  .security {
+    list-style: none;
+    display: grid;
+    gap: 1.75rem;
+  }
+  @media (min-width: 768px) {
+    .security {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 2rem 3rem;
+    }
+  }
+  @media (min-width: 1100px) {
+    .security {
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+    }
+  }
+
+  .sec-icon {
+    display: grid;
+    place-items: center;
+    width: 2.75rem;
+    height: 2.75rem;
+    margin-bottom: 0.85rem;
+    border-radius: 12px;
+    background: var(--bg);
+    border: 1px solid var(--line-strong);
+    color: var(--teal-ink);
+  }
+  .sec-icon svg {
+    width: 1.3rem;
+    height: 1.3rem;
+  }
+
+  .security h3 {
+    font-size: var(--step-1);
+  }
+  .security p {
+    margin-top: 0.4rem;
+    color: var(--text-2);
+  }
+
+</style>

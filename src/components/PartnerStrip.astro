@@ -1,0 +1,129 @@
+---
+/**
+ * Dải huy hiệu "Đối tác nền tảng" (Meta, Google, Shopify, TikTok Shop).
+ * Danh sách, ảnh và link xác minh nằm ở `partners` trong src/config/site.ts.
+ *
+ * - Mặc định: chỉ khối tiêu đề + huy hiệu, đặt vào trong một khối có sẵn (ví dụ hero trang chủ).
+ * - `band`: tự bọc trong một dải ngang có container, dùng ngay dưới đầu trang con.
+ *
+ * Không có JavaScript. Ảnh có width/height cố định, ô có chiều cao cố định → không xô lệch bố cục.
+ */
+import { Image } from 'astro:assets';
+import { partners } from '../config/site';
+
+interface Props {
+  lang?: 'vi' | 'en';
+  band?: boolean;
+  /** id cho tiêu đề (duy nhất trong trang) */
+  id?: string;
+}
+
+const { lang = 'vi', band = false, id = 'partners-title' } = Astro.props;
+
+const t =
+  lang === 'en'
+    ? { heading: 'Platform partners', newTab: ' (opens in a new tab)' }
+    : { heading: 'Đối tác nền tảng', newTab: ' (mở trong tab mới)' };
+
+const Tag = band ? 'section' : 'div';
+---
+
+<Tag class:list={['partners', band && 'partners-band container']} aria-labelledby={band ? id : undefined}>
+  <h2 id={id} class="partners-title">{t.heading}</h2>
+  <ul class="partners-list" aria-labelledby={id}>
+    {
+      partners.map((p) => (
+        <li>
+          {p.verifyUrl ? (
+            <a class="partner-tile" href={p.verifyUrl} target="_blank" rel="noopener">
+              <Image
+                src={p.image}
+                alt={p.alt}
+                width={130}
+                height={52}
+                densities={[1, 2]}
+                loading="lazy"
+                decoding="async"
+                class="partner-logo"
+              />
+              <span class="visually-hidden">{t.newTab}</span>
+            </a>
+          ) : (
+            <span class="partner-tile">
+              <Image
+                src={p.image}
+                alt={p.alt}
+                width={130}
+                height={52}
+                densities={[1, 2]}
+                loading="lazy"
+                decoding="async"
+                class="partner-logo"
+              />
+            </span>
+          )}
+        </li>
+      ))
+    }
+  </ul>
+</Tag>
+
+<style>
+  .partners-band {
+    padding-block: clamp(1.75rem, 1.4rem + 1.5vw, 2.5rem);
+  }
+
+  .partners-title {
+    margin-bottom: 0.75rem;
+    font-size: var(--step--1);
+    font-weight: 600;
+    line-height: 1.4;
+    letter-spacing: 0.01em;
+    color: var(--text-3);
+  }
+
+  /* 2×2 khi hẹp; 4 ô một hàng khi đủ chỗ cho logo ≈ 120px (theo bề rộng khối, không theo màn hình,
+     vì ở trang chủ desktop khối này nằm trong cột trái của hero). */
+  .partners {
+    container-type: inline-size;
+  }
+
+  .partners-list {
+    list-style: none;
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.5rem;
+    max-width: 24rem;
+  }
+
+  @container (min-width: 35.5rem) {
+    .partners-list {
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      max-width: 44rem;
+    }
+  }
+
+  /* Ô sáng để logo gốc (chữ đen, xám) đọc rõ trên nền tối. Chiều cao cố định. */
+  .partner-tile {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 4.5rem;
+    padding: 0.5rem;
+    border-radius: var(--r-md);
+    background: #e9ecf6;
+  }
+
+  a.partner-tile {
+    transition: background-color 0.15s ease;
+  }
+  a.partner-tile:hover {
+    background: #fff;
+  }
+
+  .partner-logo {
+    width: 100%;
+    max-width: 130px;
+    height: auto;
+  }
+</style>

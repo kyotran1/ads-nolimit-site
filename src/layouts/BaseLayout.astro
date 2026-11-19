@@ -1,0 +1,53 @@
+---
+import '@fontsource/be-vietnam-pro/400.css';
+import '@fontsource/be-vietnam-pro/500.css';
+import '@fontsource/be-vietnam-pro/600.css';
+import '@fontsource/be-vietnam-pro/700.css';
+import '@fontsource/be-vietnam-pro/800.css';
+import '../styles/global.css';
+
+import Seo from '../components/Seo.astro';
+import Header from '../components/Header.astro';
+import Footer from '../components/Footer.astro';
+import MobileContactBar from '../components/MobileContactBar.astro';
+import Analytics from '../components/Analytics.astro';
+
+interface Props {
+  title: string;
+  description: string;
+  image?: string;
+  type?: 'website' | 'article';
+  noindex?: boolean;
+  lang?: 'vi' | 'en';
+  alternate?: { vi: string; en: string };
+  publishedTime?: string;
+}
+
+const { lang = 'vi', ...seo } = Astro.props;
+---
+
+<!doctype html>
+<html lang={lang}>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <meta name="theme-color" content="#070a1a" />
+    <meta name="generator" content={Astro.generator} />
+    <link rel="icon" href="/favicon.ico" sizes="48x48" />
+    <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png" />
+    <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16.png" />
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+    <link rel="manifest" href="/site.webmanifest" />
+    <Seo lang={lang} {...seo} />
+    <Analytics />
+  </head>
+  <body>
+    <a class="skip-link" href="#noi-dung">{lang === 'en' ? 'Skip to content' : 'Bỏ qua, tới nội dung chính'}</a>
+    <Header lang={lang} />
+    <main id="noi-dung">
+      <slot />
+    </main>
+    <Footer lang={lang} />
+    <MobileContactBar lang={lang} />
+  </body>
+</html>

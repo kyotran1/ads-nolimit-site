@@ -1,0 +1,190 @@
+---
+import { Image } from 'astro:assets';
+import logoFull from '../assets/brand/logo-full.png';
+import { site, contact, links, solutionsNav } from '../config/site';
+
+interface Props {
+  lang?: 'vi' | 'en';
+}
+const { lang = 'vi' } = Astro.props;
+const year = new Date().getFullYear();
+---
+
+<footer class="site-footer">
+  <div class="container footer-grid">
+    <div class="footer-brand">
+      <a href={lang === 'en' ? '/en/' : '/'} class="footer-logo" aria-label={site.name}>
+        <Image src={logoFull} alt="Logo ADS-Nolimit" width={150} densities={[1, 2]} />
+      </a>
+      {
+        lang === 'en' ? (
+          <p class="muted small">Advertising and AI agents for Vietnamese businesses. Running ads since 2016.</p>
+        ) : (
+          <p class="muted small">
+            Quảng cáo & AI Agent cho doanh nghiệp. Làm quảng cáo từ 2016, đã phục vụ hơn 800 khách hàng.
+          </p>
+        )
+      }
+    </div>
+
+    {
+      lang === 'vi' && (
+        <nav class="footer-col" aria-label="Giải pháp">
+          <p class="footer-title">Giải pháp</p>
+          <ul>
+            {solutionsNav.map((item) => (
+              <li>
+                <a href={item.href}>{item.label}</a>
+              </li>
+            ))}
+          </ul>
+        </nav>
+      )
+    }
+
+    {
+      lang === 'vi' && (
+        <nav class="footer-col" aria-label="ADS-Nolimit">
+          <p class="footer-title">ADS-Nolimit</p>
+          <ul>
+            <li>
+              <a href="/bang-gia/">Bảng giá</a>
+            </li>
+            <li>
+              <a href="/du-an/">Dự án</a>
+            </li>
+            <li>
+              <a href="/blog/">Blog</a>
+            </li>
+            <li>
+              <a href="/ve-chung-toi/">Về chúng tôi</a>
+            </li>
+            <li>
+              <a href="/lien-he/">Liên hệ</a>
+            </li>
+            <li>
+              <a href="/chinh-sach-bao-mat/">Chính sách bảo mật</a>
+            </li>
+            <li>
+              <a href="/en/" lang="en" hreflang="en">
+                English
+              </a>
+            </li>
+          </ul>
+        </nav>
+      )
+    }
+
+    <div class="footer-col">
+      <p class="footer-title">{lang === 'en' ? 'Contact' : 'Liên hệ'}</p>
+      <ul class="footer-contacts">
+        <li>Hotline: <a href={links.hotline}>{contact.hotline}</a></li>
+        <li>{lang === 'en' ? 'Phone & Zalo' : 'Điện thoại & Zalo'}: <a href={links.phone}>{contact.zaloPhone}</a></li>
+        <li>{lang === 'en' ? 'Assistant' : 'Trợ lý'}: <a href={links.assistant}>{contact.assistantPhone}</a></li>
+        <li>Telegram: <a href={links.telegram} rel="noopener">@{contact.telegramUser}</a></li>
+        <li>Email: <a href={links.email}>{contact.email}</a></li>
+        <li>Fanpage: <a href={links.facebook} rel="noopener">{contact.facebookName}</a></li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="container">
+    <div class="footer-bottom">
+    <p>© {year} {site.name}</p>
+    {
+      lang === 'en' ? (
+        <p>Illustrations on this site are drawn in SVG/CSS with AI assistance.</p>
+      ) : (
+        <p>Hình minh họa trên site được vẽ bằng SVG/CSS, có sử dụng AI.</p>
+      )
+    }
+    </div>
+  </div>
+</footer>
+
+<style>
+  .site-footer {
+    border-top: 1px solid var(--line);
+    background: #050716;
+    padding-top: clamp(2.5rem, 2rem + 3vw, 4rem);
+    font-size: 0.9375rem;
+  }
+
+  .footer-grid {
+    display: grid;
+    gap: 2rem;
+  }
+
+  @media (min-width: 640px) {
+    .footer-grid {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+  }
+  @media (min-width: 1024px) {
+    .footer-grid {
+      grid-template-columns: 1.3fr 1fr 0.8fr 1.3fr;
+      gap: 2.5rem;
+    }
+  }
+
+  .footer-logo {
+    display: inline-block;
+    margin-bottom: 0.75rem;
+  }
+  .footer-logo img {
+    width: 150px;
+  }
+
+  .footer-brand p {
+    max-width: 22rem;
+  }
+
+  .footer-title {
+    font-weight: 700;
+    margin-bottom: 0.75rem;
+  }
+
+  .footer-col ul {
+    list-style: none;
+    display: grid;
+    gap: 0.5rem;
+  }
+
+  .footer-col a {
+    color: var(--text-2);
+    text-decoration: none;
+  }
+  .footer-col a:hover {
+    color: var(--text);
+    text-decoration: underline;
+  }
+
+  .footer-contacts li {
+    color: var(--text-3);
+    overflow-wrap: anywhere;
+  }
+  .footer-contacts a {
+    color: var(--text);
+    text-decoration: underline;
+    text-decoration-color: var(--line-strong);
+    text-underline-offset: 0.25em;
+  }
+  .footer-contacts a:hover {
+    text-decoration-color: var(--text);
+  }
+
+  .footer-bottom {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    gap: 0.5rem 2rem;
+    margin-top: 2.5rem;
+    padding-block: 1.25rem 1.5rem;
+    border-top: 1px solid var(--line);
+    color: var(--text-3);
+    font-size: 0.8125rem;
+  }
+  .footer-bottom p {
+    margin: 0;
+  }
+</style>

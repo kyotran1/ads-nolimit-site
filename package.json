@@ -1,0 +1,21 @@
+{
+  "name": "ads-nolimit-website",
+  "type": "module",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Website ADS-Nolimit: Quảng cáo & AI Agent cho doanh nghiệp",
+  "engines": {
+    "node": ">=22.23.4"
+  },
+  "scripts": {
+    "dev": "astro dev",
+    "build": "astro build",
+    "preview": "astro preview",
+    "astro": "astro"
+  },
+  "dependencies": {
+    "@fontsource/be-vietnam-pro": "^5.3.0",
+    "astro": "^7.4.7",
+    "sharp": "^0.35.5"
+  }
+}
