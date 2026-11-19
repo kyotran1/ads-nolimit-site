@@ -1,64 +1,281 @@
 ---
 /**
- * Khung chat mô phỏng AI Agent. LUÔN có nhãn "Hội thoại minh họa".
+ * Khung chat mô phỏng AI Agent, tự phát như một đoạn video ngắn.
+ * LUÔN có nhãn "Hội thoại minh họa" / "Illustrative conversation" (không bao giờ bị ẩn).
+ *
+ * - Không JavaScript hoặc người dùng bật "giảm chuyển động": hiện toàn bộ hội thoại, không tự phát.
+ * - Có JavaScript: tin nhắn hiện lần lượt (khách → "đang nhập…" → AI trả lời → thông báo hệ thống),
+ *   tự phát khi cuộn tới, tạm dừng khi ra khỏi màn hình, lặp lại sau vài giây.
+ * - Chiều cao khung chat = chiều cao hội thoại đầy đủ (mọi tin luôn chiếm chỗ) → không xô lệch bố cục.
  */
 import Icon from './Icon.astro';
+import type { IconName } from './Icon.astro';
+import type { Lang } from '../config/i18n';
 
 export interface ChatMessage {
   from: 'customer' | 'ai' | 'event';
   text: string;
+  /** Giờ hiện dưới tin nhắn (ví dụ tin đầu tiên) */
   time?: string;
+  /** Icon cho thông báo hệ thống (event) */
+  icon?: IconName;
 }
 
 interface Props {
+  lang?: Lang;
   /** Tên hiển thị của trợ lý trong khung chat */
   agentName: string;
   /** Kênh hiển thị, ví dụ "Messenger" */
   channel: string;
   messages: ChatMessage[];
-  /** Ghi chú nhỏ bên dưới nhãn */
+  /** Giờ ở góc header (giờ khuya của cuộc trò chuyện) */
+  clock?: string;
+  /** Ghi chú nhỏ bên dưới khung */
   note?: string;
 }
 
-const { agentName, channel, messages, note = 'Tên cửa hàng, sản phẩm và giá trong hội thoại là ví dụ.' } = Astro.props;
+const { lang = 'vi', agentName, channel, messages, clock } = Astro.props;
+
+const copy = {
+  vi: {
+    badge: 'Hội thoại minh họa',
+    note: 'Tên cửa hàng, sản phẩm và giá trong hội thoại là ví dụ.',
+    via: `Trả lời qua ${channel}`,
+    typing: 'đang nhập…',
+    customer: 'Khách:',
+    ai: 'AI Agent:',
+    play: 'Phát hội thoại minh họa',
+    pause: 'Tạm dừng hội thoại minh họa',
+    replay: 'Phát lại từ đầu',
+    caption: 'Hội thoại minh họa giữa khách hàng và AI Agent, không phải hội thoại thật.',
+    clock: 'Giờ trong hội thoại',
+  },
+  en: {
+    badge: 'Illustrative conversation',
+    note: 'Shop names, products and prices in this conversation are examples.',
+    via: `Replies on ${channel}`,
+    typing: 'typing…',
+    customer: 'Customer:',
+    ai: 'AI agent:',
+    play: 'Play the illustrative conversation',
+    pause: 'Pause the illustrative conversation',
+    replay: 'Replay from the start',
+    caption: 'An illustrative conversation between a customer and an AI agent, not a real one.',
+    clock: 'Time in the conversation',
+  },
+}[lang];
+
+const note = Astro.props.note ?? copy.note;
+const clockTime = clock ?? messages.find((m) => m.time)?.time;
 ---
 
-<figure class="chat">
-  <div class="chat-label">
-    <span class="tag tag--sun">Hội thoại minh họa</span>
-    <span class="chat-note">{note}</span>
-  </div>
-
+<figure class="chat" data-chat data-label-play={copy.play} data-label-pause={copy.pause}>
   <div class="chat-window">
     <div class="chat-head">
       <span class="chat-avatar" aria-hidden="true">AI</span>
       <span class="chat-who">
         <strong>{agentName}</strong>
-        <span>Trả lời qua {channel}</span>
+        <span class="chat-status">
+          <span class="status-via">{copy.via}</span>
+          <span class="status-typing" aria-hidden="true">{copy.typing}</span>
+        </span>
       </span>
+      {
+        clockTime && (
+          <span class="chat-clock" title={copy.clock}>
+            <Icon name="clock" />
+            <span>{clockTime}</span>
+          </span>
+        )
+      }
     </div>
 
     <ol class="chat-log">
+      <li class="chat-badge">
+        <Icon name="spark" />
+        {copy.badge}
+      </li>
       {
         messages.map((m) =>
           m.from === 'event' ? (
-            <li class="msg-event">
-              <Icon name="bolt" />
+            <li class="msg-event" data-step="event" data-len={m.text.length}>
+              <Icon name={m.icon ?? 'bolt'} />
               <span>{m.text}</span>
             </li>
           ) : (
-            <li class:list={['msg', m.from === 'ai' ? 'msg-ai' : 'msg-customer']}>
-              <span class="visually-hidden">{m.from === 'ai' ? 'AI Agent:' : 'Khách:'}</span>
-              <p>{m.text}</p>
-              {m.time && <span class="msg-time">{m.time}</span>}
+            <li
+              class:list={['msg', m.from === 'ai' ? 'msg-ai' : 'msg-customer']}
+              data-step={m.from}
+              data-len={m.text.length}
+            >
+              {m.from === 'ai' && (
+                <span class="typing" aria-hidden="true">
+                  <i />
+                  <i />
+                  <i />
+                </span>
+              )}
+              <span class="bubble">
+                <span class="visually-hidden">{m.from === 'ai' ? copy.ai : copy.customer}</span>
+                <span class="bubble-text">{m.text}</span>
+                {m.time && <span class="msg-time">{m.time}</span>}
+              </span>
             </li>
           ),
         )
       }
     </ol>
+
+    <div class="chat-strip">
+      <p class="strip-note">{note}</p>
+      <div class="strip-player">
+        <button type="button" class="cc-btn" data-act="toggle" aria-label={copy.pause}>
+          <Icon name="pause" class="i-pause" />
+          <Icon name="play" class="i-play" />
+        </button>
+        <span class="cc-track" aria-hidden="true"><span class="cc-fill"></span></span>
+        <button type="button" class="cc-btn" data-act="replay" aria-label={copy.replay}>
+          <Icon name="replay" />
+        </button>
+      </div>
+    </div>
   </div>
-  <figcaption class="visually-hidden">Hội thoại minh họa giữa khách hàng và AI Agent, không phải hội thoại thật.</figcaption>
+  <figcaption class="chat-caption">
+    <span class="visually-hidden">{copy.caption}</span>
+    <span class="caption-note" aria-hidden="true">{note}</span>
+  </figcaption>
 </figure>
+
+<script>
+  // Phát hội thoại minh họa như video. Không thư viện. Tôn trọng prefers-reduced-motion.
+  type State = 'hidden' | 'typing' | 'shown';
+  interface Step {
+    el: HTMLElement;
+    typingAt: number;
+    showAt: number;
+    state?: State;
+  }
+
+  const clamp = (v: number, lo: number, hi: number) => Math.min(hi, Math.max(lo, v));
+  const reduce = window.matchMedia('(prefers-reduced-motion: reduce)');
+
+  function setup(root: HTMLElement) {
+    const items = Array.from(root.querySelectorAll<HTMLElement>('[data-step]'));
+    const fill = root.querySelector<HTMLElement>('.cc-fill');
+    const toggle = root.querySelector<HTMLButtonElement>('[data-act="toggle"]');
+    const replay = root.querySelector<HTMLButtonElement>('[data-act="replay"]');
+    if (!items.length || !fill || !toggle || !replay) return;
+
+    // Dựng dòng thời gian (ms): độ dài tin nhắn quyết định thời gian "đang nhập" và thời gian đọc.
+    const steps: Step[] = [];
+    let cursor = 700;
+    for (const el of items) {
+      const kind = el.dataset.step;
+      const len = Number(el.dataset.len) || 40;
+      const read = clamp(700 + len * 17, 900, 2600);
+      if (kind === 'ai') {
+        const typing = clamp(900 + len * 4, 1000, 1500);
+        steps.push({ el, typingAt: cursor, showAt: cursor + typing });
+        cursor += typing + read;
+      } else if (kind === 'event') {
+        steps.push({ el, typingAt: cursor, showAt: cursor });
+        cursor += 950;
+      } else {
+        steps.push({ el, typingAt: cursor, showAt: cursor });
+        cursor += read;
+      }
+    }
+    const total = steps[steps.length - 1].showAt + 700; // thanh tiến trình đầy khi tin cuối đã hiện
+    const hold = 4200; // dừng ở cuối trước khi lặp
+    const fade = 450;
+
+    let t = 0;
+    let playing = false;
+    let inView = false;
+    let userPaused = false;
+    let last = 0;
+    let raf = 0;
+
+    const render = () => {
+      let typing = false;
+      for (const s of steps) {
+        const state: State = t >= s.showAt ? 'shown' : t >= s.typingAt && s.typingAt < s.showAt ? 'typing' : 'hidden';
+        if (state === 'typing') typing = true;
+        if (state !== s.state) {
+          s.state = state;
+          s.el.dataset.state = state;
+        }
+      }
+      root.classList.toggle('is-typing', typing);
+      root.classList.toggle('is-fading', t >= total + hold);
+      fill.style.transform = `scaleX(${Math.min(1, t / total)})`;
+    };
+
+    const frame = (now: number) => {
+      const dt = Math.min(now - last, 100);
+      last = now;
+      t += dt;
+      if (t >= total + hold + fade) t = 0; // lặp lại
+      render();
+      raf = requestAnimationFrame(frame);
+    };
+
+    const updateButton = () => {
+      root.classList.toggle('is-paused', !playing);
+      toggle.setAttribute('aria-label', (playing ? root.dataset.labelPause : root.dataset.labelPlay) ?? '');
+    };
+
+    const play = () => {
+      if (playing) return;
+      playing = true;
+      last = performance.now();
+      raf = requestAnimationFrame(frame);
+      updateButton();
+    };
+    const pause = () => {
+      playing = false;
+      cancelAnimationFrame(raf);
+      updateButton();
+    };
+    const sync = () => (inView && !userPaused && !document.hidden ? play() : pause());
+
+    toggle.addEventListener('click', () => {
+      if (playing) {
+        userPaused = true;
+        pause();
+      } else {
+        userPaused = false;
+        if (t >= total) t = 0;
+        play();
+      }
+    });
+    replay.addEventListener('click', () => {
+      t = 0;
+      userPaused = false;
+      render();
+      play();
+    });
+    document.addEventListener('visibilitychange', sync);
+
+    // Tự phát khi ít nhất 1/4 khung chat nằm trong màn hình; ra ngoài thì tạm dừng.
+    new IntersectionObserver(
+      (entries) => {
+        const entry = entries[entries.length - 1];
+        inView = entry.isIntersecting && entry.intersectionRatio >= 0.25;
+        sync();
+      },
+      { threshold: [0, 0.25, 0.5] },
+    ).observe(root);
+
+    root.classList.add('is-player');
+    render();
+    updateButton();
+  }
+
+  if (!reduce.matches) {
+    document.querySelectorAll<HTMLElement>('[data-chat]').forEach(setup);
+  }
+</script>
 
 <style>
   .chat {
@@ -67,37 +284,31 @@ const { agentName, channel, messages, note = 'Tên cửa hàng, sản phẩm và
     width: 100%;
   }
 
-  .chat-label {
-    display: flex;
-    flex-wrap: wrap;
-    align-items: center;
-    gap: 0.4rem 0.75rem;
-    margin-bottom: 0.75rem;
-  }
-
-  .chat-note {
-    font-size: 0.8125rem;
-    color: var(--text-3);
-  }
-
   .chat-window {
+    position: relative;
     border-radius: 26px;
     border: 1px solid var(--line-strong);
-    background: #0b1028;
+    background:
+      radial-gradient(120% 60% at 50% 0%, rgb(72 0 168 / 0.16), transparent 60%),
+      #0a0f27;
     overflow: hidden;
-    box-shadow: 0 30px 60px -30px rgb(24 0 240 / 0.45);
+    box-shadow:
+      var(--shadow-glow),
+      inset 0 1px 0 rgb(255 255 255 / 0.05);
   }
 
+  /* ---------- Header ---------- */
   .chat-head {
     display: flex;
     align-items: center;
     gap: 0.75rem;
-    padding: 0.9rem 1rem;
+    padding: 0.85rem 1rem;
     border-bottom: 1px solid var(--line);
-    background: var(--bg-raise);
+    background: rgb(18 26 64 / 0.75);
   }
 
   .chat-avatar {
+    position: relative;
     display: grid;
     place-items: center;
     width: 2.4rem;
@@ -106,61 +317,148 @@ const { agentName, channel, messages, note = 'Tên cửa hàng, sản phẩm và
     background: var(--grad);
     color: #fff;
     font-weight: 800;
-    font-size: 0.85rem;
+    font-size: 0.8125rem;
     flex: none;
+  }
+  .chat-avatar::after {
+    content: '';
+    position: absolute;
+    right: 0;
+    bottom: 0;
+    width: 0.7rem;
+    height: 0.7rem;
+    border-radius: 50%;
+    background: var(--green);
+    box-shadow: 0 0 0 2px #121a40;
   }
 
   .chat-who {
     display: grid;
+    min-width: 0;
     line-height: 1.35;
+    margin-right: auto;
   }
   .chat-who strong {
-    font-size: 0.9688rem;
+    font-size: 0.9375rem;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
   }
-  .chat-who span {
+
+  .chat-status {
+    display: grid;
     font-size: 0.8125rem;
     color: var(--text-3);
   }
+  .chat-status > span {
+    grid-area: 1 / 1;
+    transition: opacity 0.2s ease;
+  }
+  .status-typing {
+    opacity: 0;
+    color: var(--green-ink);
+  }
+  .chat.is-typing .status-typing {
+    opacity: 1;
+  }
+  .chat.is-typing .status-via {
+    opacity: 0;
+  }
 
+  .chat-clock {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3rem;
+    flex: none;
+    padding: 0.2rem 0.55rem;
+    border-radius: 999px;
+    background: rgb(7 10 26 / 0.7);
+    border: 1px solid var(--line);
+    font-size: 0.8125rem;
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
+    color: var(--text-2);
+  }
+  .chat-clock :global(svg) {
+    width: 0.9rem;
+    height: 0.9rem;
+    color: var(--violet-ink);
+  }
+
+  /* ---------- Log ---------- */
   .chat-log {
     list-style: none;
     display: flex;
     flex-direction: column;
     gap: 0.6rem;
-    padding: 1rem;
+    padding: 0.9rem 1rem 1.1rem;
+    transition: opacity 0.45s ease;
+  }
+  .chat.is-fading .chat-log {
+    opacity: 0;
+  }
+
+  .chat-badge {
+    align-self: center;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    margin-bottom: 0.25rem;
+    padding: 0.15rem 0.7rem;
+    border-radius: 999px;
+    border: 1px solid rgb(238 214 90 / 0.45);
+    background: rgb(238 214 90 / 0.08);
+    color: var(--sun);
+    font-size: 0.75rem;
+    font-weight: 700;
+    line-height: 1.6;
+  }
+  .chat-badge :global(svg) {
+    width: 0.8rem;
+    height: 0.8rem;
   }
 
   .msg {
+    position: relative;
+    display: flex;
     max-width: 86%;
+  }
+  .msg-customer {
+    align-self: flex-end;
+    justify-content: flex-end;
+  }
+  .msg-ai {
+    align-self: flex-start;
+  }
+
+  .bubble {
+    display: block;
     padding: 0.6rem 0.85rem;
     border-radius: 18px;
     font-size: 0.9375rem;
     line-height: 1.5;
+    transition:
+      opacity 0.35s ease,
+      transform 0.4s cubic-bezier(0.2, 0.8, 0.2, 1);
   }
-
-  .msg-customer {
-    align-self: flex-end;
-    background: #232c66;
+  .msg-customer .bubble {
+    background: linear-gradient(160deg, #2a33a0, #1d2575);
     border-bottom-right-radius: 6px;
+    transform-origin: 100% 100%;
   }
-
-  .msg-ai {
-    align-self: flex-start;
-    background: var(--bg-raise-2);
+  .msg-ai .bubble {
+    background: var(--surface-2);
     border: 1px solid var(--line);
     border-bottom-left-radius: 6px;
+    transform-origin: 0 100%;
   }
 
   .msg-time {
     display: block;
     margin-top: 0.2rem;
     font-size: 0.75rem;
-    color: var(--text-3);
+    color: #c3c8ea;
     text-align: right;
-  }
-
-  .msg-customer .msg-time {
-    color: var(--text-2);
   }
 
   .msg-event {
@@ -170,15 +468,199 @@ const { agentName, channel, messages, note = 'Tên cửa hàng, sản phẩm và
     gap: 0.4rem;
     padding: 0.3rem 0.75rem;
     border-radius: 999px;
-    border: 1px dashed rgb(0 216 120 / 0.55);
+    border: 1px solid rgb(0 216 120 / 0.45);
+    background: rgb(0 216 120 / 0.07);
     color: var(--green-ink);
     font-size: 0.8125rem;
     font-weight: 600;
     text-align: center;
+    transition:
+      opacity 0.3s ease,
+      transform 0.35s cubic-bezier(0.2, 0.8, 0.2, 1.4);
   }
-  .msg-event svg {
+  .msg-event :global(svg) {
     width: 0.95rem;
     height: 0.95rem;
     flex: none;
+  }
+
+  /* "đang nhập…": bong bóng nhỏ đè lên chỗ đã chừa sẵn cho câu trả lời */
+  .typing {
+    position: absolute;
+    left: 0;
+    top: 0;
+    display: none;
+    gap: 4px;
+    align-items: center;
+    padding: 0.85rem 0.95rem;
+    border-radius: 18px;
+    border-bottom-left-radius: 6px;
+    background: var(--surface-2);
+    border: 1px solid var(--line);
+  }
+  .typing i {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: var(--text-2);
+    animation: dot 1.1s infinite ease-in-out;
+  }
+  .typing i:nth-child(2) {
+    animation-delay: 0.15s;
+  }
+  .typing i:nth-child(3) {
+    animation-delay: 0.3s;
+  }
+  @keyframes dot {
+    0%,
+    60%,
+    100% {
+      transform: translateY(0);
+      opacity: 0.45;
+    }
+    30% {
+      transform: translateY(-4px);
+      opacity: 1;
+    }
+  }
+
+  /* Trạng thái khi đang phát (chỉ khi JS chạy và không giảm chuyển động) */
+  .chat.is-player [data-state='hidden'] .bubble,
+  .chat.is-player [data-state='typing'] .bubble {
+    opacity: 0;
+    transform: translateY(10px) scale(0.97);
+  }
+  .chat.is-player .msg-event[data-state='hidden'] {
+    opacity: 0;
+    transform: scale(0.9);
+  }
+  .chat.is-player [data-state='typing'] .typing {
+    display: inline-flex;
+  }
+
+  /* ---------- Thanh điều khiển kiểu video ---------- */
+  .chat-strip {
+    display: grid;
+    align-items: center;
+    min-height: 3.25rem;
+    padding: 0.45rem 0.75rem;
+    border-top: 1px solid var(--line);
+    background: rgb(7 10 26 / 0.65);
+  }
+  .chat-strip > * {
+    grid-area: 1 / 1;
+  }
+
+  .strip-note {
+    padding-inline: 0.25rem;
+    font-size: 0.8125rem;
+    line-height: 1.4;
+    color: var(--text-3);
+  }
+  .strip-player {
+    display: none;
+    align-items: center;
+    gap: 0.6rem;
+  }
+  .chat.is-player .strip-player {
+    display: flex;
+  }
+  .chat.is-player .strip-note {
+    visibility: hidden;
+  }
+
+  .cc-btn {
+    display: grid;
+    place-items: center;
+    flex: none;
+    width: 2.5rem;
+    height: 2.5rem;
+    border-radius: 50%;
+    border: 1px solid var(--line-strong);
+    background: rgb(255 255 255 / 0.04);
+    color: var(--text);
+    cursor: pointer;
+    transition:
+      background-color 0.15s ease,
+      border-color 0.15s ease;
+  }
+  .cc-btn:hover {
+    background: rgb(255 255 255 / 0.1);
+    border-color: var(--text-3);
+  }
+  .cc-btn :global(svg) {
+    width: 1.05rem;
+    height: 1.05rem;
+  }
+  .cc-btn :global(.i-play) {
+    display: none;
+  }
+  .chat.is-paused .cc-btn :global(.i-play) {
+    display: block;
+  }
+  .chat.is-paused .cc-btn :global(.i-pause) {
+    display: none;
+  }
+
+  .cc-track {
+    position: relative;
+    flex: 1;
+    height: 4px;
+    border-radius: 4px;
+    background: rgb(255 255 255 / 0.1);
+    overflow: hidden;
+  }
+  .cc-fill {
+    position: absolute;
+    inset: 0;
+    background: var(--grad);
+    transform: scaleX(0);
+    transform-origin: 0 50%;
+  }
+
+  /* Điện thoại: chữ nhỏ hơn một chút để cả cuộc trò chuyện gọn trong màn hình */
+  @media (max-width: 479.98px) {
+    .chat-window {
+      border-radius: 22px;
+    }
+    .chat-head {
+      padding: 0.75rem 0.85rem;
+      gap: 0.6rem;
+    }
+    .chat-log {
+      gap: 0.5rem;
+      padding: 0.75rem 0.75rem 0.9rem;
+    }
+    .msg {
+      max-width: 90%;
+    }
+    .bubble {
+      padding: 0.5rem 0.75rem;
+      font-size: 0.875rem;
+      line-height: 1.45;
+    }
+    .msg-event {
+      font-size: 0.75rem;
+      padding: 0.25rem 0.65rem;
+    }
+    .chat-clock {
+      padding: 0.15rem 0.45rem;
+    }
+  }
+
+  /* Ghi chú dưới khung: chỉ hiện khi đang phát (lúc đó thanh dưới là nút điều khiển) */
+  .chat-caption {
+    margin-top: 0.7rem;
+    min-height: 1.3em;
+    font-size: 0.8125rem;
+    line-height: 1.4;
+    color: var(--text-3);
+    text-align: center;
+  }
+  .caption-note {
+    visibility: hidden;
+  }
+  .chat.is-player .caption-note {
+    visibility: visible;
   }
 </style>
