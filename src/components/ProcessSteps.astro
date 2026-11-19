@@ -64,7 +64,7 @@ const { steps = defaults[lang] } = Astro.props;
 <ol class="steps">
   {
     steps.map((step, i) => (
-      <li class="step">
+      <li class="step" data-glow="soft">
         <span class="step-num" aria-hidden="true">
           {i + 1}
         </span>

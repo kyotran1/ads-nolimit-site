@@ -47,7 +47,7 @@ const channels =
 
 <section class="cta section" aria-labelledby="cta-title">
   <div class="container">
-    <div class="cta-box">
+    <div class="cta-box" data-glow>
       <div class="cta-main">
         <h2 id="cta-title">{title}</h2>
         <p class="cta-text">{text}</p>
@@ -94,6 +94,9 @@ const channels =
 
 <style>
   .cta-box {
+    --glow-inset: 0px; /* overflow: hidden */
+    --glow-size: 44rem;
+    --glow-fill: 0.12;
     position: relative;
     display: grid;
     gap: 2rem;

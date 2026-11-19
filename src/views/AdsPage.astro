@@ -163,7 +163,7 @@ const channelTones = ['tone-blue', 'tone-teal', 'tone-green'];
       <ul class="channels">
         {
           copy.channels.map((c, i) => (
-            <li class={channelTones[i]}>
+            <li class={channelTones[i]} data-glow="soft">
               <h3>{c.name}</h3>
               <p>{c.text}</p>
             </li>
@@ -175,12 +175,12 @@ const channelTones = ['tone-blue', 'tone-teal', 'tone-green'];
 
   <section class="section section--raise" aria-labelledby="daily-title">
     <div class="container grid-2 two-lists">
-      <div class="panel">
+      <div class="panel" data-glow>
         <h2 id="daily-title">{copy.dailyTitle}</h2>
         <p class="muted list-lead">{copy.dailyLead}</p>
         <ul class="checklist">{copy.daily.map((d) => <li>{d}</li>)}</ul>
       </div>
-      <div class="panel">
+      <div class="panel" data-glow>
         <h2 id="report-title">{copy.reportTitle}</h2>
         <p class="muted list-lead">{copy.reportLead}</p>
         <ul class="checklist">{copy.report.map((r) => <li>{r}</li>)}</ul>
@@ -205,7 +205,7 @@ const channelTones = ['tone-blue', 'tone-teal', 'tone-green'];
         <p class="lead agency-lead">{copy.agencyLead}</p>
         <ul class="checklist">{copy.agencyPoints.map((p) => <li>{p}</li>)}</ul>
       </div>
-      <aside class="panel price-aside" aria-label={copy.agencyAside}>
+      <aside class="panel price-aside" aria-label={copy.agencyAside} data-glow>
         <p class="price-aside-label">{agency.prices[0].label}</p>
         <p class="price-aside-value">{agency.prices[0].value}</p>
         <p class="price-aside-text">{agency.summary}</p>

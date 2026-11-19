@@ -36,7 +36,7 @@ const otherPrices = plan.prices.filter((_, i) => i !== leadIndex);
 const detailsLink = showLink && !/(^|\/)(bang-gia|pricing)\//.test(plan.href.split('#')[0]);
 ---
 
-<article class:list={['plan', { 'plan--pilot': hasPilot }]} id={plan.id}>
+<article class:list={['plan', { 'plan--pilot': hasPilot }]} id={plan.id} data-glow data-tilt>
   <div class="plan-head">
     {
       hasPilot && (

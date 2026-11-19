@@ -254,11 +254,11 @@ const tones = ['tone-teal', 'tone-violet', 'tone-blue', 'tone-green'];
         <p>{copy.canLead}</p>
       </div>
       <div class="grid-2 can-grid">
-        <div class="panel can-panel">
+        <div class="panel can-panel" data-glow>
           <h3 class="list-title">{copy.canLabel}</h3>
           <ul class="checklist">{copy.can.map((item) => <li>{item}</li>)}</ul>
         </div>
-        <div class="panel cannot-panel">
+        <div class="panel cannot-panel" data-glow>
           <h3 class="list-title">{copy.cannotLabel}</h3>
           <ul class="crosslist">{copy.cannot.map((item) => <li>{item}</li>)}</ul>
         </div>
@@ -298,7 +298,7 @@ const tones = ['tone-teal', 'tone-violet', 'tone-blue', 'tone-green'];
       <ul class="security">
         {
           copy.security.map((s, i) => (
-            <li class={tones[i]}>
+            <li class={tones[i]} data-glow="soft">
               <span class="icon-tile">
                 <Icon name={s.icon} />
               </span>

@@ -330,7 +330,7 @@ const faq = getFaq(lang);
       <ul class="pains">
         {
           copy.pains.map((p) => (
-            <li class={`pain tone-${p.tone}`}>
+            <li class={`pain tone-${p.tone}`} data-glow="soft">
               <span class="pain-cue">{p.cue}</span>
               <h3>{p.title}</h3>
               <p>{p.text}</p>
@@ -352,7 +352,7 @@ const faq = getFaq(lang);
       <div class="solutions-big">
         {
           copy.solutions.map((s) => (
-            <article class={`sol card tone-${s.tone}`}>
+            <article class={`sol card tone-${s.tone}`} data-glow data-tilt>
               <span class="icon-tile icon-tile--lg">
                 <Icon name={s.icon} />
               </span>
@@ -377,7 +377,7 @@ const faq = getFaq(lang);
       <div class="solutions-small">
         {
           copy.small.map((s) => (
-            <a class="sol-small card tone-sun" href={s.href}>
+            <a class="sol-small card tone-sun" href={s.href} data-glow>
               <span class="icon-tile">
                 <Icon name={s.icon} />
               </span>
@@ -649,7 +649,10 @@ const faq = getFaq(lang);
     flex-direction: column;
     gap: 1rem;
     padding: clamp(1.5rem, 1.2rem + 1vw, 2rem);
-    overflow: hidden;
+    /* quầng màu nhẹ phía trên mỗi thẻ (::after dành cho hiệu ứng sáng theo chuột, xem fx.css) */
+    background:
+      radial-gradient(70% 9rem at 50% 0%, color-mix(in srgb, var(--tone-fill) 14%, transparent), transparent),
+      var(--card-bg);
   }
 
   /* dải màu mảnh phía trên mỗi thẻ */
@@ -660,15 +663,6 @@ const faq = getFaq(lang);
     height: 1px;
     background: linear-gradient(90deg, transparent, var(--tone-fill), transparent);
   }
-  .sol::after {
-    content: '';
-    position: absolute;
-    inset: 0 0 auto;
-    height: 9rem;
-    background: radial-gradient(70% 100% at 50% 0%, color-mix(in srgb, var(--tone-fill) 14%, transparent), transparent);
-    pointer-events: none;
-  }
-
   .sol h3 {
     font-size: var(--step-2);
     margin-top: 0.25rem;

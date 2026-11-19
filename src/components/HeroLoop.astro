@@ -113,7 +113,7 @@ const loopPath =
   <ol class="loop-events">
     {
       events.map((e) => (
-        <li class={`tone-${e.tone}`}>
+        <li class={`tone-${e.tone}`} data-glow>
           <span class="ev-time">{e.time}</span>
           <span class="ev-body">
             <span class="ev-text">{e.text}</span>

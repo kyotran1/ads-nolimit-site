@@ -23,7 +23,7 @@ const s = {
 ---
 
 <div class="summary">
-  <ul class="rows">
+  <ul class="rows" data-glow>
     {
       rows.map((plan) => (
         <li class="row">
@@ -65,6 +65,8 @@ const s = {
 
 <style>
   .rows {
+    --glow-inset: 0px; /* overflow: hidden → vòng sáng nằm ngay trong viền */
+    --glow-size: 34rem;
     list-style: none;
     border-radius: var(--r-lg);
     border: 1px solid var(--line);

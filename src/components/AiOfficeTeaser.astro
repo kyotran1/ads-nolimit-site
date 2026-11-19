@@ -58,7 +58,7 @@ const mailto = `mailto:${contact.email}?subject=${encodeURIComponent(copy.subjec
 ---
 
 <div class="office">
-  <div class="office-inner">
+  <div class="office-inner" data-glow>
     <div class="office-copy">
       <span class="tag tag--sun">{copy.tag}</span>
       <Heading class="office-title">ADS-NOLIMIT AI Office</Heading>
@@ -83,6 +83,8 @@ const mailto = `mailto:${contact.email}?subject=${encodeURIComponent(copy.subjec
   }
 
   .office-inner {
+    --glow-inset: 0px;
+    --glow-size: 36rem;
     display: grid;
     gap: 1.75rem;
     border-radius: calc(var(--r-xl) - 1px);

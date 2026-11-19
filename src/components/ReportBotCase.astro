@@ -109,7 +109,7 @@ const tones = ['tone-teal', 'tone-violet', 'tone-green'];
     }
   </div>
 
-  <ol class="flow" aria-label={copy.flowLabel}>
+  <ol class="flow" aria-label={copy.flowLabel} data-glow>
     {
       copy.nodes.map((n, i) => (
         <li class:list={['flow-node', tones[i]]}>

@@ -46,7 +46,7 @@ const copy = {
         {
           posts.map((post) => (
             <li>
-              <article class="post-card card card--link">
+              <article class="post-card card card--link" data-glow>
                 <time datetime={post.data.pubDate.toISOString()}>{formatDate(post.data.pubDate, lang)}</time>
                 <h2>
                   <a href={`${base}${post.id}/`}>{post.data.title}</a>

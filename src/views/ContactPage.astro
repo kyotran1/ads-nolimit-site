@@ -132,6 +132,7 @@ const copy = {
                 class:list={['channel', { 'channel--main': main[lang].includes(c.id) }]}
                 href={c.href}
                 rel={c.external ? 'noopener' : undefined}
+                data-glow
               >
                 <span class="icon-tile tone-green">
                   <Icon name={iconFor[c.id] ?? 'chat'} />
