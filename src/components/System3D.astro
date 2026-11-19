@@ -81,10 +81,10 @@ interface Station {
 }
 const stations: Station[] = [
   { x: 70, y: 80, w: 120, d: 90, h: 40, tone: '#8592ff', icon: 'chart' },
-  { x: 390, y: 70, w: 120, d: 100, h: 40, tone: '#a58cff', icon: 'chat' },
+  { x: 440, y: 40, w: 120, d: 100, h: 40, tone: '#a58cff', icon: 'chat' },
   { x: 240, y: 240, w: 120, d: 120, h: 64, tone: '#2ee89a', icon: 'spark' },
   { x: 420, y: 330, w: 110, d: 120, h: 34, tone: '#2ee89a', icon: 'sheet' },
-  { x: 400, y: 470, w: 110, d: 80, h: 48, tone: '#eed65a', icon: 'bell' },
+  { x: 320, y: 480, w: 110, d: 80, h: 48, tone: '#eed65a', icon: 'bell' },
   { x: 80, y: 390, w: 130, d: 110, h: 56, tone: '#3fd0c2', icon: 'chart' },
 ];
 const center = (s: Station) => ({ cx: s.x + s.w / 2, cy: s.y + s.d / 2 });
@@ -98,11 +98,11 @@ const bars = [
 
 /** Đường đi trên sàn: 6 đoạn nối 6 trạm thành vòng khép kín. */
 const segs = [
-  'M130,125 C230,60 350,60 450,120',
-  'M450,120 C440,200 360,230 300,300',
+  'M130,125 C230,50 400,30 500,90',
+  'M500,90 C470,190 370,230 300,300',
   'M300,300 C360,330 420,350 475,390',
-  'M475,390 C520,430 510,470 455,510',
-  'M455,510 C360,560 220,540 145,445',
+  'M475,390 C520,450 470,510 375,520',
+  'M375,520 C300,540 200,530 145,445',
   'M145,445 C60,360 60,220 130,125',
 ];
 const loop = segs.map((d, i) => (i === 0 ? d : d.replace(/^M[\d.,]+\s*/, ''))).join(' ');
@@ -201,7 +201,7 @@ const boxStyle = (b: { x: number; y: number; w: number; d: number; h: number; z?
             <div class="anchor" style={`--cx:${cx}px;--cy:${cy}px;--cz:${s.h + (i === 2 ? 92 : i === 0 ? 72 : 22)}px`} data-label={i}>
               <span class="s3d-label">
                 <b>{i + 1}</b>
-                {copy.steps[i].name}
+                <span class="lbl-text">{copy.steps[i].name}</span>
               </span>
             </div>
           );
@@ -309,6 +309,7 @@ const boxStyle = (b: { x: number; y: number; w: number; d: number; h: number; z?
       const zoom = Math.max(0.36, Math.min(1.05, Math.min(w / 860, h / 600)));
       world.style.setProperty('--zoom', zoom.toFixed(3));
       world.style.setProperty('--ls', Math.min(2.1, Math.max(1, 0.82 / zoom)).toFixed(3));
+      root.classList.toggle('is-compact', zoom < 0.6);
     };
 
     const frame = (now: number) => {
@@ -533,7 +534,7 @@ const boxStyle = (b: { x: number; y: number; w: number; d: number; h: number; z?
     height: 600px;
     margin: -300px 0 0 -300px;
     transform-style: preserve-3d;
-    transform: rotateX(var(--pitch)) rotateZ(var(--yaw)) scale(var(--zoom));
+    transform: rotateX(var(--pitch)) rotateZ(var(--yaw)) scale3d(var(--zoom), var(--zoom), var(--zoom));
   }
 
   /* ---------- Khối hộp 3D (6 mặt; dùng 5 mặt nhìn thấy được) ---------- */
@@ -782,6 +783,13 @@ const boxStyle = (b: { x: number; y: number; w: number; d: number; h: number; z?
     border-radius: 50%;
     background: var(--grad);
     font-size: 11px;
+  }
+  /* Màn hẹp: nhãn chỉ còn số (tên đầy đủ nằm ở danh sách bước); nhãn đang chọn vẫn hiện tên */
+  .s3d.is-compact .s3d-label {
+    padding: 4px;
+  }
+  .s3d.is-compact .anchor:not(.is-active) .lbl-text {
+    display: none;
   }
   .anchor.is-active .s3d-label {
     border-color: var(--green-ink);
