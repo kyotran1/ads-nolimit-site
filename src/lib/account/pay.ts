@@ -5,6 +5,7 @@
 import { dataErrorMessage, errorCode } from '../auth/messages';
 import { LedgerError } from '../ledger/ops';
 import type { PurchaseInput, PurchaseResult } from '../ledger/ops';
+import { roundUp } from '../money';
 import { confirmDialog, h, toast } from '../ui/dom';
 import { go, lang, me, money } from './ctx';
 import { balance, ensure, ops, reload } from './store';
@@ -17,7 +18,7 @@ export const askTopUp = async (shortfall: number) => {
   const answer = await confirmDialog({
     title: tx('insufficientTitle'),
     body: [h('p', { text: tx('insufficient', { short: money(shortfall) }) }), h('p', { class: 'muted small', text: `${tx('balanceNow')}: ${money(balance())}` })],
-    confirm: tx('topUpShort', { amount: money(Math.max(shortfall, 100_000)) }),
+    confirm: tx('topUpShort', { amount: money(Math.max(roundUp(shortfall), 100_000)) }),
     cancel: tx('back'),
   });
   if (answer.ok) {

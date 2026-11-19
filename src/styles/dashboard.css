@@ -897,6 +897,14 @@ dialog .eyebrow {
   padding: 0.5rem 0;
 }
 
+/* Nút tạm khóa vì chưa dùng được (khác với đang xử lý có vòng xoay) */
+.dash .btn:disabled:not([aria-busy]),
+.admin .btn:disabled:not([aria-busy]) {
+  opacity: 0.45;
+  cursor: not-allowed;
+  box-shadow: none;
+}
+
 /* Trạng thái mới (V4) cho .badge của auth.css */
 .badge--pending,
 .badge--processing {
@@ -1140,7 +1148,7 @@ dialog .eyebrow {
 }
 .amount-chips {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(8.25rem, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(min(8.75rem, 100%), 1fr));
   gap: 0.5rem;
 }
 .amount-chip {
@@ -1160,7 +1168,9 @@ dialog .eyebrow {
   align-items: center;
   justify-content: center;
   min-height: 48px;
-  padding: 0.5rem;
+  padding: 0.5rem 0.35rem;
+  white-space: nowrap;
+  font-size: 0.9375rem;
   border-radius: 12px;
   border: 1px solid var(--line-strong);
   background: rgb(7 10 26 / 0.6);
@@ -1265,6 +1275,7 @@ dialog .eyebrow {
 }
 .pay-head {
   display: flex;
+  flex-wrap: wrap-reverse;
   align-items: flex-start;
   justify-content: space-between;
   gap: 1rem;
@@ -1272,6 +1283,7 @@ dialog .eyebrow {
 }
 .pay-panel .pay-code {
   margin-top: 0.15rem;
+  white-space: nowrap;
   font-size: 1.5rem;
   letter-spacing: 0.08em;
   overflow-wrap: anywhere;
@@ -2643,6 +2655,9 @@ dialog.confirm-dialog {
   color: var(--text);
   font-weight: 800;
   text-decoration: none;
+}
+.adm-top .btn {
+  white-space: nowrap;
 }
 .adm-brand img {
   width: 36px;
