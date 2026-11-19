@@ -13,8 +13,9 @@ interface Props {
 const { lang } = Astro.props;
 
 /** Ngày cập nhật — sửa khi chính sách thay đổi (cả hai ngôn ngữ). */
-const updated = { vi: '19/11/2026', en: '19 November 2026' };
+const updated = { vi: '20/11/2026', en: '20 November 2026' };
 const accountPage = { vi: localize('/tai-khoan/', 'vi'), en: localize('/tai-khoan/', 'en') };
+const termsPage = { vi: localize('/dieu-khoan/', 'vi'), en: localize('/dieu-khoan/', 'en') };
 ---
 
 {
@@ -66,16 +67,28 @@ const accountPage = { vi: localize('/tai-khoan/', 'vi'), en: localize('/tai-khoa
                 ADS-Nolimit không xem được mật khẩu của bạn.
               </li>
               <li>
-                <strong>Hồ sơ</strong> (nếu bạn điền): số điện thoại/Zalo, công ty hoặc cửa hàng, ngành hàng, và lựa chọn
-                nhận tin khi ADS-NOLIMIT AI Office ra mắt.
+                <strong>Hồ sơ</strong>: email đăng nhập (để ADS-Nolimit tìm và hỗ trợ đúng tài khoản của bạn) và, nếu bạn
+                điền, số điện thoại/Zalo, công ty hoặc cửa hàng, ngành hàng, lựa chọn nhận tin khi ADS-NOLIMIT AI Office
+                ra mắt.
               </li>
               <li>
                 <strong>Yêu cầu dịch vụ</strong> bạn gửi từ trang tài khoản: dịch vụ quan tâm, mô tả nhu cầu, cách liên hệ
                 bạn muốn, ngôn ngữ, thời điểm gửi và trạng thái xử lý.
               </li>
               <li>
-                <strong>Nơi lưu:</strong> tài khoản, hồ sơ và yêu cầu dịch vụ được lưu trên máy chủ Google Firebase
-                (Firebase Authentication và Cloud Firestore), có thể đặt ngoài Việt Nam.
+                <strong>Số dư và giao dịch</strong>: lệnh nạp tiền (số tiền, mã nội dung chuyển khoản, trạng thái), số dư,
+                sổ giao dịch (nạp, thanh toán, hoàn tiền, điều chỉnh) và đơn hàng thanh toán bằng số dư (dịch vụ, số lượng,
+                số tiền, ghi chú, ID và tên tài khoản quảng cáo nếu bạn nạp ngân sách quảng cáo). Website không lưu số tài
+                khoản ngân hàng hay thông tin thẻ của bạn. Xem thêm <a href={termsPage.vi}>Điều khoản nạp tiền & sử dụng số
+                dư</a>.
+              </li>
+              <li>
+                <strong>Khóa học và key phần mềm</strong>: khóa học bạn đã mở, key ADS-NOLIMIT AI Office được cấp, tên các
+                máy đã kích hoạt key và yêu cầu đổi máy.
+              </li>
+              <li>
+                <strong>Nơi lưu:</strong> các dữ liệu trên được lưu trên máy chủ Google Firebase (Firebase Authentication và
+                Cloud Firestore), có thể đặt ngoài Việt Nam.
               </li>
               <li>
                 Trên các trang đăng nhập và tài khoản, trình duyệt tải mã của Firebase (Google) để việc đăng nhập hoạt động;
@@ -141,8 +154,10 @@ const accountPage = { vi: localize('/tai-khoan/', 'vi'), en: localize('/tai-khoa
               cầu xóa.
             </p>
             <p>
-              Tài khoản và hồ sơ được giữ cho tới khi bạn xóa tài khoản. Yêu cầu dịch vụ đã gửi được giữ lại để đối chiếu
-              cả sau khi bạn xóa tài khoản; bạn có thể email cho chúng tôi để yêu cầu xóa cả những yêu cầu này.
+              Tài khoản và hồ sơ được giữ cho tới khi bạn xóa tài khoản. Yêu cầu dịch vụ, lệnh nạp, đơn hàng và sổ giao
+              dịch được giữ lại để đối chiếu cả sau khi bạn xóa tài khoản; bạn có thể email cho chúng tôi để yêu cầu xóa
+              những dữ liệu không bắt buộc phải lưu. Tài khoản còn số dư chưa tự xóa được: bạn liên hệ ADS-Nolimit để được
+              hỗ trợ xử lý số dư trước.
             </p>
 
             <h2>4. Quyền của bạn</h2>
@@ -224,16 +239,27 @@ const accountPage = { vi: localize('/tai-khoan/', 'vi'), en: localize('/tai-khoa
                 service). ADS-Nolimit never sees it.
               </li>
               <li>
-                <strong>Your profile</strong> (if you fill it in): phone/Zalo, company or shop, industry, and whether you want
-                news when ADS-NOLIMIT AI Office launches.
+                <strong>Your profile</strong>: your sign-in email (so ADS-Nolimit can find and support the right account)
+                and, if you fill them in, phone/Zalo, company or shop, industry, and whether you want news when
+                ADS-NOLIMIT AI Office launches.
               </li>
               <li>
                 <strong>Service requests</strong> you send from your account page: the service you are interested in, your
                 description, how you prefer to be contacted, language, when it was sent and its status.
               </li>
               <li>
-                <strong>Where it is stored:</strong> accounts, profiles and service requests are stored on Google Firebase
-                servers (Firebase Authentication and Cloud Firestore), which may be located outside Vietnam.
+                <strong>Balance and transactions</strong>: top-ups (amount, transfer reference, status), your balance, the
+                transaction history (top-ups, payments, refunds, adjustments) and orders paid from your balance (service,
+                quantity, amount, notes, and the ad account ID and name if you top up an ad budget). The website does not
+                store your bank account or card details. See also the <a href={termsPage.en}>balance top-up terms</a>.
+              </li>
+              <li>
+                <strong>Courses and software keys</strong>: courses you have unlocked, ADS-NOLIMIT AI Office keys issued to
+                you, the names of devices activated with them and device reset requests.
+              </li>
+              <li>
+                <strong>Where it is stored:</strong> all of the above is stored on Google Firebase servers (Firebase
+                Authentication and Cloud Firestore), which may be located outside Vietnam.
               </li>
               <li>
                 On the sign-in and account pages your browser loads Firebase (Google) code so that signing in works; Google
@@ -297,8 +323,10 @@ const accountPage = { vi: localize('/tai-khoan/', 'vi'), en: localize('/tai-khoa
               ask us to delete it.
             </p>
             <p>
-              Your account and profile are kept until you delete your account. Service requests you have sent are kept for
-              our records even after you delete your account; you can email us to have those deleted as well.
+              Your account and profile are kept until you delete your account. Service requests, top-ups, orders and the
+              transaction history are kept for our records even after you delete your account; you can email us to have
+              anything we are not required to keep deleted. An account that still has a balance cannot be deleted by
+              yourself: contact ADS-Nolimit to settle the balance first.
             </p>
 
             <h2>4. Your rights</h2>

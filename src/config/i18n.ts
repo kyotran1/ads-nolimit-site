@@ -42,6 +42,7 @@ export const routes: readonly RoutePair[] = [
   { vi: '/ve-chung-toi/', en: '/en/about/' },
   { vi: '/lien-he/', en: '/en/contact/' },
   { vi: '/chinh-sach-bao-mat/', en: '/en/privacy/' },
+  { vi: '/dieu-khoan/', en: '/en/terms/' },
   // Tài khoản khách hàng (Firebase Authentication)
   { vi: '/dang-nhap/', en: '/en/sign-in/' },
   { vi: '/dang-ky/', en: '/en/sign-up/' },
@@ -51,9 +52,16 @@ export const routes: readonly RoutePair[] = [
 
 /**
  * Trang có thật nhưng KHÔNG đưa vào sitemap.xml (và tự gắn noindex trong view của trang):
- * trang quên mật khẩu và trang tài khoản riêng của khách.
+ * trang quên mật khẩu, trang tài khoản riêng của khách và trang quản trị.
  */
-export const unlistedPaths: readonly string[] = ['/quen-mat-khau/', '/en/forgot-password/', '/tai-khoan/', '/en/account/'];
+export const unlistedPaths: readonly string[] = [
+  '/quen-mat-khau/',
+  '/en/forgot-password/',
+  '/tai-khoan/',
+  '/en/account/',
+  // Trang quản trị của chủ (chỉ tiếng Việt, noindex)
+  '/quan-tri/',
+];
 
 /** Trang chủ của từng ngôn ngữ. */
 export const homeOf: Record<Lang, string> = { vi: '/', en: '/en/' };
@@ -112,6 +120,7 @@ export const ui = {
     openMenu: 'Mở menu',
     contact: 'Liên hệ',
     privacy: 'Chính sách bảo mật',
+    terms: 'Điều khoản nạp tiền & số dư',
     headerCta: 'Tư vấn miễn phí',
     signIn: 'Đăng nhập',
     signUp: 'Tạo tài khoản',
@@ -147,6 +156,7 @@ export const ui = {
     openMenu: 'Open menu',
     contact: 'Contact',
     privacy: 'Privacy policy',
+    terms: 'Balance top-up terms',
     headerCta: 'Free consultation',
     signIn: 'Sign in',
     signUp: 'Create account',

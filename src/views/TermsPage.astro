@@ -1,0 +1,199 @@
+---
+/**
+ * Điều khoản nạp tiền & sử dụng số dư (/dieu-khoan/ và /en/terms/).
+ * LƯU Ý: đây là bản nháp chính sách — chủ doanh nghiệp đọc và duyệt trước khi công bố
+ * (đặc biệt mục hoàn trả số dư và ngân sách quảng cáo). Sửa ngày `updated` khi thay đổi.
+ */
+import BaseLayout from '../layouts/BaseLayout.astro';
+import PageHero from '../components/PageHero.astro';
+import { contact, links } from '../config/site';
+import type { Lang } from '../config/i18n';
+import { localize } from '../config/i18n';
+import { formatVnd } from '../lib/money';
+import { TOPUP_MAX, TOPUP_MIN } from '../lib/ledger/ops';
+
+interface Props {
+  lang: Lang;
+}
+const { lang } = Astro.props;
+const updated = { vi: '20/11/2026', en: '20 November 2026' };
+const account = localize('/tai-khoan/', lang);
+const privacy = localize('/chinh-sach-bao-mat/', lang);
+---
+
+{
+  lang === 'vi' ? (
+    <BaseLayout
+      title="Điều khoản nạp tiền & sử dụng số dư | ADS-Nolimit"
+      description="Cách nạp tiền vào tài khoản ADS-Nolimit bằng chuyển khoản VietQR, số dư dùng cho dịch vụ nào, và cách xử lý hoàn trả số dư."
+      lang="vi"
+    >
+      <PageHero title="Điều khoản nạp tiền & sử dụng số dư" lead={`Cập nhật lần cuối: ${updated.vi}.`} />
+      <section class="section">
+        <div class="container">
+          <div class="prose policy">
+            <p>
+              Trang này giải thích cách bạn nạp tiền vào <a href={account}>tài khoản ADS-Nolimit</a> và cách số dư được
+              sử dụng. Khi tạo lệnh nạp, bạn đồng ý với các điều khoản dưới đây.
+            </p>
+
+            <h2>1. Số dư là gì</h2>
+            <ul>
+              <li>
+                Số dư là khoản tiền bạn trả trước cho ADS-Nolimit, tính bằng đồng Việt Nam, hiện ở mục "Nạp tiền & Số dư"
+                trong tài khoản.
+              </li>
+              <li>
+                Số dư dùng để thanh toán dịch vụ của ADS-Nolimit: dịch vụ AI Agent (cài đặt, duy trì), đào tạo, ngân sách
+                quảng cáo cho tài khoản quảng cáo Agency bạn thuê của ADS-Nolimit, key phần mềm và khóa học.
+              </li>
+              <li>Số dư không phải tài khoản thanh toán hay ví điện tử, không sinh lãi.</li>
+            </ul>
+
+            <h2>2. Nạp tiền</h2>
+            <ul>
+              <li>
+                Bạn tạo lệnh nạp từ {formatVnd(TOPUP_MIN, 'vi')} đến {formatVnd(TOPUP_MAX, 'vi')}, rồi chuyển khoản
+                bằng mã VietQR hoặc theo thông tin hiện trên trang: đúng số tiền và đúng nội dung chuyển khoản (mã bắt đầu
+                bằng ADSN).
+              </li>
+              <li>
+                Số dư được cộng sau khi ADS-Nolimit xác nhận đã nhận được tiền. Trước đó, lệnh nạp ở trạng thái "Chờ chuyển
+                khoản".
+              </li>
+              <li>
+                Nếu bạn chuyển sai số tiền hoặc sai nội dung, hãy nhắn ADS-Nolimit kèm ảnh chụp giao dịch để được đối
+                chiếu.
+              </li>
+              <li>
+                ADS-Nolimit có thể từ chối lệnh nạp khi không nhận được tiền tương ứng; lý do được ghi trong lệnh nạp.
+              </li>
+              <li>Bạn có thể tự hủy lệnh nạp khi chưa chuyển khoản. Đã chuyển khoản thì đừng hủy, hãy liên hệ ADS-Nolimit.</li>
+            </ul>
+
+            <h2>3. Sử dụng số dư</h2>
+            <ul>
+              <li>Số dư chỉ dùng cho dịch vụ của ADS-Nolimit, không rút ra thành tiền mặt và không chuyển cho tài khoản khác.</li>
+              <li>
+                Khi bạn thanh toán bằng số dư, số tiền được trừ ngay theo giá hiện trên trang tại thời điểm đặt và được ghi
+                vào sổ giao dịch trong tài khoản của bạn.
+              </li>
+              <li>
+                Với ngân sách quảng cáo, ADS-Nolimit nạp số tiền bạn chọn vào tài khoản quảng cáo bạn ghi trong đơn. Chi
+                phí quảng cáo chi cho nền tảng (Facebook, Google, TikTok…) theo chính sách của từng nền tảng.
+              </li>
+            </ul>
+
+            <h2>4. Hoàn tiền</h2>
+            <ul>
+              <li>
+                Đơn hàng ADS-Nolimit không thực hiện được sẽ được hoàn tiền vào số dư; khoản hoàn hiện trong sổ giao dịch.
+              </li>
+              <li>
+                Muốn nhận lại số dư chưa sử dụng, bạn gửi yêu cầu qua Zalo {contact.zaloPhone}, hotline {contact.hotline}{' '}
+                hoặc email {contact.email}. ADS-Nolimit xem xét và phản hồi từng trường hợp.
+              </li>
+              <li>Tài khoản còn số dư chưa tự xóa được; bạn liên hệ ADS-Nolimit để được hỗ trợ xử lý số dư trước.</li>
+            </ul>
+
+            <h2>5. Dữ liệu</h2>
+            <p>
+              Lệnh nạp, số dư, đơn hàng và sổ giao dịch được lưu và bảo vệ như mô tả trong{' '}
+              <a href={privacy}>Chính sách bảo mật</a>. Website không lưu số tài khoản ngân hàng hay thông tin thẻ của bạn.
+            </p>
+
+            <h2>6. Liên hệ</h2>
+            <p>
+              Mọi câu hỏi về nạp tiền và số dư, bạn nhắn <a href={links.zalo}>Zalo {contact.zaloPhone}</a>, gọi{' '}
+              <a href={links.hotline}>{contact.hotline}</a> hoặc email <a href={links.email}>{contact.email}</a>.
+            </p>
+          </div>
+        </div>
+      </section>
+    </BaseLayout>
+  ) : (
+    <BaseLayout
+      title="Balance top-up terms | ADS-Nolimit"
+      description="How to top up your ADS-Nolimit balance by VietQR bank transfer, what the balance can be used for, and how unused balance refunds are handled."
+      lang="en"
+    >
+      <PageHero title="Balance top-up terms" lead={`Last updated: ${updated.en}.`} />
+      <section class="section">
+        <div class="container">
+          <div class="prose policy">
+            <p>
+              This page explains how you top up your <a href={account}>ADS-Nolimit account</a> and how the balance is
+              used. By creating a top-up you agree to these terms.
+            </p>
+
+            <h2>1. What the balance is</h2>
+            <ul>
+              <li>
+                Your balance is money you pay ADS-Nolimit in advance, held in Vietnamese dong (VND) and shown under "Top up
+                & balance" in your account.
+              </li>
+              <li>
+                It pays for ADS-Nolimit services: AI agents (setup and monthly), training, ad budgets for the Agency ad
+                account you rent from ADS-Nolimit, software keys and courses.
+              </li>
+              <li>The balance is not a bank account or e-wallet and earns no interest.</li>
+            </ul>
+
+            <h2>2. Topping up</h2>
+            <ul>
+              <li>
+                Create a top-up between {formatVnd(TOPUP_MIN, 'en')} and {formatVnd(TOPUP_MAX, 'en')}, then pay by bank
+                transfer using the VietQR code or the details shown: the exact amount and the exact transfer reference
+                (starting with ADSN).
+              </li>
+              <li>
+                Your balance is credited once ADS-Nolimit confirms the payment has arrived. Until then the top-up shows
+                "Awaiting transfer".
+              </li>
+              <li>If you sent a different amount or reference, message ADS-Nolimit with a screenshot so we can match it.</li>
+              <li>ADS-Nolimit may reject a top-up when the matching payment has not arrived; the reason is shown on it.</li>
+              <li>
+                You can cancel a top-up yourself before paying. If you have already paid, do not cancel: contact ADS-Nolimit.
+              </li>
+            </ul>
+
+            <h2>3. Using your balance</h2>
+            <ul>
+              <li>The balance can only be used for ADS-Nolimit services. It cannot be withdrawn as cash or transferred to another account.</li>
+              <li>
+                When you pay from your balance, the amount is deducted straight away at the price shown when you order, and
+                it is recorded in your transaction history.
+              </li>
+              <li>
+                For ad budgets, ADS-Nolimit adds the amount you choose to the ad account in your order. Ad spend with the
+                platforms (Facebook, Google, TikTok…) follows each platform’s policies.
+              </li>
+            </ul>
+
+            <h2>4. Refunds</h2>
+            <ul>
+              <li>If ADS-Nolimit cannot deliver an order, it is refunded to your balance and shown in your transaction history.</li>
+              <li>
+                To get unused balance back, send a request by Telegram @{contact.telegramUser}, Zalo {contact.zaloPhone} or
+                email {contact.email}. ADS-Nolimit reviews each request and replies.
+              </li>
+              <li>An account that still has a balance cannot be deleted by yourself; contact ADS-Nolimit to settle the balance first.</li>
+            </ul>
+
+            <h2>5. Data</h2>
+            <p>
+              Top-ups, balances, orders and the transaction history are stored and protected as described in our{' '}
+              <a href={privacy}>privacy policy</a>. The website does not store your bank account or card details.
+            </p>
+
+            <h2>6. Contact</h2>
+            <p>
+              For any question about top-ups or your balance, message us on <a href={links.telegram}>Telegram</a> or{' '}
+              <a href={links.zalo}>Zalo {contact.zaloPhone}</a>, or email <a href={links.email}>{contact.email}</a>.
+            </p>
+          </div>
+        </div>
+      </section>
+    </BaseLayout>
+  )
+}

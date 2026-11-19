@@ -76,7 +76,10 @@ const jumpLinks = [
 ];
 const cta = { href: primary.href, label: copy.planCta, external: true };
 // Gửi yêu cầu qua trang tài khoản, chọn sẵn gói (chưa đăng nhập thì qua trang đăng nhập rồi quay lại).
-const requestFor = (plan: Plan) => ({ href: `${localize('/tai-khoan/', lang)}?plan=${plan.id}#yeu-cau`, label: copy.planRequest });
+const requestFor = (plan: Plan) => ({
+  href: `${localize('/tai-khoan/', lang)}?plan=${plan.id}#${lang === 'en' ? 'services' : 'dich-vu'}`,
+  label: copy.planRequest,
+});
 ---
 
 <BaseLayout title={copy.title} description={copy.description} lang={lang}>
