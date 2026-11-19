@@ -2,10 +2,13 @@
  * BẢNG GIÁ — sửa giá DUY NHẤT ở file này (dùng cho cả tiếng Việt và tiếng Anh).
  *
  * Trang chủ (bảng giá rút gọn), /bang-gia/, /en/pricing/ và các trang dịch vụ đều đọc từ đây.
- * Số tiền viết dạng số nguyên (dùng dấu _ cho dễ đọc, ví dụ 4_900_000);
- * tiếng Việt hiển thị "4.900.000đ", tiếng Anh hiển thị "4,900,000 VND" (cùng một con số).
+ * Số tiền viết dạng số nguyên (dùng dấu _ cho dễ đọc, ví dụ 4_900_000).
+ * - `amount`: giá VNĐ, tiếng Việt hiển thị "4.900.000đ".
+ * - `usd`:    giá USD cho trang tiếng Anh, hiển thị "$189" (chủ doanh nghiệp yêu cầu 19/11/2026).
+ *   Quy đổi theo 26.000đ = 1 USD (tỷ giá bán Vietcombank đầu 11/2026 khoảng 25.890đ),
+ *   làm tròn LÊN số có đuôi 9. Khi đổi giá VNĐ, nhớ sửa luôn số `usd` bên cạnh.
  *
- * Mỗi chữ có hai bản: { vi: '…', en: '…' }. Sửa giá chỉ cần sửa số `amount`.
+ * Mỗi chữ có hai bản: { vi: '…', en: '…' }.
  *
  * Lưu ý: đây là giá ĐỀ XUẤT theo brief ngày 19/11/2026 — chủ doanh nghiệp duyệt trước khi công bố.
  */
@@ -14,17 +17,22 @@ import { localize } from '../config/i18n';
 
 type Text = Record<Lang, string>;
 
-/** Định dạng số tiền VNĐ: 4900000 -> "4.900.000đ" (vi) / "4,900,000 VND" (en) */
-export const vnd = (amount: number, lang: Lang = 'vi') =>
-  lang === 'en'
-    ? `${new Intl.NumberFormat('en-US').format(amount)} VND`
-    : `${new Intl.NumberFormat('vi-VN').format(amount)}đ`;
+/** Định dạng số tiền VNĐ: 4900000 -> "4.900.000đ" */
+export const vnd = (amount: number) => `${new Intl.NumberFormat('vi-VN').format(amount)}đ`;
+
+/** Định dạng số tiền USD: 189 -> "$189", 1290 -> "$1,290" */
+export const usd = (amount: number) => `$${new Intl.NumberFormat('en-US').format(amount)}`;
+
+/** Giá theo ngôn ngữ: tiếng Việt dùng VNĐ, tiếng Anh dùng USD. */
+const money = (p: { amount: number; usd: number }, lang: Lang) => (lang === 'en' ? usd(p.usd) : vnd(p.amount));
 
 interface PriceSpec {
   /** Nhãn ngắn, ví dụ "Cài đặt", "Duy trì" */
   label: Text;
   /** Số tiền VNĐ (bỏ trống khi giá là chữ, ví dụ "Liên hệ báo giá") */
   amount?: number;
+  /** Số tiền USD cho trang tiếng Anh (bắt buộc khi có `amount`) */
+  usd?: number;
   /** Hiện chữ "từ"/"from" trước số tiền */
   from?: boolean;
   /** Giá dạng chữ khi không có `amount` */
@@ -63,8 +71,8 @@ const specs: PlanSpec[] = [
       en: 'One chat channel. Answers common questions and keeps every lead.',
     },
     prices: [
-      { label: { vi: 'Cài đặt', en: 'Setup' }, amount: 4_900_000 },
-      { label: { vi: 'Duy trì', en: 'Monthly' }, amount: 990_000, unit: { vi: '/tháng', en: '/month' } },
+      { label: { vi: 'Cài đặt', en: 'Setup' }, amount: 4_900_000, usd: 189 },
+      { label: { vi: 'Duy trì', en: 'Monthly' }, amount: 990_000, usd: 39, unit: { vi: '/tháng', en: '/month' } },
     ],
     limit: { vi: 'Tới 1.000 hội thoại/tháng', en: 'Up to 1,000 conversations a month' },
     features: [
@@ -92,8 +100,8 @@ const specs: PlanSpec[] = [
       en: 'Several channels. Checks prices and stock, drafts orders, and knows when to hand over to a person.',
     },
     prices: [
-      { label: { vi: 'Cài đặt', en: 'Setup' }, amount: 12_900_000 },
-      { label: { vi: 'Duy trì', en: 'Monthly' }, amount: 2_490_000, unit: { vi: '/tháng', en: '/month' } },
+      { label: { vi: 'Cài đặt', en: 'Setup' }, amount: 12_900_000, usd: 499 },
+      { label: { vi: 'Duy trì', en: 'Monthly' }, amount: 2_490_000, usd: 99, unit: { vi: '/tháng', en: '/month' } },
     ],
     limit: { vi: 'Tới 5.000 hội thoại/tháng', en: 'Up to 5,000 conversations a month' },
     features: [
@@ -172,10 +180,11 @@ const specs: PlanSpec[] = [
       {
         label: { vi: 'Triển khai', en: 'Build' },
         amount: 15_000_000,
+        usd: 579,
         from: true,
         unit: { vi: '/quy trình', en: '/workflow' },
       },
-      { label: { vi: 'Bảo trì', en: 'Maintenance' }, amount: 1_500_000, from: true, unit: { vi: '/tháng', en: '/month' } },
+      { label: { vi: 'Bảo trì', en: 'Maintenance' }, amount: 1_500_000, usd: 59, from: true, unit: { vi: '/tháng', en: '/month' } },
     ],
     features: [
       { vi: 'Báo cáo quảng cáo tự động mỗi sáng', en: 'Automatic ad report every morning' },
@@ -216,7 +225,7 @@ const specs: PlanSpec[] = [
       vi: 'Workshop 1 buổi, mang về bộ mẫu câu lệnh dùng được ngay.',
       en: 'A one-session workshop. You leave with prompt templates you can use right away.',
     },
-    prices: [{ label: { vi: 'Học phí', en: 'Fee' }, amount: 990_000, unit: { vi: '/người', en: '/person' } }],
+    prices: [{ label: { vi: 'Học phí', en: 'Fee' }, amount: 990_000, usd: 39, unit: { vi: '/người', en: '/person' } }],
     features: [
       { vi: 'Workshop 1 buổi', en: 'One-session workshop' },
       { vi: 'Kèm bộ mẫu câu lệnh', en: 'Set of prompt templates included' },
@@ -252,6 +261,12 @@ export interface Plan {
 
 const fromWord: Text = { vi: 'từ', en: 'from' };
 
+/** Báo lỗi ngay khi build nếu có giá VNĐ mà quên điền giá USD. */
+const requireUsd = (planId: string, p: PriceSpec) => {
+  if (p.usd === undefined) throw new Error(`Gói "${planId}" có giá VNĐ nhưng thiếu giá USD (usd) trong src/data/pricing.ts`);
+  return p.usd;
+};
+
 const toPlan = (spec: PlanSpec, lang: Lang): Plan => ({
   id: spec.id,
   name: spec.name[lang],
@@ -261,7 +276,7 @@ const toPlan = (spec: PlanSpec, lang: Lang): Plan => ({
     label: p.label[lang],
     value:
       p.amount !== undefined
-        ? `${p.from ? `${fromWord[lang]} ` : ''}${vnd(p.amount, lang)}`
+        ? `${p.from ? `${fromWord[lang]} ` : ''}${money({ amount: p.amount, usd: requireUsd(spec.id, p) }, lang)}`
         : (p.text?.[lang] ?? ''),
     unit: p.unit?.[lang],
     bare: p.bare,
@@ -307,7 +322,7 @@ const priceNoteText: Text = {
 export const getPriceNote = (lang: Lang = 'vi') => priceNoteText[lang];
 
 /** Ghi chú đơn vị tiền cho trang tiếng Anh. */
-export const currencyNote = 'All prices are in Vietnamese dong (VND).';
+export const currencyNote = 'All prices are in US dollars (USD).';
 
 /** Thời gian triển khai gói AI Agent Khởi đầu (dùng trong FAQ, các bước triển khai). */
 const leadTime: Text = { vi: '7–14 ngày', en: '7–14 days' };
@@ -318,16 +333,18 @@ const lowerFirst = (s: string) => s.charAt(0).toLowerCase() + s.slice(1);
 /**
  * Chuỗi giá gọn trên một dòng.
  * vi: "Cài đặt 4.900.000đ, duy trì 990.000đ/tháng"
- * en: "Setup 4,900,000 VND, monthly 990,000 VND/month"
+ * en: "Setup $189, $39/month"
  */
 export const priceInline = (plan: Plan, lang: Lang = 'vi') =>
   plan.prices
     .map((p, i) => {
-      const startsWithNumber = /^[0-9]/.test(p.value) || p.value.startsWith(fromWord[lang]);
+      const startsWithNumber = /^[0-9$]/.test(p.value) || p.value.startsWith(fromWord[lang]);
       const value = startsWithNumber ? p.value : lowerFirst(p.value);
       let text = p.bare ? p.value : `${p.label} ${value}${p.unit ?? ''}`;
       // Tiếng Anh tự nhiên hơn: "Free assessment", "7-day trial"
       if (lang === 'en' && p.value === 'Free') text = `Free ${p.label.toLowerCase()}`;
+      // "Setup $189, $39/month" thay vì "monthly $39/month"
+      if (lang === 'en' && p.label === 'Monthly' && p.unit === '/month') text = `${p.value}${p.unit}`;
       if (lang === 'en' && /^\d+ days$/.test(p.value)) text = `${p.value.replace(' days', '-day')} ${p.label.toLowerCase()}`;
       return i === 0 ? text : lowerFirst(text);
     })

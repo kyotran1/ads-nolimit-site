@@ -7,6 +7,11 @@
  * - Có JavaScript: tin nhắn hiện lần lượt (khách → "đang nhập…" → AI trả lời → thông báo hệ thống),
  *   tự phát khi cuộn tới, tạm dừng khi ra khỏi màn hình, lặp lại sau vài giây.
  * - Chiều cao khung chat = chiều cao hội thoại đầy đủ (mọi tin luôn chiếm chỗ) → không xô lệch bố cục.
+ * - Âm thanh (public/sounds/chat-*.mp3, tự tổng hợp bằng scripts/make-chat-sounds.py):
+ *   khách gửi tin → "send", AI đang soạn → "typing" (rất nhỏ), AI trả lời → "receive",
+ *   thông báo hệ thống → "notify". Trình duyệt chặn tự phát tiếng nên mặc định TẮT;
+ *   khách bấm "Bật tiếng" một lần, lựa chọn được nhớ cho các trang sau (localStorage).
+ *   File âm thanh chỉ tải khi khách bật tiếng.
  */
 import Icon from './Icon.astro';
 import type { IconName } from './Icon.astro';
@@ -45,6 +50,9 @@ const copy = {
     customer: 'Khách:',
     ai: 'AI Agent:',
     play: 'Phát hội thoại minh họa',
+    soundOn: 'Bật âm thanh hội thoại',
+    soundOff: 'Tắt âm thanh hội thoại',
+    soundText: 'Bật tiếng',
     pause: 'Tạm dừng hội thoại minh họa',
     replay: 'Phát lại từ đầu',
     caption: 'Hội thoại minh họa giữa khách hàng và AI Agent, không phải hội thoại thật.',
@@ -58,6 +66,9 @@ const copy = {
     customer: 'Customer:',
     ai: 'AI agent:',
     play: 'Play the illustrative conversation',
+    soundOn: 'Turn conversation sound on',
+    soundOff: 'Turn conversation sound off',
+    soundText: 'Sound on',
     pause: 'Pause the illustrative conversation',
     replay: 'Replay from the start',
     caption: 'An illustrative conversation between a customer and an AI agent, not a real one.',
@@ -69,7 +80,14 @@ const note = Astro.props.note ?? copy.note;
 const clockTime = clock ?? messages.find((m) => m.time)?.time;
 ---
 
-<figure class="chat" data-chat data-label-play={copy.play} data-label-pause={copy.pause}>
+<figure
+  class="chat"
+  data-chat
+  data-label-play={copy.play}
+  data-label-pause={copy.pause}
+  data-label-sound-on={copy.soundOn}
+  data-label-sound-off={copy.soundOff}
+>
   <div class="chat-window">
     <div class="chat-head">
       <span class="chat-avatar" aria-hidden="true">AI</span>
@@ -134,6 +152,11 @@ const clockTime = clock ?? messages.find((m) => m.time)?.time;
           <Icon name="play" class="i-play" />
         </button>
         <span class="cc-track" aria-hidden="true"><span class="cc-fill"></span></span>
+        <button type="button" class="cc-btn cc-sound" data-act="sound" aria-pressed="false" aria-label={copy.soundOn}>
+          <Icon name="volume-off" class="i-sound-off" />
+          <Icon name="volume" class="i-sound-on" />
+          <span class="cc-sound-text" aria-hidden="true">{copy.soundText}</span>
+        </button>
         <button type="button" class="cc-btn" data-act="replay" aria-label={copy.replay}>
           <Icon name="replay" />
         </button>
@@ -159,12 +182,118 @@ const clockTime = clock ?? messages.find((m) => m.time)?.time;
   const clamp = (v: number, lo: number, hi: number) => Math.min(hi, Math.max(lo, v));
   const reduce = window.matchMedia('(prefers-reduced-motion: reduce)');
 
+  /* ---------- Âm thanh: một bộ phát dùng chung cho mọi khung chat trên trang ---------- */
+  type SoundName = 'send' | 'typing' | 'receive' | 'notify';
+  const SOUND_NAMES: SoundName[] = ['send', 'typing', 'receive', 'notify'];
+  const SOUND_KEY = 'adsnl-chat-sound';
+  const SOUND_EVENT = 'adsnl-chat-sound';
+
+  const readPref = () => {
+    try {
+      return localStorage.getItem(SOUND_KEY) === 'on';
+    } catch {
+      return false;
+    }
+  };
+  const writePref = (on: boolean) => {
+    try {
+      localStorage.setItem(SOUND_KEY, on ? 'on' : 'off');
+    } catch {
+      /* chế độ ẩn danh / chặn lưu trữ: bỏ qua */
+    }
+  };
+
+  const sound = {
+    enabled: readPref(),
+    ctx: null as AudioContext | null,
+    out: null as GainNode | null,
+    buffers: new Map<SoundName, AudioBuffer>(),
+    loading: null as Promise<void> | null,
+
+    /** Tạo AudioContext + tải file. Chỉ gọi trong thao tác của người dùng (bấm/chạm/phím). */
+    unlock() {
+      if (!this.ctx) {
+        const Ctx: typeof AudioContext | undefined =
+          window.AudioContext ?? (window as unknown as { webkitAudioContext?: typeof AudioContext }).webkitAudioContext;
+        if (!Ctx) return;
+        const ctx = new Ctx();
+        const comp = ctx.createDynamicsCompressor();
+        comp.threshold.value = -14;
+        comp.ratio.value = 3;
+        const out = ctx.createGain();
+        out.gain.value = 1;
+        out.connect(comp).connect(ctx.destination);
+        this.ctx = ctx;
+        this.out = out;
+      }
+      if (this.ctx.state !== 'running') this.ctx.resume().catch(() => {});
+      if (!this.loading) {
+        const ctx = this.ctx;
+        this.loading = Promise.all(
+          SOUND_NAMES.map(async (name) => {
+            try {
+              const res = await fetch(`/sounds/chat-${name}.mp3`);
+              const data = await res.arrayBuffer();
+              const buf = await new Promise<AudioBuffer>((ok, fail) => ctx.decodeAudioData(data, ok, fail));
+              this.buffers.set(name, buf);
+            } catch {
+              /* thiếu một tiếng thì im lặng, không làm hỏng hội thoại */
+            }
+          }),
+        ).then(() => {});
+      }
+    },
+
+    /** Phát một tiếng. Trả về hàm dừng (có giảm dần) cho tiếng gõ phím. */
+    play(name: SoundName, gain = 1): (() => void) | null {
+      const { ctx, out } = this;
+      const buf = this.buffers.get(name);
+      if (!this.enabled || !ctx || !out || !buf || ctx.state !== 'running') return null;
+      const src = ctx.createBufferSource();
+      const g = ctx.createGain();
+      src.buffer = buf;
+      g.gain.value = gain;
+      src.connect(g).connect(out);
+      src.start();
+      return () => {
+        const now = ctx.currentTime;
+        g.gain.cancelScheduledValues(now);
+        g.gain.setValueAtTime(g.gain.value, now);
+        g.gain.linearRampToValueAtTime(0, now + 0.08);
+        try {
+          src.stop(now + 0.1);
+        } catch {
+          /* đã dừng */
+        }
+      };
+    },
+
+    set(on: boolean) {
+      this.enabled = on;
+      writePref(on);
+      if (on) this.unlock();
+      document.dispatchEvent(new CustomEvent(SOUND_EVENT));
+    },
+  };
+
+  // Khách đã bật tiếng ở trang trước: mở khóa âm thanh ngay ở lần chạm/bấm/gõ phím đầu tiên.
+  if (sound.enabled) {
+    const kick = () => {
+      sound.unlock();
+      if (sound.ctx?.state === 'running') {
+        for (const ev of ['pointerdown', 'pointerup', 'touchend', 'keydown']) document.removeEventListener(ev, kick, true);
+      }
+    };
+    for (const ev of ['pointerdown', 'pointerup', 'touchend', 'keydown']) document.addEventListener(ev, kick, true);
+  }
+
   function setup(root: HTMLElement) {
     const items = Array.from(root.querySelectorAll<HTMLElement>('[data-step]'));
     const fill = root.querySelector<HTMLElement>('.cc-fill');
     const toggle = root.querySelector<HTMLButtonElement>('[data-act="toggle"]');
     const replay = root.querySelector<HTMLButtonElement>('[data-act="replay"]');
-    if (!items.length || !fill || !toggle || !replay) return;
+    const soundBtn = root.querySelector<HTMLButtonElement>('[data-act="sound"]');
+    if (!items.length || !fill || !toggle || !replay || !soundBtn) return;
 
     // Dựng dòng thời gian (ms): độ dài tin nhắn quyết định thời gian "đang nhập" và thời gian đọc.
     const steps: Step[] = [];
@@ -195,17 +324,44 @@ const clockTime = clock ?? messages.find((m) => m.time)?.time;
     let userPaused = false;
     let last = 0;
     let raf = 0;
+    let stopTyping: (() => void) | null = null;
 
-    const render = () => {
+    const endTyping = () => {
+      stopTyping?.();
+      stopTyping = null;
+    };
+
+    /** Âm thanh khi một tin đổi trạng thái lúc đang phát (không kêu khi tua về đầu). */
+    const cue = (s: Step, state: State) => {
+      const kind = s.el.dataset.step;
+      if (state === 'typing') {
+        endTyping();
+        stopTyping = sound.play('typing', 0.9);
+      } else if (state === 'shown') {
+        if (kind === 'ai') {
+          endTyping();
+          sound.play('receive');
+        } else if (kind === 'event') {
+          sound.play('notify');
+        } else {
+          sound.play('send');
+        }
+      }
+    };
+
+    const render = (withSound = false) => {
       let typing = false;
       for (const s of steps) {
         const state: State = t >= s.showAt ? 'shown' : t >= s.typingAt && s.typingAt < s.showAt ? 'typing' : 'hidden';
         if (state === 'typing') typing = true;
         if (state !== s.state) {
+          const before = s.state;
           s.state = state;
           s.el.dataset.state = state;
+          if (withSound && before !== undefined && state !== 'hidden') cue(s, state);
         }
       }
+      if (!typing) endTyping();
       root.classList.toggle('is-typing', typing);
       root.classList.toggle('is-fading', t >= total + hold);
       fill.style.transform = `scaleX(${Math.min(1, t / total)})`;
@@ -216,7 +372,7 @@ const clockTime = clock ?? messages.find((m) => m.time)?.time;
       last = now;
       t += dt;
       if (t >= total + hold + fade) t = 0; // lặp lại
-      render();
+      render(true);
       raf = requestAnimationFrame(frame);
     };
 
@@ -235,6 +391,7 @@ const clockTime = clock ?? messages.find((m) => m.time)?.time;
     const pause = () => {
       playing = false;
       cancelAnimationFrame(raf);
+      endTyping();
       updateButton();
     };
     const sync = () => (inView && !userPaused && !document.hidden ? play() : pause());
@@ -256,6 +413,28 @@ const clockTime = clock ?? messages.find((m) => m.time)?.time;
       play();
     });
     document.addEventListener('visibilitychange', sync);
+
+    const updateSound = () => {
+      root.classList.toggle('is-sound', sound.enabled);
+      soundBtn.setAttribute('aria-pressed', String(sound.enabled));
+      soundBtn.setAttribute('aria-label', (sound.enabled ? root.dataset.labelSoundOff : root.dataset.labelSoundOn) ?? '');
+      if (!sound.enabled) endTyping();
+    };
+    soundBtn.addEventListener('click', () => {
+      const on = !sound.enabled;
+      sound.set(on);
+      if (on) {
+        // tiếng xác nhận ngắn khi tệp đã sẵn sàng; nếu đang tạm dừng thì phát tiếp
+        sound.loading?.then(() => sound.play('send', 0.55));
+        if (!playing) {
+          userPaused = false;
+          if (t >= total) t = 0;
+          sync();
+        }
+      }
+    });
+    document.addEventListener(SOUND_EVENT, updateSound);
+    updateSound();
 
     // Tự phát khi ít nhất 1/4 khung chat nằm trong màn hình; ra ngoài thì tạm dừng.
     new IntersectionObserver(
@@ -602,8 +781,56 @@ const clockTime = clock ?? messages.find((m) => m.time)?.time;
     display: none;
   }
 
+  /* Nút âm thanh: khi tắt là viên thuốc "Bật tiếng" có vòng sáng nhẹ; khi bật thu về icon loa xanh */
+  .cc-sound {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    width: auto;
+    padding: 0 0.85rem 0 0.7rem;
+    border-radius: 999px;
+    border-color: rgb(46 232 154 / 0.55);
+    background: rgb(0 216 120 / 0.1);
+    color: var(--green-ink);
+    font: inherit;
+    font-size: 0.8125rem;
+    font-weight: 700;
+    white-space: nowrap;
+    animation: sound-hint 2.6s ease-out infinite;
+  }
+  .cc-sound:hover {
+    background: rgb(0 216 120 / 0.18);
+    border-color: var(--green-ink);
+  }
+  .cc-sound :global(.i-sound-on) {
+    display: none;
+  }
+  .chat.is-sound .cc-sound {
+    width: 2.5rem;
+    padding: 0;
+    justify-content: center;
+    animation: none;
+  }
+  .chat.is-sound .cc-sound :global(.i-sound-on) {
+    display: block;
+  }
+  .chat.is-sound .cc-sound :global(.i-sound-off),
+  .chat.is-sound .cc-sound-text {
+    display: none;
+  }
+  @keyframes sound-hint {
+    0% {
+      box-shadow: 0 0 0 0 rgb(46 232 154 / 0.45);
+    }
+    70%,
+    100% {
+      box-shadow: 0 0 0 9px rgb(46 232 154 / 0);
+    }
+  }
+
   .cc-track {
     position: relative;
+    min-width: 2rem;
     flex: 1;
     height: 4px;
     border-radius: 4px;
