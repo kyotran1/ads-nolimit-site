@@ -1,33 +1,38 @@
 rules_version = '2';
 
 // ==========================================================================
-// LUẬT BẢO MẬT FIRESTORE — dự án "ADS-Nolimit Web" (tài khoản khách hàng).
+// LUẬT BẢO MẬT FIRESTORE — dự án "ADS-Nolimit Web" (tài khoản khách hàng, V4).
 //
-// Nguyên tắc: mặc định CẤM tất cả. Chỉ mở đúng hai bộ sưu tập:
+// Nguyên tắc: mặc định CẤM tất cả, chỉ mở đúng những gì liệt kê dưới đây.
 //
-//   users/{uid}     Hồ sơ của khách. Khách chỉ đọc / tạo / sửa / xóa hồ sơ CỦA MÌNH,
-//                   chỉ với các trường: displayName, phone, company, industry,
-//                   aiOfficeNews, createdAt, updatedAt. Chuỗi tối đa 120 ký tự,
-//                   số điện thoại tối đa 20 ký tự. (Xóa: dùng khi khách xóa tài khoản.)
+//   users/{uid}          Hồ sơ khách (khách tự đọc/sửa của mình; quản trị viên đọc được).
+//   wallets/{uid}        Số dư (VNĐ, số nguyên). Khách CHỈ đọc; khách chỉ làm số dư GIẢM
+//                        trong một lần ghi mua hàng hợp lệ (đơn + giao dịch + ví cùng lúc).
+//                        Mọi lần cộng tiền do quản trị viên làm, luôn kèm một dòng sổ giao dịch.
+//   transactions/{id}    Sổ giao dịch (nạp, thanh toán, hoàn tiền, điều chỉnh). Không ai sửa/xóa.
+//                        id: "topup_<mã nạp>", "refund_<mã đơn>", mã đơn (thanh toán), tự sinh (điều chỉnh).
+//   topups/{mã nạp}      Lệnh nạp tiền chuyển khoản. Khách tạo (chờ chuyển khoản) và tự hủy;
+//                        chỉ quản trị viên duyệt / từ chối.
+//   orders/{id}          Đơn hàng trả bằng số dư. Giá phải đúng bảng giá products/ (hoặc courses/).
+//   products/{id}        Bảng giá bán bằng số dư (quản trị viên "Đồng bộ bảng giá" từ src/data/catalog.ts).
+//   courses/{id}         Khóa học; courses/{id}/lessons/{id} chỉ đọc được khi có courseAccess.
+//   courseAccess/{uid_courseId}  Quyền học (mua bằng số dư, khóa miễn phí, hoặc quản trị viên cấp).
+//   guides/{id}          Hướng dẫn sử dụng (khách đã đăng nhập đọc bài đã đăng).
+//   keys/{key}           Key bản quyền ADS-NOLIMIT AI Office (quản trị viên cấp, khách chỉ đọc).
+//   keyRequests/{id}     Yêu cầu đổi máy của khách.
+//   settings/payment     Thông tin nhận chuyển khoản (khách đã đăng nhập đọc, quản trị viên ghi).
+//   requests/{id}        Yêu cầu tư vấn dịch vụ (như V3; quản trị viên đổi trạng thái).
+//   admins/{uid}         Danh sách quản trị viên: CHỈ tạo trong Firebase Console, website không ghi được.
 //
-//   requests/{id}   Yêu cầu dịch vụ khách gửi từ trang Tài khoản.
-//                   - Tạo: chỉ cho chính mình, trạng thái phải là 'new', thời điểm
-//                     tạo là giờ máy chủ, planId nằm trong danh sách gói ở
-//                     src/data/pricing.ts (thêm 'other').
-//                   - Đọc: chỉ yêu cầu của mình.
-//                   - Sửa: khách chỉ được HỦY ('new' → 'cancelled'), không đổi gì khác.
-//                   - Xóa: không cho khách xóa (giữ lại để đối chiếu).
-//
-// Chủ doanh nghiệp đổi trạng thái yêu cầu trong Firebase Console
-// (new → contacted → in_progress → done, hoặc cancelled). Thao tác trong Console
-// không bị luật này chặn.
-//
-// Khi thêm gói mới vào src/data/pricing.ts, nhớ thêm id gói vào planIds() bên dưới.
+// Thêm gói mới vào src/data/pricing.ts: thêm id gói vào planIds() bên dưới (yêu cầu tư vấn),
+// và nếu bán bằng số dư thì khai báo trong src/data/catalog.ts rồi bấm "Đồng bộ bảng giá" ở /quan-tri/.
 // Test: cd firebase && npm ci && npm test (chạy trên Firebase Emulator, không chạm dự án thật).
 // ==========================================================================
 
 service cloud.firestore {
   match /databases/{database}/documents {
+
+    // ---------- Hàm dùng chung ----------
 
     function signedIn() {
       return request.auth != null;
@@ -37,17 +42,77 @@ service cloud.firestore {
       return signedIn() && request.auth.uid == uid;
     }
 
+    function isAdmin() {
+      return signedIn() && exists(/databases/$(database)/documents/admins/$(request.auth.uid));
+    }
+
+    function myEmail() {
+      return request.auth.token.email;
+    }
+
+    // Dữ liệu này là của người đang đăng nhập (dùng cho đọc một tài liệu hoặc truy vấn where uid == mình).
+    function ownsResource() {
+      return signedIn() && resource.data.uid == request.auth.uid;
+    }
+
     // Trường không bắt buộc: không có, hoặc là chuỗi dài tối đa `max` ký tự.
     function optString(data, key, max) {
       return !(key in data) || (data[key] is string && data[key].size() <= max);
     }
 
-    // ---------- users/{uid} ----------
+    // Trường bắt buộc: chuỗi dài từ `min` tới `max` ký tự.
+    function reqString(data, key, min, max) {
+      return key in data && data[key] is string && data[key].size() >= min && data[key].size() <= max;
+    }
+
+    // Id an toàn để ghép vào đường dẫn (không có "/").
+    function safeId(id) {
+      return id is string && id.matches('^[A-Za-z0-9_-]{1,64}$');
+    }
+
+    function walletPath(uid) {
+      return /databases/$(database)/documents/wallets/$(uid);
+    }
+    function txPath(id) {
+      return /databases/$(database)/documents/transactions/$(id);
+    }
+    function orderPath(id) {
+      return /databases/$(database)/documents/orders/$(id);
+    }
+    function topupPath(id) {
+      return /databases/$(database)/documents/topups/$(id);
+    }
+    function productPath(id) {
+      return /databases/$(database)/documents/products/$(id);
+    }
+    function coursePath(id) {
+      return /databases/$(database)/documents/courses/$(id);
+    }
+    function accessPath(id) {
+      return /databases/$(database)/documents/courseAccess/$(id);
+    }
+    function keyPath(id) {
+      return /databases/$(database)/documents/keys/$(id);
+    }
+
+    // ======================================================================
+    // admins/{uid} — chỉ tạo/xóa trong Firebase Console
+    // ======================================================================
+    match /admins/{uid} {
+      allow get: if isMe(uid);
+      allow list, write: if false;
+    }
+
+    // ======================================================================
+    // users/{uid} — hồ sơ khách
+    // ======================================================================
 
     function validProfile(d) {
-      return d.keys().hasOnly(['displayName', 'phone', 'company', 'industry', 'aiOfficeNews', 'createdAt', 'updatedAt'])
+      return d.keys().hasOnly(['displayName', 'email', 'phone', 'company', 'industry', 'aiOfficeNews', 'createdAt', 'updatedAt'])
         && d.keys().hasAll(['createdAt', 'updatedAt'])
         && optString(d, 'displayName', 120)
+        // email (để chủ tìm khách) phải đúng email đăng nhập
+        && (!('email' in d) || d.email == myEmail())
         && optString(d, 'phone', 20)
         && (!('phone' in d) || d.phone.matches('[0-9+() .-]*'))
         && optString(d, 'company', 120)
@@ -57,18 +122,574 @@ service cloud.firestore {
         && d.updatedAt == request.time;
     }
 
+    // Chỉ xóa hồ sơ (bước đầu của "Xóa tài khoản") khi số dư bằng 0.
+    function walletEmpty(uid) {
+      return !exists(walletPath(uid)) || get(walletPath(uid)).data.balance == 0;
+    }
+
     match /users/{uid} {
-      allow get: if isMe(uid);
+      allow get: if isMe(uid) || isAdmin();
+      allow list: if isAdmin();
       allow create: if isMe(uid)
         && validProfile(request.resource.data)
         && request.resource.data.createdAt == request.time;
       allow update: if isMe(uid)
         && validProfile(request.resource.data)
         && request.resource.data.createdAt == resource.data.createdAt;
-      allow delete: if isMe(uid);
+      allow delete: if isMe(uid) && walletEmpty(uid);
     }
 
-    // ---------- requests/{id} ----------
+    // ======================================================================
+    // wallets/{uid} — số dư
+    // ======================================================================
+
+    function walletShape(uid, w) {
+      return w.keys().hasOnly(['uid', 'balance', 'updatedAt', 'lastTx'])
+        && w.uid == uid
+        && w.balance is int
+        && w.balance >= 0
+        && w.updatedAt == request.time
+        && safeId(w.lastTx);
+    }
+
+    // Khách trả tiền: số dư GIẢM đúng bằng tổng của một đơn hàng MỚI tạo trong cùng lần ghi.
+    // (Luật của orders/ kiểm tra giá; luật của transactions/ kiểm tra dòng sổ.)
+    function customerPays(uid) {
+      return isMe(uid)
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['balance', 'updatedAt', 'lastTx'])
+        && walletShape(uid, request.resource.data)
+        && request.resource.data.balance < resource.data.balance
+        && !exists(orderPath(request.resource.data.lastTx))
+        && paysForOrder(uid, getAfter(orderPath(request.resource.data.lastTx)).data);
+    }
+
+    function paysForOrder(uid, order) {
+      return order.uid == uid
+        && order.total == resource.data.balance - request.resource.data.balance;
+    }
+
+    // Quản trị viên cộng/trừ tiền: luôn kèm một dòng sổ MỚI (lastTx) có số tiền = chênh lệch số dư.
+    function adminMovesWallet(uid, before) {
+      return isAdmin()
+        && walletShape(uid, request.resource.data)
+        && !exists(txPath(request.resource.data.lastTx))
+        && ledgerMatches(uid, getAfter(txPath(request.resource.data.lastTx)).data, before);
+    }
+
+    function ledgerMatches(uid, tx, before) {
+      return tx.uid == uid && tx.amount == request.resource.data.balance - before;
+    }
+
+    match /wallets/{uid} {
+      allow get: if isMe(uid) || isAdmin();
+      allow list: if isAdmin();
+      allow create: if adminMovesWallet(uid, 0);
+      allow update: if customerPays(uid) || adminMovesWallet(uid, resource.data.balance);
+      allow delete: if false;
+    }
+
+    // ======================================================================
+    // transactions/{id} — sổ giao dịch (bất biến)
+    // ======================================================================
+
+    function txShape(d) {
+      return d.keys().hasOnly(['uid', 'type', 'amount', 'balanceAfter', 'refType', 'refId', 'note', 'createdAt', 'by'])
+        && d.keys().hasAll(['uid', 'type', 'amount', 'balanceAfter', 'createdAt'])
+        && d.uid is string
+        && d.amount is int
+        && d.amount != 0
+        && d.balanceAfter is int
+        && d.balanceAfter >= 0
+        && optString(d, 'note', 300)
+        && (!('refId' in d) || safeId(d.refId))
+        && d.createdAt == request.time;
+    }
+
+    // Dòng "thanh toán" khách tự ghi khi mua: id = mã đơn, số tiền = −tổng đơn, số dư sau = số dư mới của ví.
+    function customerPurchaseTx(txId) {
+      return signedIn()
+        && request.resource.data.uid == request.auth.uid
+        && request.resource.data.type == 'purchase'
+        && txShape(request.resource.data)
+        && !('by' in request.resource.data)
+        && request.resource.data.refType == 'order'
+        && request.resource.data.refId == txId
+        && purchaseMatches(txId, request.resource.data, getAfter(orderPath(txId)).data, getAfter(walletPath(request.auth.uid)).data);
+    }
+
+    function purchaseMatches(txId, d, order, wallet) {
+      return order.uid == d.uid
+        && d.amount == -order.total
+        && wallet.lastTx == txId
+        && wallet.balance == d.balanceAfter;
+    }
+
+    // Dòng nạp / hoàn tiền / điều chỉnh do quản trị viên ghi, khớp với ví sau khi ghi.
+    function adminTx(txId) {
+      return isAdmin()
+        && txShape(request.resource.data)
+        && request.resource.data.type in ['topup', 'refund', 'adjust']
+        && request.resource.data.by == request.auth.uid
+        && safeId(request.resource.data.uid)
+        && adminTxWallet(txId, request.resource.data, getAfter(walletPath(request.resource.data.uid)).data)
+        && adminTxRef(txId, request.resource.data);
+    }
+
+    function walletBefore(uid) {
+      return exists(walletPath(uid)) ? get(walletPath(uid)).data.balance : 0;
+    }
+
+    function adminTxWallet(txId, d, wallet) {
+      return wallet.lastTx == txId
+        && wallet.balance == d.balanceAfter
+        && d.balanceAfter == walletBefore(d.uid) + d.amount;
+    }
+
+    function adminTxRef(txId, d) {
+      return (d.type == 'topup'
+          && d.refType == 'topup'
+          && safeId(d.refId)
+          && txId == 'topup_' + d.refId
+          && topupCredited(d, getAfter(topupPath(d.refId)).data))
+        || (d.type == 'refund'
+          && d.refType == 'order'
+          && safeId(d.refId)
+          && txId == 'refund_' + d.refId
+          && orderRefunded(d, getAfter(orderPath(d.refId)).data))
+        || (d.type == 'adjust'
+          && !('refType' in d)
+          && !('refId' in d)
+          && reqString(d, 'note', 3, 300));
+    }
+
+    function topupCredited(d, topup) {
+      return topup.status == 'approved' && topup.uid == d.uid && topup.amount == d.amount;
+    }
+
+    function orderRefunded(d, order) {
+      return order.status == 'refunded' && order.uid == d.uid && order.total == d.amount;
+    }
+
+    match /transactions/{txId} {
+      allow read: if ownsResource() || isAdmin();
+      allow create: if safeId(txId) && (customerPurchaseTx(txId) || adminTx(txId));
+      allow update, delete: if false;
+    }
+
+    // ======================================================================
+    // topups/{code} — lệnh nạp tiền (chuyển khoản VietQR, chủ duyệt tay)
+    // ======================================================================
+
+    function newTopup(code) {
+      return signedIn()
+        && request.resource.data.keys().hasOnly(['uid', 'email', 'name', 'amount', 'code', 'status', 'lang', 'createdAt'])
+        && request.resource.data.keys().hasAll(['uid', 'email', 'amount', 'code', 'status', 'lang', 'createdAt'])
+        && request.resource.data.uid == request.auth.uid
+        && request.resource.data.email == myEmail()
+        && optString(request.resource.data, 'name', 120)
+        && request.resource.data.amount is int
+        && request.resource.data.amount >= 100000
+        && request.resource.data.amount <= 500000000
+        && request.resource.data.amount % 1000 == 0
+        // mã chuyển khoản = id tài liệu → không thể trùng
+        && code.matches('^ADSN[A-HJ-NP-Z2-9]{6}$')
+        && request.resource.data.code == code
+        && request.resource.data.status == 'pending'
+        && request.resource.data.lang in ['vi', 'en']
+        && request.resource.data.createdAt == request.time;
+    }
+
+    function customerCancelsTopup() {
+      return ownsResource()
+        && resource.data.status == 'pending'
+        && request.resource.data.status == 'cancelled'
+        && request.resource.data.cancelledAt == request.time
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status', 'cancelledAt']);
+    }
+
+    // Duyệt = cùng một transaction: lệnh nạp → approved + dòng sổ "topup_<mã>" + ví cộng tiền.
+    // Lệnh khách đã hủy vẫn duyệt được (khách hủy nhầm nhưng đã chuyển tiền). Mỗi lệnh chỉ duyệt một lần.
+    function adminApprovesTopup(code) {
+      return isAdmin()
+        && resource.data.status in ['pending', 'cancelled']
+        && request.resource.data.status == 'approved'
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status', 'decidedAt', 'decidedBy', 'txId'])
+        && request.resource.data.decidedAt == request.time
+        && request.resource.data.decidedBy == request.auth.uid
+        && request.resource.data.txId == 'topup_' + code
+        && !exists(txPath('topup_' + code))
+        && existsAfter(txPath('topup_' + code));
+    }
+
+    function adminRejectsTopup() {
+      return isAdmin()
+        && resource.data.status == 'pending'
+        && request.resource.data.status == 'rejected'
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status', 'decidedAt', 'decidedBy', 'reason'])
+        && request.resource.data.decidedAt == request.time
+        && request.resource.data.decidedBy == request.auth.uid
+        && reqString(request.resource.data, 'reason', 1, 300);
+    }
+
+    match /topups/{code} {
+      allow read: if ownsResource() || isAdmin();
+      allow create: if newTopup(code);
+      allow update: if customerCancelsTopup() || adminApprovesTopup(code) || adminRejectsTopup();
+      allow delete: if false;
+    }
+
+    // ======================================================================
+    // products/{id} — bảng giá bán bằng số dư
+    // ======================================================================
+
+    function validProduct(pid, d) {
+      return d.keys().hasOnly(['id', 'planId', 'type', 'pricing', 'price', 'priceUsd', 'maxQty', 'minAmount', 'maxAmount', 'name', 'unit', 'active', 'sort', 'updatedAt'])
+        && d.id == pid
+        && safeId(pid)
+        && d.type in ['service', 'ad_budget', 'key']
+        && d.active is bool
+        && d.name is map
+        && reqString(d.name, 'vi', 1, 200)
+        && reqString(d.name, 'en', 1, 200)
+        && ((d.pricing == 'fixed'
+            && d.price is int && d.price > 0
+            && d.maxQty is int && d.maxQty >= 1 && d.maxQty <= 100)
+          || (d.pricing == 'variable'
+            && d.minAmount is int && d.minAmount > 0
+            && d.maxAmount is int && d.maxAmount >= d.minAmount))
+        && d.updatedAt == request.time;
+    }
+
+    match /products/{pid} {
+      allow read: if signedIn();
+      allow create, update: if isAdmin() && validProduct(pid, request.resource.data);
+      allow delete: if isAdmin();
+    }
+
+    // ======================================================================
+    // orders/{id} — đơn hàng trả bằng số dư
+    // ======================================================================
+
+    function orderShape(d) {
+      return d.keys().hasOnly(['uid', 'email', 'type', 'productId', 'name', 'qty', 'unitPrice', 'total', 'status', 'lang', 'note', 'adAccountId', 'adAccountName', 'createdAt', 'updatedAt'])
+        && d.keys().hasAll(['uid', 'email', 'type', 'productId', 'name', 'qty', 'unitPrice', 'total', 'status', 'lang', 'createdAt', 'updatedAt'])
+        && safeId(d.productId)
+        && reqString(d, 'name', 1, 200)
+        && d.qty is int
+        && d.unitPrice is int
+        && d.total is int
+        && d.total > 0
+        && optString(d, 'note', 1000)
+        && optString(d, 'adAccountId', 64)
+        && optString(d, 'adAccountName', 120)
+        && d.lang in ['vi', 'en'];
+    }
+
+    // Giá theo bảng products/{id}: giá cố định × số lượng, hoặc số tiền khách nhập (ngân sách quảng cáo).
+    function productPriceOk(d, p) {
+      return p.active == true
+        && p.type == d.type
+        && ((p.pricing == 'fixed'
+            && d.unitPrice == p.price
+            && d.qty >= 1
+            && d.qty <= p.maxQty
+            && d.total == p.price * d.qty)
+          || (p.pricing == 'variable'
+            && d.qty == 1
+            && d.unitPrice == d.total
+            && d.total >= p.minAmount
+            && d.total <= p.maxAmount
+            && d.total % 1000 == 0))
+        && (d.type != 'ad_budget' || reqString(d, 'adAccountId', 3, 64));
+    }
+
+    // Khóa học: giá theo courses/{id}; mỗi khóa chỉ mua một lần (quyền học được tạo cùng lúc).
+    function coursePriceOk(d, c) {
+      return c.published == true
+        && c.price is int
+        && c.price > 0
+        && d.qty == 1
+        && d.unitPrice == c.price
+        && d.total == c.price
+        && !exists(accessPath(d.uid + '_' + d.productId))
+        && existsAfter(accessPath(d.uid + '_' + d.productId));
+    }
+
+    function priceOk(d) {
+      return d.type == 'course'
+        ? coursePriceOk(d, get(coursePath(d.productId)).data)
+        : (d.type in ['service', 'ad_budget', 'key'] && productPriceOk(d, get(productPath(d.productId)).data));
+    }
+
+    // Đơn mới chỉ hợp lệ khi CÙNG LẦN GHI có: ví trừ đúng tổng (lastTx = mã đơn) và dòng sổ thanh toán.
+    function customerOrder(oid) {
+      return signedIn()
+        && safeId(oid)
+        && request.resource.data.uid == request.auth.uid
+        && request.resource.data.email == myEmail()
+        && orderShape(request.resource.data)
+        && request.resource.data.status == 'paid'
+        && request.resource.data.createdAt == request.time
+        && request.resource.data.updatedAt == request.time
+        && priceOk(request.resource.data)
+        && walletPaid(oid, request.resource.data, getAfter(walletPath(request.auth.uid)).data)
+        && existsAfter(txPath(oid));
+    }
+
+    function walletPaid(oid, d, after) {
+      return after.lastTx == oid
+        && after.balance == get(walletPath(d.uid)).data.balance - d.total;
+    }
+
+    function adminOrderStatus() {
+      return isAdmin()
+        && resource.data.status in ['paid', 'processing', 'done', 'cancelled']
+        && request.resource.data.status in ['paid', 'processing', 'done', 'cancelled']
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status', 'updatedAt', 'adminNote'])
+        && request.resource.data.updatedAt == request.time
+        && optString(request.resource.data, 'adminNote', 500);
+    }
+
+    // Hoàn tiền = cùng một transaction: đơn → refunded + dòng sổ "refund_<mã đơn>" + ví cộng lại tổng đơn.
+    function adminRefund(oid) {
+      return isAdmin()
+        && resource.data.status in ['paid', 'processing', 'done', 'cancelled']
+        && request.resource.data.status == 'refunded'
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status', 'updatedAt', 'refundedAt', 'adminNote'])
+        && request.resource.data.updatedAt == request.time
+        && request.resource.data.refundedAt == request.time
+        && optString(request.resource.data, 'adminNote', 500)
+        && !exists(txPath('refund_' + oid))
+        && existsAfter(txPath('refund_' + oid));
+    }
+
+    match /orders/{oid} {
+      allow read: if ownsResource() || isAdmin();
+      allow create: if customerOrder(oid);
+      allow update: if adminOrderStatus() || adminRefund(oid);
+      allow delete: if false;
+    }
+
+    // ======================================================================
+    // courses/{id}, courses/{id}/lessons/{id}, courseAccess/{uid_courseId}
+    // ======================================================================
+
+    function validCourse(d) {
+      return d.keys().hasOnly(['title', 'titleEn', 'description', 'descriptionEn', 'price', 'priceUsd', 'cover', 'published', 'sort', 'outline', 'createdAt', 'updatedAt'])
+        && reqString(d, 'title', 1, 160)
+        && optString(d, 'titleEn', 160)
+        && optString(d, 'description', 2000)
+        && optString(d, 'descriptionEn', 2000)
+        && d.price is int && d.price >= 0 && d.price <= 500000000
+        && (!('priceUsd' in d) || (d.priceUsd is number && d.priceUsd >= 0))
+        && optString(d, 'cover', 20)
+        && d.published is bool
+        && (!('sort' in d) || d.sort is int)
+        && (!('outline' in d) || (d.outline is list && d.outline.size() <= 200))
+        && d.updatedAt == request.time;
+    }
+
+    function validLesson(d) {
+      return d.keys().hasOnly(['title', 'titleEn', 'videoUrl', 'duration', 'sort', 'updatedAt'])
+        && reqString(d, 'title', 1, 160)
+        && optString(d, 'titleEn', 160)
+        && (!('videoUrl' in d) || (d.videoUrl is string && d.videoUrl.size() <= 500 && (d.videoUrl == '' || d.videoUrl.matches('^https://.+'))))
+        && optString(d, 'duration', 12)
+        && (!('sort' in d) || d.sort is int)
+        && d.updatedAt == request.time;
+    }
+
+    function hasCourseAccess(cid) {
+      return signedIn() && exists(accessPath(request.auth.uid + '_' + cid));
+    }
+
+    match /courses/{cid} {
+      allow read: if (signedIn() && resource.data.published == true) || isAdmin();
+      allow create, update: if isAdmin() && safeId(cid) && validCourse(request.resource.data);
+      allow delete: if isAdmin();
+
+      match /lessons/{lid} {
+        allow read: if hasCourseAccess(cid) || isAdmin();
+        allow create, update: if isAdmin() && safeId(lid) && validLesson(request.resource.data);
+        allow delete: if isAdmin();
+      }
+    }
+
+    function accessShape(aid, d) {
+      return d.keys().hasOnly(['uid', 'courseId', 'source', 'orderId', 'createdAt', 'by'])
+        && d.keys().hasAll(['uid', 'courseId', 'source', 'createdAt'])
+        && safeId(d.uid)
+        && safeId(d.courseId)
+        && aid == d.uid + '_' + d.courseId
+        && d.createdAt == request.time;
+    }
+
+    function customerAccess(aid) {
+      return signedIn()
+        && request.resource.data.uid == request.auth.uid
+        && accessShape(aid, request.resource.data)
+        && !('by' in request.resource.data)
+        && ((request.resource.data.source == 'purchase'
+            && safeId(request.resource.data.orderId)
+            && !exists(orderPath(request.resource.data.orderId))
+            && boughtCourse(request.resource.data, getAfter(orderPath(request.resource.data.orderId)).data))
+          || (request.resource.data.source == 'free'
+            && !('orderId' in request.resource.data)
+            && freeCourse(get(coursePath(request.resource.data.courseId)).data)));
+    }
+
+    function boughtCourse(d, order) {
+      return order.uid == d.uid && order.type == 'course' && order.productId == d.courseId;
+    }
+
+    function freeCourse(c) {
+      return c.published == true && c.price == 0;
+    }
+
+    function adminGrant(aid) {
+      return isAdmin()
+        && accessShape(aid, request.resource.data)
+        && request.resource.data.source == 'admin'
+        && request.resource.data.by == request.auth.uid
+        && !('orderId' in request.resource.data);
+    }
+
+    match /courseAccess/{aid} {
+      allow read: if ownsResource() || isAdmin();
+      allow create: if customerAccess(aid) || adminGrant(aid);
+      allow delete: if isAdmin();
+      allow update: if false;
+    }
+
+    // ======================================================================
+    // guides/{id} — hướng dẫn sử dụng
+    // ======================================================================
+
+    function validGuide(d) {
+      return d.keys().hasOnly(['title', 'titleEn', 'category', 'categoryEn', 'body', 'bodyEn', 'videoUrl', 'published', 'sort', 'createdAt', 'updatedAt'])
+        && reqString(d, 'title', 1, 160)
+        && optString(d, 'titleEn', 160)
+        && reqString(d, 'category', 1, 60)
+        && optString(d, 'categoryEn', 60)
+        && optString(d, 'body', 20000)
+        && optString(d, 'bodyEn', 20000)
+        && (!('videoUrl' in d) || (d.videoUrl is string && d.videoUrl.size() <= 500 && (d.videoUrl == '' || d.videoUrl.matches('^https://.+'))))
+        && d.published is bool
+        && (!('sort' in d) || d.sort is int)
+        && d.updatedAt == request.time;
+    }
+
+    match /guides/{gid} {
+      allow read: if (signedIn() && resource.data.published == true) || isAdmin();
+      allow create, update: if isAdmin() && safeId(gid) && validGuide(request.resource.data);
+      allow delete: if isAdmin();
+    }
+
+    // ======================================================================
+    // keys/{key} — key ADS-NOLIMIT AI Office; keyRequests/{id} — yêu cầu đổi máy
+    // ======================================================================
+    //
+    // machines: danh sách { id, name, activatedAt } (máy đã kích hoạt), tối đa maxMachines.
+    // Khi phần mềm ra mắt, có thể mở thêm luật cho chính chủ key thêm một máy, ví dụ:
+    //   allow update: if ownsResource() && resource.data.status == 'active'
+    //     && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['machines', 'updatedAt'])
+    //     && request.resource.data.machines.size() == resource.data.machines.size() + 1
+    //     && request.resource.data.machines.size() <= resource.data.maxMachines
+    //     && request.resource.data.machines.hasAll(resource.data.machines) && ...
+    // (nên dùng máy chủ riêng / Cloud Functions để chống giả mạo mã máy).
+
+    function keyIdOk(kid) {
+      return kid.matches('^AINO-[A-HJ-NP-Z2-9]{4}-[A-HJ-NP-Z2-9]{4}-[A-HJ-NP-Z2-9]{4}$');
+    }
+
+    function validNewKey(kid, d) {
+      return keyIdOk(kid)
+        && d.keys().hasOnly(['uid', 'email', 'key', 'plan', 'maxMachines', 'machines', 'status', 'note', 'createdAt', 'updatedAt', 'issuedBy'])
+        && safeId(d.uid)
+        && reqString(d, 'email', 3, 200)
+        && d.key == kid
+        && reqString(d, 'plan', 1, 60)
+        && d.maxMachines is int && d.maxMachines >= 1 && d.maxMachines <= 50
+        && d.machines is list && d.machines.size() == 0
+        && d.status == 'active'
+        && optString(d, 'note', 300)
+        && d.createdAt == request.time
+        && d.updatedAt == request.time
+        && d.issuedBy == request.auth.uid;
+    }
+
+    function validKeyUpdate() {
+      return request.resource.data.diff(resource.data).affectedKeys().hasOnly(['plan', 'maxMachines', 'machines', 'status', 'note', 'updatedAt'])
+        && reqString(request.resource.data, 'plan', 1, 60)
+        && request.resource.data.maxMachines is int
+        && request.resource.data.maxMachines >= 1
+        && request.resource.data.maxMachines <= 50
+        && request.resource.data.machines is list
+        && request.resource.data.machines.size() <= request.resource.data.maxMachines
+        && request.resource.data.status in ['active', 'revoked']
+        && optString(request.resource.data, 'note', 300)
+        && request.resource.data.updatedAt == request.time;
+    }
+
+    match /keys/{kid} {
+      allow read: if ownsResource() || isAdmin();
+      allow create: if isAdmin() && validNewKey(kid, request.resource.data);
+      allow update: if isAdmin() && validKeyUpdate();
+      allow delete: if false;
+    }
+
+    function validKeyRequest(d) {
+      return d.keys().hasOnly(['uid', 'email', 'keyId', 'type', 'note', 'status', 'lang', 'createdAt'])
+        && d.keys().hasAll(['uid', 'email', 'keyId', 'type', 'status', 'lang', 'createdAt'])
+        && d.uid == request.auth.uid
+        && d.email == myEmail()
+        && d.keyId is string
+        && keyIdOk(d.keyId)
+        && d.type == 'reset_machines'
+        && optString(d, 'note', 500)
+        && d.status == 'new'
+        && d.lang in ['vi', 'en']
+        && d.createdAt == request.time
+        && get(keyPath(d.keyId)).data.uid == request.auth.uid;
+    }
+
+    match /keyRequests/{rid} {
+      allow read: if ownsResource() || isAdmin();
+      allow create: if signedIn() && validKeyRequest(request.resource.data);
+      allow update: if isAdmin()
+        && resource.data.status == 'new'
+        && request.resource.data.status in ['done', 'rejected']
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status', 'decidedAt', 'adminNote'])
+        && request.resource.data.decidedAt == request.time
+        && optString(request.resource.data, 'adminNote', 300);
+      allow delete: if false;
+    }
+
+    // ======================================================================
+    // settings/payment — thông tin nhận chuyển khoản (chỉ chủ điền ở /quan-tri/)
+    // ======================================================================
+
+    function validPayment(d) {
+      return d.keys().hasOnly(['bankBin', 'bankName', 'accountNumber', 'accountName', 'note', 'updatedAt', 'updatedBy'])
+        && d.bankBin is string && d.bankBin.matches('^[0-9]{6}$')
+        && reqString(d, 'bankName', 1, 80)
+        && d.accountNumber is string && d.accountNumber.matches('^[0-9]{6,19}$')
+        && d.accountName is string && d.accountName.matches('^[A-Z0-9 .-]{2,60}$')
+        && optString(d, 'note', 300)
+        && d.updatedAt == request.time
+        && d.updatedBy == request.auth.uid;
+    }
+
+    match /settings/{name} {
+      allow get: if (signedIn() && name == 'payment') || isAdmin();
+      allow list: if isAdmin();
+      allow create, update: if isAdmin() && name == 'payment' && validPayment(request.resource.data);
+      allow delete: if isAdmin();
+    }
+
+    // ======================================================================
+    // requests/{id} — yêu cầu tư vấn dịch vụ
+    // ======================================================================
 
     function planIds() {
       return ['ai-starter', 'ai-sales', 'ads', 'agency-account', 'automation', 'web', 'training', 'other'];
@@ -87,18 +708,22 @@ service cloud.firestore {
     }
 
     match /requests/{requestId} {
-      // Đọc một yêu cầu, hoặc truy vấn where('uid', '==', <uid của mình>).
-      allow read: if signedIn() && resource.data.uid == request.auth.uid;
+      // Khách đọc yêu cầu của mình (truy vấn where('uid', '==', <uid của mình>)); quản trị viên đọc tất cả.
+      allow read: if ownsResource() || isAdmin();
       allow create: if signedIn() && validNewRequest(request.resource.data);
-      // Khách chỉ được hủy yêu cầu còn ở trạng thái 'new', không đổi trường nào khác.
-      allow update: if signedIn()
-        && resource.data.uid == request.auth.uid
-        && resource.data.status == 'new'
-        && request.resource.data.status == 'cancelled'
-        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status']);
+      // Khách chỉ được hủy yêu cầu còn 'new'; quản trị viên đổi trạng thái.
+      allow update: if (ownsResource()
+          && resource.data.status == 'new'
+          && request.resource.data.status == 'cancelled'
+          && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status']))
+        || (isAdmin()
+          && request.resource.data.status in ['new', 'contacted', 'in_progress', 'done', 'cancelled']
+          && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status', 'updatedAt', 'adminNote'])
+          && request.resource.data.updatedAt == request.time
+          && optString(request.resource.data, 'adminNote', 500));
       allow delete: if false;
     }
 
-    // Mọi đường dẫn khác: cấm (không có match nào khác = không ai đọc/ghi được từ trình duyệt).
+    // Mọi đường dẫn khác: cấm.
   }
 }

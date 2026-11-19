@@ -121,7 +121,10 @@ describe('users/{uid} — hồ sơ khách', () => {
     await env.withSecurityRulesDisabled((ctx) => deleteDoc(doc(ctx.firestore(), 'users/alice')));
     await assertFails(setDoc(doc(as(ALICE), 'users/alice'), profile({ role: 'admin' })));
   });
-  test('sửa hồ sơ thêm trường lạ (email): bị chặn', async () => {
+  test('lưu email đúng email đăng nhập (để chủ tìm khách): được', async () => {
+    await assertSucceeds(updateDoc(doc(as(ALICE), 'users/alice'), { email: 'alice@example.com', updatedAt: serverTimestamp() }));
+  });
+  test('lưu email khác email đăng nhập: bị chặn', async () => {
     await assertFails(updateDoc(doc(as(ALICE), 'users/alice'), { email: 'x@example.com', updatedAt: serverTimestamp() }));
   });
   test('chuỗi dài hơn 120 ký tự: bị chặn', async () => {
