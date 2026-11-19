@@ -1,0 +1,86 @@
+---
+/** Trang Đăng nhập (/dang-nhap/ và /en/sign-in/). Xử lý: src/lib/auth/sign-in.ts. */
+import '../styles/auth.css';
+import BaseLayout from '../layouts/BaseLayout.astro';
+import AuthShell from '../components/auth/AuthShell.astro';
+import Field from '../components/auth/Field.astro';
+import PasswordInput from '../components/auth/PasswordInput.astro';
+import GoogleButton from '../components/auth/GoogleButton.astro';
+import { contact, links } from '../config/site';
+import { localize } from '../config/i18n';
+import type { Lang } from '../config/i18n';
+
+interface Props {
+  lang: Lang;
+}
+const { lang } = Astro.props;
+const href = {
+  signUp: localize('/dang-ky/', lang),
+  forgot: localize('/quen-mat-khau/', lang),
+  privacy: localize('/chinh-sach-bao-mat/', lang),
+};
+
+const copy = {
+  vi: {
+    title: 'Đăng nhập | ADS-Nolimit',
+    description: 'Đăng nhập tài khoản ADS-Nolimit bằng email hoặc Google để cập nhật hồ sơ và gửi yêu cầu dịch vụ.',
+    h1: 'Đăng nhập tài khoản',
+    lead: 'Chào mừng bạn quay lại. Đăng nhập để xem hồ sơ và các yêu cầu dịch vụ của bạn.',
+    email: 'Email',
+    password: 'Mật khẩu',
+    forgot: 'Quên mật khẩu?',
+    show: 'Hiện mật khẩu',
+    submit: 'Đăng nhập',
+    or: 'hoặc',
+    google: 'Đăng nhập với Google',
+    googleNote: `Lần đầu đăng nhập với Google sẽ tạo tài khoản mới. Khi tiếp tục, bạn đồng ý với <a href="${href.privacy}">Chính sách bảo mật</a> của ADS-Nolimit.`,
+    noAccount: 'Chưa có tài khoản?',
+    signUp: 'Tạo tài khoản',
+    help: `Cần hỗ trợ đăng nhập? Nhắn <a href="${links.zalo}" rel="noopener">Zalo ${contact.zaloPhone}</a> hoặc email <a href="${links.email}">${contact.email}</a>.`,
+  },
+  en: {
+    title: 'Sign in | ADS-Nolimit',
+    description: 'Sign in to your ADS-Nolimit account with email or Google to update your profile and send service requests.',
+    h1: 'Sign in to your account',
+    lead: 'Welcome back. Sign in to see your profile and service requests.',
+    email: 'Email',
+    password: 'Password',
+    forgot: 'Forgot password?',
+    show: 'Show password',
+    submit: 'Sign in',
+    or: 'or',
+    google: 'Sign in with Google',
+    googleNote: `Signing in with Google for the first time creates a new account. By continuing, you agree to the ADS-Nolimit <a href="${href.privacy}">privacy policy</a>.`,
+    noAccount: 'No account yet?',
+    signUp: 'Create account',
+    help: `Trouble signing in? Message us on <a href="${links.telegram}" rel="noopener">Telegram</a> or email <a href="${links.email}">${contact.email}</a>.`,
+  },
+}[lang];
+---
+
+<BaseLayout title={copy.title} description={copy.description} lang={lang}>
+  <AuthShell lang={lang} title={copy.h1} lead={copy.lead}>
+    <form id="signin-form" class="auth-form" novalidate>
+      <div id="signin-alert" class="auth-alert" role="alert"></div>
+      <Field id="signin-email" name="email" type="email" label={copy.email} autocomplete="email" inputmode="email" required />
+      <PasswordInput id="signin-password" name="password" label={copy.password} autocomplete="current-password" showLabel={copy.show}>
+        <a slot="extra" href={href.forgot} data-keep-next>{copy.forgot}</a>
+      </PasswordInput>
+      <button type="submit" class="btn btn-primary btn-block">{copy.submit}</button>
+    </form>
+
+    <p class="auth-divider">{copy.or}</p>
+    <GoogleButton id="signin-google" label={copy.google} />
+    <p class="auth-note" set:html={copy.googleNote} />
+
+    <p class="auth-switch">
+      {copy.noAccount} <a href={href.signUp} data-keep-next>{copy.signUp}</a>
+    </p>
+
+    <p slot="below" set:html={copy.help} />
+  </AuthShell>
+</BaseLayout>
+
+<script>
+  import '../lib/auth/sign-in';
+</script>
