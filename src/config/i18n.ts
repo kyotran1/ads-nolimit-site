@@ -42,7 +42,18 @@ export const routes: readonly RoutePair[] = [
   { vi: '/ve-chung-toi/', en: '/en/about/' },
   { vi: '/lien-he/', en: '/en/contact/' },
   { vi: '/chinh-sach-bao-mat/', en: '/en/privacy/' },
+  // Tài khoản khách hàng (Firebase Authentication)
+  { vi: '/dang-nhap/', en: '/en/sign-in/' },
+  { vi: '/dang-ky/', en: '/en/sign-up/' },
+  { vi: '/quen-mat-khau/', en: '/en/forgot-password/' },
+  { vi: '/tai-khoan/', en: '/en/account/' },
 ];
+
+/**
+ * Trang có thật nhưng KHÔNG đưa vào sitemap.xml (và tự gắn noindex trong view của trang):
+ * trang quên mật khẩu và trang tài khoản riêng của khách.
+ */
+export const unlistedPaths: readonly string[] = ['/quen-mat-khau/', '/en/forgot-password/', '/tai-khoan/', '/en/account/'];
 
 /** Trang chủ của từng ngôn ngữ. */
 export const homeOf: Record<Lang, string> = { vi: '/', en: '/en/' };
@@ -102,6 +113,9 @@ export const ui = {
     contact: 'Liên hệ',
     privacy: 'Chính sách bảo mật',
     headerCta: 'Tư vấn miễn phí',
+    signIn: 'Đăng nhập',
+    signUp: 'Tạo tài khoản',
+    account: 'Tài khoản',
     language: 'Ngôn ngữ',
     langName: { vi: 'Tiếng Việt', en: 'English' },
     quickContact: 'Liên hệ nhanh',
@@ -134,6 +148,9 @@ export const ui = {
     contact: 'Contact',
     privacy: 'Privacy policy',
     headerCta: 'Free consultation',
+    signIn: 'Sign in',
+    signUp: 'Create account',
+    account: 'Account',
     language: 'Language',
     langName: { vi: 'Tiếng Việt', en: 'English' },
     quickContact: 'Quick contact',
