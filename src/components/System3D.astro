@@ -1,0 +1,1101 @@
+---
+/**
+ * Mô hình 3D "xưởng" của ADS-Nolimit: một khách hàng đi qua 6 trạm
+ * (Quảng cáo → Tin nhắn → AI Agent → Google Sheet → Báo nhân viên → Báo cáo sáng).
+ *
+ * - Vẽ bằng CSS 3D (transform-style: preserve-3d), không thư viện, không ảnh → nhẹ, nét.
+ * - Kéo (chuột) hoặc vuốt ngang (điện thoại) để xoay; nút góc nhìn; "Chạy thử 1 khách"
+ *   chạy lần lượt 6 bước, mỗi bước sáng trạm tương ứng + chú thích.
+ * - Tự chạy thử một lần khi cuộn tới; tạm dừng mọi chuyển động khi ra khỏi màn hình.
+ * - Giảm chuyển động (prefers-reduced-motion): không tự xoay, không chấm chạy; vẫn bấm xem từng bước.
+ * - Không JS: hiện mô hình tĩnh + danh sách 6 bước (đủ thông tin).
+ * - Phần 3D chỉ để minh họa (aria-hidden); nội dung thật nằm ở danh sách 6 bước bên dưới.
+ */
+import Icon from './Icon.astro';
+import type { IconName } from './Icon.astro';
+import type { Lang } from '../config/i18n';
+
+interface Props {
+  lang?: Lang;
+}
+const { lang = 'vi' } = Astro.props;
+
+const copy = {
+  vi: {
+    label: 'Mô hình 3D: một khách hàng đi qua hệ thống ADS-Nolimit',
+    chip: 'Mô hình 3D',
+    hintDrag: 'Kéo để xoay',
+    hintSwipe: 'Vuốt ngang để xoay',
+    views: { overview: 'Toàn cảnh', top: 'Nhìn từ trên', side: 'Bên hông' },
+    run: 'Chạy thử 1 khách',
+    running: 'Đang chạy…',
+    again: 'Chạy lại',
+    swayPause: 'Tạm dừng xoay',
+    swayPlay: 'Tiếp tục xoay',
+    stepsLabel: 'Sáu bước, bấm để xem trên mô hình',
+    note: 'Mô hình minh họa luồng công việc; công cụ và kênh cụ thể tùy từng doanh nghiệp.',
+    idle: 'Bấm “Chạy thử 1 khách” hoặc chọn một bước bên dưới.',
+    steps: [
+      { name: 'Quảng cáo', time: '20:15', text: 'Quảng cáo Facebook, Google, TikTok đưa đúng người có nhu cầu tới trang.' },
+      { name: 'Tin nhắn', time: '22:41', text: 'Khách nhắn hỏi giá qua Messenger, Zalo OA hoặc khung chat trên website.' },
+      { name: 'AI Agent', time: '22:41', text: 'AI Agent trả lời trong vài giây theo bảng giá và tài liệu của cửa hàng, xin số điện thoại.' },
+      { name: 'Google Sheet', time: '22:42', text: 'Tên, số điện thoại, nhu cầu tự lưu vào bảng tính. Không khách nào bị thất lạc.' },
+      { name: 'Báo nhân viên', time: '22:42', text: 'Lễ tân hoặc nhân viên nhận thông báo qua Zalo, Telegram; sáng mai gọi lại chốt lịch.' },
+      { name: 'Báo cáo sáng', time: '07:00', text: 'Báo cáo quảng cáo tự động gửi về; ngân sách dồn sang nhóm quảng cáo tốt hơn.' },
+    ],
+  },
+  en: {
+    label: '3D model: one customer moving through the ADS-Nolimit system',
+    chip: '3D model',
+    hintDrag: 'Drag to rotate',
+    hintSwipe: 'Swipe sideways to rotate',
+    views: { overview: 'Overview', top: 'Top view', side: 'Side view' },
+    run: 'Run one customer',
+    running: 'Running…',
+    again: 'Run again',
+    swayPause: 'Pause rotation',
+    swayPlay: 'Resume rotation',
+    stepsLabel: 'Six steps, select one to see it on the model',
+    note: 'An illustration of the workflow; the exact tools and channels depend on each business.',
+    idle: 'Press “Run one customer” or pick a step below.',
+    steps: [
+      { name: 'Ads', time: '20:15', text: 'Facebook, Google and TikTok ads bring people who need what you sell.' },
+      { name: 'Messages', time: '22:41', text: 'A customer asks for a price on Messenger, Zalo OA or your website chat.' },
+      { name: 'AI agent', time: '22:41', text: 'The AI agent replies within seconds from your price list and documents, and asks for a phone number.' },
+      { name: 'Google Sheets', time: '22:42', text: 'Name, phone and request are saved to a spreadsheet. No lead gets lost.' },
+      { name: 'Staff alert', time: '22:42', text: 'Reception or sales gets a Zalo or Telegram alert and calls back in the morning.' },
+      { name: 'Morning report', time: '07:00', text: 'An automatic ad report arrives; budget moves to the ad sets that work.' },
+    ],
+  },
+}[lang];
+
+/** Trạm trên sàn 600×600 (đơn vị px của mô hình). */
+interface Station {
+  x: number;
+  y: number;
+  w: number;
+  d: number;
+  h: number;
+  tone: string;
+  icon: IconName;
+}
+const stations: Station[] = [
+  { x: 70, y: 80, w: 120, d: 90, h: 40, tone: '#8592ff', icon: 'chart' },
+  { x: 390, y: 70, w: 120, d: 100, h: 40, tone: '#a58cff', icon: 'chat' },
+  { x: 240, y: 240, w: 120, d: 120, h: 64, tone: '#2ee89a', icon: 'spark' },
+  { x: 420, y: 330, w: 110, d: 120, h: 34, tone: '#2ee89a', icon: 'sheet' },
+  { x: 400, y: 470, w: 110, d: 80, h: 48, tone: '#eed65a', icon: 'bell' },
+  { x: 80, y: 390, w: 130, d: 110, h: 56, tone: '#3fd0c2', icon: 'chart' },
+];
+const center = (s: Station) => ({ cx: s.x + s.w / 2, cy: s.y + s.d / 2 });
+
+/** Cột biểu đồ nổi trên trạm Quảng cáo (màu ba nền tảng, tự vẽ). */
+const bars = [
+  { x: 92, y: 108, h: 26, tone: '#6f7dff' },
+  { x: 122, y: 108, h: 42, tone: '#3fd0c2' },
+  { x: 152, y: 108, h: 60, tone: '#2ee89a' },
+];
+
+/** Đường đi trên sàn: 6 đoạn nối 6 trạm thành vòng khép kín. */
+const segs = [
+  'M130,125 C230,60 350,60 450,120',
+  'M450,120 C440,200 360,230 300,300',
+  'M300,300 C360,330 420,350 475,390',
+  'M475,390 C520,430 510,470 455,510',
+  'M455,510 C360,560 220,540 145,445',
+  'M145,445 C60,360 60,220 130,125',
+];
+const loop = segs.map((d, i) => (i === 0 ? d : d.replace(/^M[\d.,]+\s*/, ''))).join(' ');
+
+const boxStyle = (b: { x: number; y: number; w: number; d: number; h: number; z?: number; tone: string }) =>
+  `--x:${b.x}px;--y:${b.y}px;--w:${b.w}px;--d:${b.d}px;--h:${b.h}px;--z:${b.z ?? 0}px;--tone:${b.tone}`;
+---
+
+<figure class="s3d" data-s3d data-label-running={copy.running} data-label-again={copy.again} data-label-run={copy.run} data-label-sway-pause={copy.swayPause} data-label-sway-play={copy.swayPlay}>
+  <div class="s3d-stage" data-stage>
+    <div class="s3d-chips" aria-hidden="true">
+      <span class="s3d-chip"><Icon name="spark" />{copy.chip}</span>
+      <span class="s3d-chip s3d-chip--hint">
+        <span class="hint-drag">{copy.hintDrag}</span>
+        <span class="hint-swipe">{copy.hintSwipe}</span>
+      </span>
+    </div>
+
+    <div class="s3d-world" aria-hidden="true" data-world>
+      <!-- Sàn -->
+      <div class="box box--floor" style={boxStyle({ x: 0, y: 0, w: 600, d: 600, h: 18, z: -18, tone: '#343e7c' })}>
+        <div class="f f-top floor">
+          <span class="floor-ring floor-ring--a"></span>
+          <span class="floor-ring floor-ring--b"></span>
+          <svg class="floor-svg" viewBox="0 0 600 600" width="600" height="600" data-svg>
+            <defs>
+              <linearGradient id="s3d-track" x1="0" y1="0" x2="1" y2="1">
+                <stop offset="0" stop-color="#a58cff"></stop>
+                <stop offset="0.5" stop-color="#3fd0c2"></stop>
+                <stop offset="1" stop-color="#2ee89a"></stop>
+              </linearGradient>
+              <path id="s3d-loop" d={loop}></path>
+            </defs>
+            <use href="#s3d-loop" class="track-base"></use>
+            <use href="#s3d-loop" class="track-flow"></use>
+            {segs.map((d, i) => <path class="seg" d={d} data-seg={i} />)}
+            {
+              [0, -4, -8].map((begin) => (
+                <circle class="packet" r="5">
+                  <animateMotion dur="12s" repeatCount="indefinite" begin={`${begin}s`}>
+                    <mpath href="#s3d-loop" />
+                  </animateMotion>
+                </circle>
+              ))
+            }
+            <circle class="runner" r="10" cx="130" cy="125" data-runner></circle>
+          </svg>
+        </div>
+        <div class="f f-front"></div>
+        <div class="f f-back"></div>
+        <div class="f f-left"></div>
+        <div class="f f-right"></div>
+      </div>
+
+      <!-- 6 trạm -->
+      {
+        stations.map((s, i) => (
+          <div class="box station" style={boxStyle(s)} data-station={i}>
+            <div class="f f-top">
+              <span class="top-icon">
+                <Icon name={s.icon} />
+              </span>
+              <span class="top-num">{i + 1}</span>
+            </div>
+            <div class="f f-front" />
+            <div class="f f-back" />
+            <div class="f f-left" />
+            <div class="f f-right" />
+          </div>
+        ))
+      }
+
+      <!-- Cột biểu đồ trên trạm Quảng cáo -->
+      {
+        bars.map((b) => (
+          <div class="box bar" style={boxStyle({ x: b.x, y: b.y, w: 18, d: 18, h: b.h, z: 40, tone: b.tone })}>
+            <div class="f f-top" />
+            <div class="f f-front" />
+            <div class="f f-back" />
+            <div class="f f-left" />
+            <div class="f f-right" />
+          </div>
+        ))
+      }
+
+      <!-- Lõi AI phát sáng nổi trên trạm AI Agent -->
+      <div class="anchor" style="--cx:300px;--cy:300px;--cz:118px">
+        <span class="orb"></span>
+      </div>
+
+      <!-- Nhãn tên trạm (luôn quay mặt về người xem) -->
+      {
+        stations.map((s, i) => {
+          const { cx, cy } = center(s);
+          return (
+            <div class="anchor" style={`--cx:${cx}px;--cy:${cy}px;--cz:${s.h + (i === 2 ? 92 : i === 0 ? 72 : 22)}px`} data-label={i}>
+              <span class="s3d-label">
+                <b>{i + 1}</b>
+                {copy.steps[i].name}
+              </span>
+            </div>
+          );
+        })
+      }
+    </div>
+
+    <div class="s3d-controls">
+      <div class="seg-views" role="group">
+        <button type="button" class="ctl" data-view="overview" aria-pressed="true">{copy.views.overview}</button>
+        <button type="button" class="ctl" data-view="top" aria-pressed="false">{copy.views.top}</button>
+        <button type="button" class="ctl" data-view="side" aria-pressed="false">{copy.views.side}</button>
+      </div>
+      <button type="button" class="ctl ctl--run" data-run>
+        <Icon name="play" />
+        <span data-run-text>{copy.run}</span>
+      </button>
+      <button type="button" class="ctl ctl--icon" data-sway aria-label={copy.swayPause}>
+        <Icon name="pause" class="i-pause" />
+        <Icon name="play" class="i-play" />
+      </button>
+    </div>
+  </div>
+
+  <div class="s3d-caption" aria-live="polite" data-caption>
+    <span class="cap-time" data-cap-time></span>
+    <strong class="cap-title" data-cap-title></strong>
+    <span class="cap-text" data-cap-text>{copy.idle}</span>
+  </div>
+
+  <ol class="s3d-steps" aria-label={copy.stepsLabel}>
+    {
+      copy.steps.map((st, i) => (
+        <li>
+          <button type="button" class="step" data-step={i} aria-pressed="false" data-glow style={`--tone:${stations[i].tone}`}>
+            <span class="step-num">{i + 1}</span>
+            <span class="step-body">
+              <span class="step-name">
+                {st.name}
+                <span class="step-time">{st.time}</span>
+              </span>
+              <span class="step-text">{st.text}</span>
+            </span>
+          </button>
+        </li>
+      ))
+    }
+  </ol>
+  <figcaption class="s3d-note">{copy.note}</figcaption>
+</figure>
+
+<script>
+  // Điều khiển mô hình 3D. Không thư viện.
+  interface View {
+    pitch: number;
+    yaw: number;
+  }
+  const VIEWS: Record<string, View> = {
+    overview: { pitch: 58, yaw: -38 },
+    top: { pitch: 14, yaw: -10 },
+    side: { pitch: 76, yaw: -78 },
+  };
+  const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const wait = (ms: number) => new Promise<void>((r) => setTimeout(r, ms));
+
+  function setup(root: HTMLElement) {
+    const stage = root.querySelector<HTMLElement>('[data-stage]')!;
+    const world = root.querySelector<HTMLElement>('[data-world]')!;
+    const svg = root.querySelector<SVGSVGElement>('[data-svg]')!;
+    const runner = root.querySelector<SVGCircleElement>('[data-runner]')!;
+    const segs = Array.from(root.querySelectorAll<SVGPathElement>('path[data-seg]'));
+    const stations = Array.from(root.querySelectorAll<HTMLElement>('[data-station]'));
+    const labels = Array.from(root.querySelectorAll<HTMLElement>('[data-label]'));
+    const stepBtns = Array.from(root.querySelectorAll<HTMLButtonElement>('button[data-step]'));
+    const viewBtns = Array.from(root.querySelectorAll<HTMLButtonElement>('button[data-view]'));
+    const runBtn = root.querySelector<HTMLButtonElement>('[data-run]')!;
+    const runText = root.querySelector<HTMLElement>('[data-run-text]')!;
+    const swayBtn = root.querySelector<HTMLButtonElement>('[data-sway]')!;
+    const capTime = root.querySelector<HTMLElement>('[data-cap-time]')!;
+    const capTitle = root.querySelector<HTMLElement>('[data-cap-title]')!;
+    const capText = root.querySelector<HTMLElement>('[data-cap-text]')!;
+    const steps = stepBtns.map((b) => ({
+      name: b.querySelector('.step-name')?.childNodes[0]?.textContent?.trim() ?? '',
+      time: b.querySelector('.step-time')?.textContent ?? '',
+      text: b.querySelector('.step-text')?.textContent ?? '',
+    }));
+
+    // ---- Camera ----
+    const cam = { pitch: VIEWS.overview.pitch, yaw: VIEWS.overview.yaw };
+    let target: View | null = null;
+    let baseYaw = VIEWS.overview.yaw;
+    let swayOn = !reduce;
+    let interacted = 0; // thời điểm khách kéo/bấm gần nhất
+    let inView = false;
+    let raf = 0;
+    let t0 = performance.now();
+
+    const apply = () => {
+      world.style.setProperty('--pitch', `${cam.pitch.toFixed(2)}deg`);
+      world.style.setProperty('--yaw', `${cam.yaw.toFixed(2)}deg`);
+    };
+    const fit = () => {
+      const w = stage.clientWidth;
+      const h = stage.clientHeight;
+      const zoom = Math.max(0.36, Math.min(1.05, Math.min(w / 860, h / 600)));
+      world.style.setProperty('--zoom', zoom.toFixed(3));
+      world.style.setProperty('--ls', Math.min(2.1, Math.max(1, 0.82 / zoom)).toFixed(3));
+    };
+
+    const frame = (now: number) => {
+      raf = requestAnimationFrame(frame);
+      if (target) {
+        cam.pitch += (target.pitch - cam.pitch) * 0.1;
+        cam.yaw += (target.yaw - cam.yaw) * 0.1;
+        if (Math.abs(target.pitch - cam.pitch) < 0.05 && Math.abs(target.yaw - cam.yaw) < 0.05) {
+          cam.pitch = target.pitch;
+          cam.yaw = target.yaw;
+          baseYaw = cam.yaw;
+          t0 = now;
+          target = null;
+        }
+        apply();
+      } else if (swayOn && !dragging && now - interacted > 7000) {
+        // lắc nhẹ quanh góc hiện tại cho mô hình "sống"
+        cam.yaw = baseYaw + 9 * Math.sin((now - t0) / 2600);
+        apply();
+      }
+    };
+    const start = () => {
+      if (!raf && inView) raf = requestAnimationFrame(frame);
+      if (!reduce) svg.unpauseAnimations();
+    };
+    const stop = () => {
+      cancelAnimationFrame(raf);
+      raf = 0;
+      svg.pauseAnimations();
+    };
+
+    const setView = (name: string) => {
+      target = { ...VIEWS[name] };
+      interacted = 0;
+      viewBtns.forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.view === name)));
+      start();
+    };
+    viewBtns.forEach((b) => b.addEventListener('click', () => setView(b.dataset.view!)));
+
+    // ---- Kéo để xoay ----
+    let dragging = false;
+    let lx = 0;
+    let ly = 0;
+    stage.addEventListener('pointerdown', (e) => {
+      if ((e.target as HTMLElement).closest('button')) return;
+      dragging = true;
+      lx = e.clientX;
+      ly = e.clientY;
+      target = null;
+      stage.classList.add('is-dragging');
+      stage.setPointerCapture(e.pointerId);
+    });
+    stage.addEventListener('pointermove', (e) => {
+      if (!dragging) return;
+      const dx = e.clientX - lx;
+      const dy = e.clientY - ly;
+      lx = e.clientX;
+      ly = e.clientY;
+      cam.yaw += dx * 0.35;
+      cam.pitch = Math.max(8, Math.min(80, cam.pitch - dy * 0.25));
+      baseYaw = cam.yaw;
+      interacted = performance.now();
+      viewBtns.forEach((b) => b.setAttribute('aria-pressed', 'false'));
+      apply();
+    });
+    const endDrag = () => {
+      if (!dragging) return;
+      dragging = false;
+      t0 = performance.now();
+      stage.classList.remove('is-dragging');
+    };
+    stage.addEventListener('pointerup', endDrag);
+    stage.addEventListener('pointercancel', endDrag);
+
+    // ---- Bật/tắt lắc nhẹ ----
+    const updateSway = () => {
+      root.classList.toggle('is-still', !swayOn);
+      swayBtn.setAttribute('aria-label', (swayOn ? root.dataset.labelSwayPause : root.dataset.labelSwayPlay) ?? '');
+      if (swayOn) svg.unpauseAnimations();
+      else svg.pauseAnimations();
+    };
+    swayBtn.addEventListener('click', () => {
+      swayOn = !swayOn;
+      if (swayOn) {
+        baseYaw = cam.yaw;
+        t0 = performance.now();
+        interacted = 0;
+      }
+      updateSway();
+    });
+
+    // ---- Làm sáng một bước ----
+    const focus = (i: number | null) => {
+      stations.forEach((s, k) => s.classList.toggle('is-active', k === i));
+      labels.forEach((l, k) => l.classList.toggle('is-active', k === i));
+      stepBtns.forEach((b, k) => b.setAttribute('aria-pressed', String(k === i)));
+      root.classList.toggle('has-focus', i !== null);
+      if (i === null) return;
+      capTime.textContent = steps[i].time;
+      capTitle.textContent = `${i + 1}. ${steps[i].name}`;
+      capText.textContent = steps[i].text;
+      const p = segs[(i + 5) % 6].getPointAtLength(segs[(i + 5) % 6].getTotalLength());
+      runner.setAttribute('cx', String(p.x));
+      runner.setAttribute('cy', String(p.y));
+      root.classList.add('show-runner');
+    };
+    stepBtns.forEach((b) =>
+      b.addEventListener('click', () => {
+        if (running) return;
+        focus(Number(b.dataset.step));
+      }),
+    );
+
+    // ---- Chạy thử 1 khách ----
+    let running = false;
+    const move = (seg: SVGPathElement, ms: number) =>
+      new Promise<void>((resolve) => {
+        if (reduce) return resolve();
+        const len = seg.getTotalLength();
+        const t = performance.now();
+        const tick = (now: number) => {
+          const k = Math.min(1, (now - t) / ms);
+          const e = k < 0.5 ? 2 * k * k : 1 - (-2 * k + 2) ** 2 / 2;
+          const p = seg.getPointAtLength(len * e);
+          runner.setAttribute('cx', String(p.x));
+          runner.setAttribute('cy', String(p.y));
+          if (k < 1) requestAnimationFrame(tick);
+          else resolve();
+        };
+        requestAnimationFrame(tick);
+      });
+
+    const run = async () => {
+      if (running) return;
+      running = true;
+      root.classList.add('is-running');
+      runBtn.disabled = true;
+      runText.textContent = root.dataset.labelRunning ?? '';
+      for (let i = 0; i < 6; i++) {
+        if (i > 0) await move(segs[i - 1], 1100);
+        focus(i);
+        await wait(reduce ? 2200 : 1700);
+      }
+      await move(segs[5], 1100);
+      running = false;
+      root.classList.remove('is-running');
+      runBtn.disabled = false;
+      runText.textContent = root.dataset.labelAgain ?? '';
+    };
+    runBtn.addEventListener('click', run);
+
+    // ---- Khi nào chạy ----
+    let autoRan = false;
+    new IntersectionObserver(
+      (entries) => {
+        const e = entries[entries.length - 1];
+        inView = e.isIntersecting;
+        if (inView) {
+          start();
+          if (!autoRan && e.intersectionRatio >= 0.45 && !reduce) {
+            autoRan = true;
+            setTimeout(run, 600);
+          }
+        } else stop();
+      },
+      { threshold: [0, 0.45] },
+    ).observe(stage);
+    document.addEventListener('visibilitychange', () => (document.hidden ? stop() : inView && start()));
+    new ResizeObserver(fit).observe(stage);
+
+    root.classList.add('is-live');
+    fit();
+    apply();
+    updateSway();
+    if (reduce) svg.pauseAnimations();
+  }
+
+  document.querySelectorAll<HTMLElement>('[data-s3d]').forEach(setup);
+</script>
+
+<style>
+  .s3d {
+    position: relative;
+    margin: 0;
+  }
+
+  /* ---------- Sân khấu ---------- */
+  .s3d-stage {
+    position: relative;
+    overflow: hidden;
+    height: clamp(26rem, 46vw, 38rem);
+    border-radius: var(--r-xl);
+    border: 1px solid var(--line-strong);
+    background:
+      radial-gradient(60% 55% at 50% 52%, rgb(24 0 240 / 0.22), transparent 70%),
+      radial-gradient(40% 40% at 78% 20%, rgb(0 216 120 / 0.12), transparent 70%),
+      radial-gradient(45% 45% at 15% 85%, rgb(72 0 168 / 0.22), transparent 70%),
+      #060a1f;
+    box-shadow:
+      var(--shadow-glow),
+      inset 0 1px 0 rgb(255 255 255 / 0.05);
+    perspective: 1600px;
+    perspective-origin: 50% 38%;
+    cursor: grab;
+    touch-action: pan-y;
+    user-select: none;
+    -webkit-user-select: none;
+  }
+  .s3d-stage.is-dragging {
+    cursor: grabbing;
+  }
+
+  .s3d-world {
+    --pitch: 58deg;
+    --yaw: -38deg;
+    --zoom: 0.9;
+    --ls: 1;
+    position: absolute;
+    left: 50%;
+    top: 54%;
+    width: 600px;
+    height: 600px;
+    margin: -300px 0 0 -300px;
+    transform-style: preserve-3d;
+    transform: rotateX(var(--pitch)) rotateZ(var(--yaw)) scale(var(--zoom));
+  }
+
+  /* ---------- Khối hộp 3D (6 mặt; dùng 5 mặt nhìn thấy được) ---------- */
+  .box {
+    position: absolute;
+    left: var(--x);
+    top: var(--y);
+    width: var(--w);
+    height: var(--d);
+    transform-style: preserve-3d;
+    transform: translateZ(var(--z));
+  }
+  .f {
+    position: absolute;
+    left: 0;
+    top: 0;
+    transform-origin: 0 0;
+    backface-visibility: hidden;
+  }
+  .f-top {
+    width: var(--w);
+    height: var(--d);
+    transform: translateZ(var(--h));
+  }
+  .f-front,
+  .f-back {
+    width: var(--w);
+    height: var(--h);
+  }
+  .f-left,
+  .f-right {
+    width: var(--d);
+    height: var(--h);
+  }
+  .f-front {
+    transform: translate3d(0, var(--d), var(--h)) rotateX(-90deg);
+  }
+  .f-back {
+    transform: translate3d(var(--w), 0, var(--h)) rotateZ(180deg) rotateX(-90deg);
+  }
+  .f-left {
+    transform: translate3d(0, 0, var(--h)) rotateZ(90deg) rotateX(-90deg);
+  }
+  .f-right {
+    transform: translate3d(var(--w), var(--d), var(--h)) rotateZ(-90deg) rotateX(-90deg);
+  }
+
+  /* Sàn */
+  .floor {
+    border-radius: 14px;
+    border: 1px solid #2c3687;
+    background:
+      radial-gradient(circle at 50% 50%, rgb(24 0 240 / 0.2), transparent 55%),
+      repeating-linear-gradient(0deg, rgb(133 146 255 / 0.07) 0 1px, transparent 1px 40px),
+      repeating-linear-gradient(90deg, rgb(133 146 255 / 0.07) 0 1px, transparent 1px 40px),
+      #0a0f2c;
+    box-shadow: 0 0 0 1px rgb(165 140 255 / 0.08), 0 0 60px rgb(24 0 240 / 0.25);
+  }
+  .box--floor .f-front,
+  .box--floor .f-back {
+    background: linear-gradient(180deg, #151d52, #090d26);
+  }
+  .box--floor .f-left,
+  .box--floor .f-right {
+    background: linear-gradient(180deg, #10174a, #070a20);
+  }
+
+  .floor-svg {
+    position: absolute;
+    inset: 0;
+    overflow: visible;
+  }
+  .track-base {
+    fill: none;
+    stroke: rgb(165 140 255 / 0.22);
+    stroke-width: 14;
+    stroke-linecap: round;
+  }
+  .track-flow {
+    fill: none;
+    stroke: url(#s3d-track);
+    stroke-width: 3;
+    stroke-dasharray: 10 14;
+    stroke-linecap: round;
+    animation: flow 1.6s linear infinite;
+  }
+  @keyframes flow {
+    to {
+      stroke-dashoffset: -24;
+    }
+  }
+  .seg {
+    fill: none;
+    stroke: none;
+  }
+  .packet {
+    fill: #2ee89a;
+    filter: drop-shadow(0 0 6px #2ee89a);
+  }
+  .runner {
+    fill: #fff;
+    stroke: #2ee89a;
+    stroke-width: 4;
+    filter: drop-shadow(0 0 10px #2ee89a) drop-shadow(0 0 22px rgb(46 232 154 / 0.7));
+    opacity: 0;
+    transition: opacity 0.3s ease;
+  }
+  .s3d.show-runner .runner {
+    opacity: 1;
+  }
+
+  .floor-ring {
+    position: absolute;
+    left: 300px;
+    top: 300px;
+    border-radius: 50%;
+    translate: -50% -50%;
+    pointer-events: none;
+  }
+  .floor-ring--a {
+    width: 220px;
+    height: 220px;
+    border: 2px dashed rgb(46 232 154 / 0.35);
+    animation: spin 18s linear infinite;
+  }
+  .floor-ring--b {
+    width: 290px;
+    height: 290px;
+    border: 1px solid rgb(165 140 255 / 0.22);
+    box-shadow: 0 0 40px rgb(46 232 154 / 0.12) inset;
+  }
+  @keyframes spin {
+    to {
+      rotate: 360deg;
+    }
+  }
+
+  /* Trạm */
+  .station .f-top {
+    display: grid;
+    place-items: center;
+    border-radius: 8px;
+    border: 1px solid color-mix(in srgb, var(--tone) 45%, transparent);
+    background:
+      radial-gradient(circle at 50% 45%, color-mix(in srgb, var(--tone) 26%, transparent), transparent 70%),
+      linear-gradient(160deg, #222c66, #161e4d);
+    transition:
+      border-color 0.3s ease,
+      box-shadow 0.3s ease;
+  }
+  .station .f-front,
+  .station .f-back {
+    background: linear-gradient(180deg, color-mix(in srgb, var(--tone) 18%, #182158), #0f1640);
+    border-top: 2px solid color-mix(in srgb, var(--tone) 60%, transparent);
+  }
+  .station .f-left,
+  .station .f-right {
+    background: linear-gradient(180deg, color-mix(in srgb, var(--tone) 10%, #121a48), #0b1134);
+    border-top: 2px solid color-mix(in srgb, var(--tone) 40%, transparent);
+  }
+  .top-icon {
+    display: grid;
+    place-items: center;
+    width: 46px;
+    height: 46px;
+    border-radius: 12px;
+    background: rgb(7 10 26 / 0.55);
+    border: 1px solid color-mix(in srgb, var(--tone) 50%, transparent);
+    color: var(--tone);
+  }
+  .top-icon :global(svg) {
+    width: 26px;
+    height: 26px;
+  }
+  .top-num {
+    position: absolute;
+    left: 8px;
+    top: 6px;
+    font-size: 13px;
+    font-weight: 800;
+    color: var(--tone);
+  }
+  .station.is-active .f-top {
+    border-color: var(--tone);
+    box-shadow:
+      0 0 0 2px color-mix(in srgb, var(--tone) 60%, transparent),
+      0 0 40px color-mix(in srgb, var(--tone) 70%, transparent);
+  }
+  .station.is-active .f-front,
+  .station.is-active .f-left,
+  .station.is-active .f-right,
+  .station.is-active .f-back {
+    filter: brightness(1.45);
+  }
+
+  .bar .f-top {
+    background: var(--tone);
+    box-shadow: 0 0 14px var(--tone);
+  }
+  .bar .f-front,
+  .bar .f-back {
+    background: color-mix(in srgb, var(--tone) 70%, #0b1134);
+  }
+  .bar .f-left,
+  .bar .f-right {
+    background: color-mix(in srgb, var(--tone) 45%, #0b1134);
+  }
+
+  /* Điểm neo nổi + nhãn quay mặt về người xem */
+  .anchor {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 0;
+    height: 0;
+    transform-style: preserve-3d;
+    transform: translate3d(var(--cx), var(--cy), var(--cz)) rotateZ(calc(var(--yaw) * -1)) rotateX(calc(var(--pitch) * -1));
+  }
+  .s3d-label {
+    position: absolute;
+    left: 0;
+    top: 0;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 10px 4px 5px;
+    border-radius: 999px;
+    border: 1px solid rgb(255 255 255 / 0.14);
+    background: rgb(10 15 39 / 0.88);
+    color: var(--text);
+    font-size: 13px;
+    font-weight: 700;
+    white-space: nowrap;
+    transform-origin: 50% 100%;
+    transform: translate(-50%, -100%) scale(var(--ls));
+    box-shadow: 0 8px 20px -10px rgb(0 0 0 / 0.8);
+    transition:
+      border-color 0.3s ease,
+      background-color 0.3s ease;
+  }
+  .s3d-label b {
+    display: grid;
+    place-items: center;
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    background: var(--grad);
+    font-size: 11px;
+  }
+  .anchor.is-active .s3d-label {
+    border-color: var(--green-ink);
+    background: rgb(0 60 40 / 0.92);
+  }
+
+  .orb {
+    position: absolute;
+    left: -24px;
+    top: -24px;
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    background: radial-gradient(circle at 35% 30%, #fff, #b6ffe0 22%, #2ee89a 48%, #189090 70%, rgb(24 0 240 / 0) 72%);
+    box-shadow:
+      0 0 26px #2ee89a,
+      0 0 60px rgb(46 232 154 / 0.55);
+    animation: pulse 2.4s ease-in-out infinite;
+  }
+  @keyframes pulse {
+    50% {
+      scale: 1.12;
+      box-shadow:
+        0 0 34px #2ee89a,
+        0 0 90px rgb(46 232 154 / 0.7);
+    }
+  }
+
+  /* ---------- Lớp phủ 2D: chip, chú thích, nút ---------- */
+  .s3d-chips {
+    position: absolute;
+    left: 1rem;
+    top: 1rem;
+    z-index: 2;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    pointer-events: none;
+  }
+  .s3d-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    padding: 0.3rem 0.75rem;
+    border-radius: 999px;
+    border: 1px solid var(--line-strong);
+    background: rgb(7 10 26 / 0.75);
+    color: var(--text-2);
+    font-size: 0.8125rem;
+    font-weight: 600;
+  }
+  .s3d-chip :global(svg) {
+    width: 0.9rem;
+    height: 0.9rem;
+    color: var(--sun);
+  }
+  .hint-swipe {
+    display: none;
+  }
+  @media (hover: none) {
+    .hint-drag {
+      display: none;
+    }
+    .hint-swipe {
+      display: inline;
+    }
+  }
+
+  .s3d-caption {
+    position: absolute;
+    right: 1rem;
+    top: 1rem;
+    z-index: 2;
+    display: grid;
+    gap: 0.2rem;
+    width: min(21rem, calc(100% - 2rem));
+    padding: 0.8rem 1rem;
+    border-radius: var(--r-md);
+    border: 1px solid var(--line-strong);
+    background: rgb(7 10 26 / 0.82);
+    backdrop-filter: blur(6px);
+    pointer-events: none;
+  }
+  .cap-time {
+    font-size: 0.75rem;
+    font-weight: 700;
+    color: var(--green-ink);
+    font-variant-numeric: tabular-nums;
+  }
+  .cap-time:empty,
+  .cap-title:empty {
+    display: none;
+  }
+  .cap-title {
+    font-size: 0.9375rem;
+  }
+  .cap-text {
+    font-size: 0.875rem;
+    line-height: 1.45;
+    color: var(--text-2);
+  }
+
+  .s3d-controls {
+    position: absolute;
+    left: 50%;
+    bottom: 1rem;
+    z-index: 2;
+    translate: -50% 0;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.35rem;
+    border-radius: 999px;
+    border: 1px solid var(--line-strong);
+    background: rgb(7 10 26 / 0.85);
+    backdrop-filter: blur(6px);
+    cursor: default;
+  }
+  .seg-views {
+    display: flex;
+    gap: 0.25rem;
+  }
+  .ctl {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    min-height: 2.5rem;
+    padding: 0 0.95rem;
+    border: 0;
+    border-radius: 999px;
+    background: transparent;
+    color: var(--text-2);
+    font: inherit;
+    font-size: 0.875rem;
+    font-weight: 600;
+    white-space: nowrap;
+    cursor: pointer;
+    transition:
+      background-color 0.15s ease,
+      color 0.15s ease;
+  }
+  .ctl:hover {
+    background: rgb(255 255 255 / 0.07);
+    color: var(--text);
+  }
+  .ctl[aria-pressed='true'] {
+    background: rgb(255 255 255 / 0.1);
+    color: var(--text);
+  }
+  .ctl--run {
+    background: var(--green);
+    color: var(--on-green);
+    font-weight: 700;
+    box-shadow: 0 8px 22px -10px rgb(0 216 120 / 0.9);
+  }
+  .ctl--run:hover {
+    background: #19e88a;
+    color: var(--on-green);
+  }
+  .ctl--run:disabled {
+    opacity: 0.75;
+    cursor: progress;
+  }
+  .ctl :global(svg) {
+    width: 1rem;
+    height: 1rem;
+  }
+  .ctl--icon {
+    width: 2.5rem;
+    padding: 0;
+    justify-content: center;
+  }
+  .ctl--icon :global(.i-play) {
+    display: none;
+  }
+  .s3d.is-still .ctl--icon :global(.i-play) {
+    display: block;
+  }
+  .s3d.is-still .ctl--icon :global(.i-pause) {
+    display: none;
+  }
+  /* Không JS: ẩn nút điều khiển, chú thích (mô hình tĩnh + danh sách bước là đủ) */
+  .s3d:not(.is-live) .s3d-controls,
+  .s3d:not(.is-live) .s3d-caption {
+    display: none;
+  }
+
+  /* ---------- Danh sách 6 bước ---------- */
+  .s3d-steps {
+    list-style: none;
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 0.75rem;
+    margin-top: 1rem;
+    padding: 0;
+  }
+  .step {
+    display: flex;
+    gap: 0.8rem;
+    align-items: flex-start;
+    width: 100%;
+    height: 100%;
+    padding: 1rem 1.1rem;
+    border-radius: var(--r-lg);
+    border: 1px solid var(--line);
+    background: var(--card-bg);
+    color: var(--text);
+    font: inherit;
+    text-align: left;
+    cursor: pointer;
+    transition:
+      border-color 0.2s ease,
+      transform 0.2s ease;
+  }
+  .step:hover {
+    border-color: var(--line-strong);
+  }
+  .step[aria-pressed='true'] {
+    border-color: var(--tone);
+    box-shadow: 0 0 0 1px var(--tone), 0 14px 34px -18px var(--tone);
+  }
+  .step-num {
+    display: grid;
+    place-items: center;
+    flex: none;
+    width: 2rem;
+    height: 2rem;
+    border-radius: 50%;
+    border: 1px solid color-mix(in srgb, var(--tone) 60%, transparent);
+    background: color-mix(in srgb, var(--tone) 14%, transparent);
+    color: var(--tone);
+    font-weight: 800;
+    font-size: 0.875rem;
+  }
+  .step-body {
+    display: grid;
+    gap: 0.25rem;
+  }
+  .step-name {
+    display: flex;
+    align-items: baseline;
+    gap: 0.5rem;
+    font-weight: 700;
+  }
+  .step-time {
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: var(--text-3);
+    font-variant-numeric: tabular-nums;
+  }
+  .step-text {
+    font-size: 0.875rem;
+    line-height: 1.5;
+    color: var(--text-2);
+  }
+  .s3d-note {
+    margin-top: 0.85rem;
+    font-size: 0.8125rem;
+    color: var(--text-3);
+    text-align: center;
+  }
+
+  /* ---------- Máy tính bảng / điện thoại ---------- */
+  @media (max-width: 900px) {
+    .s3d-steps {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+  }
+  @media (max-width: 640px) {
+    .s3d-stage {
+      height: 25rem;
+      border-radius: 22px;
+    }
+    .s3d-world {
+      top: 50%;
+    }
+    .s3d-caption {
+      position: static;
+      width: auto;
+      margin-top: 0.75rem;
+      backdrop-filter: none;
+      background: var(--surface);
+    }
+    .s3d-controls {
+      left: 0.5rem;
+      right: 0.5rem;
+      translate: none;
+      justify-content: space-between;
+      border-radius: 18px;
+      flex-wrap: wrap;
+    }
+    .seg-views {
+      flex: 1 1 100%;
+      justify-content: space-between;
+    }
+    .seg-views .ctl {
+      flex: 1;
+      justify-content: center;
+      padding: 0 0.5rem;
+    }
+    .ctl--run {
+      flex: 1;
+      justify-content: center;
+    }
+    .s3d-steps {
+      grid-template-columns: 1fr;
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .track-flow,
+    .floor-ring--a,
+    .orb {
+      animation: none;
+    }
+  }
+</style>

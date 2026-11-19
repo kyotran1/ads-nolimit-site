@@ -32,8 +32,8 @@ const copy = {
   vi: {
     title: 'Giải pháp AI Agent bán hàng & chăm sóc khách | ADS-Nolimit',
     description: `AI Agent trả lời khách 24/7 trên Messenger, Zalo OA, website theo tài liệu của cửa hàng; xin số điện thoại, lưu Google Sheet, báo khách mới. Gói Khởi đầu cài đặt ${starter.prices[0].value}.`,
-    h1: 'AI Agent: nhân viên trực tin nhắn không nghỉ, trả lời theo tài liệu của chính anh/chị',
-    lead: 'AI Agent trả lời khách trên Messenger, Zalo OA hoặc website. Nó dựa vào bảng giá, chính sách và câu hỏi thường gặp của cửa hàng, giữ lại thông tin khách và báo anh/chị khi có khách mới.',
+    h1: 'AI Agent: nhân viên trực tin nhắn không nghỉ, trả lời theo tài liệu của chính bạn',
+    lead: 'AI Agent trả lời khách trên Messenger, Zalo OA hoặc website. Nó dựa vào bảng giá, chính sách và câu hỏi thường gặp của cửa hàng, giữ lại thông tin khách và báo bạn khi có khách mới.',
     plansBtn: 'Xem gói & giá',
     canTitle: 'AI Agent làm được gì',
     canLead: 'Và quan trọng không kém: những việc nó được cài để không làm.',
@@ -42,13 +42,13 @@ const copy = {
     can: [
       'Trả lời câu hỏi thường gặp dựa trên tài liệu của cửa hàng: giá, giờ mở cửa, chính sách đổi trả, phí giao hàng',
       'Xin số điện thoại, lưu khách vào Google Sheet',
-      'Báo khách mới cho anh/chị qua Telegram hoặc Zalo',
+      'Báo khách mới cho bạn qua Telegram hoặc Zalo',
       'Tra bảng giá, tồn kho và tạo đơn nháp (gói Bán hàng)',
       'Chuyển cuộc trò chuyện cho nhân viên khi cần (gói Bán hàng)',
       'Gửi báo cáo hằng tuần (gói Bán hàng)',
     ],
     cannot: [
-      'Tự hứa giảm giá hay ưu đãi ngoài chính sách anh/chị đưa',
+      'Tự hứa giảm giá hay ưu đãi ngoài chính sách bạn đưa',
       'Tư vấn chuyên môn nhạy cảm như sức khỏe, pháp lý: chuyển cho người thật',
       'Tự chốt đơn: đơn nháp luôn chờ nhân viên xác nhận',
       'Nhắn tin hàng loạt hay làm phiền khách chưa hỏi',
@@ -79,7 +79,7 @@ const copy = {
       { from: 'event', text: 'Đã chuyển cuộc trò chuyện cho nhân viên', icon: 'user' },
     ] as ChatMessage[],
     stepsTitle: 'Triển khai trong 4 bước',
-    stepsLead: 'Anh/chị duyệt kịch bản trước khi AI nói chuyện với khách thật.',
+    stepsLead: 'Bạn duyệt kịch bản trước khi AI nói chuyện với khách thật.',
     steps: [
       {
         title: 'Khảo sát',
@@ -95,16 +95,16 @@ const copy = {
       },
       {
         title: 'Đo và tối ưu',
-        text: 'Xem lại những câu AI chưa trả lời được, bổ sung tài liệu, chỉnh kịch bản. Anh/chị góp ý trực tiếp qua Zalo hoặc Telegram.',
+        text: 'Xem lại những câu AI chưa trả lời được, bổ sung tài liệu, chỉnh kịch bản. Bạn góp ý trực tiếp qua Zalo hoặc Telegram.',
       },
     ],
     securityTitle: 'Bảo mật dữ liệu khách hàng',
     securityLead:
-      'Luật Bảo vệ dữ liệu cá nhân (91/2025/QH15) có hiệu lực từ 01/01/2026. AI Agent được thiết kế để anh/chị chủ động với dữ liệu của khách.',
+      'Luật Bảo vệ dữ liệu cá nhân (91/2025/QH15) có hiệu lực từ 01/01/2026. AI Agent được thiết kế để bạn chủ động với dữ liệu của khách.',
     security: [
       {
         icon: 'sheet',
-        title: 'Dữ liệu nằm trong tài khoản của anh/chị',
+        title: 'Dữ liệu nằm trong tài khoản của bạn',
         text: 'Danh sách khách được lưu vào Google Sheet, fanpage, Zalo OA do chính doanh nghiệp sở hữu.',
       },
       {
@@ -115,7 +115,7 @@ const copy = {
       {
         icon: 'lock',
         title: 'Quyền truy cập thu hồi được',
-        text: 'ADS-Nolimit dùng quyền quản trị để cài đặt và bảo trì. Anh/chị có thể thu hồi bất cứ lúc nào.',
+        text: 'ADS-Nolimit dùng quyền quản trị để cài đặt và bảo trì. Bạn có thể thu hồi bất cứ lúc nào.',
       },
       {
         icon: 'bolt',
@@ -123,14 +123,14 @@ const copy = {
         text: 'Để tạo câu trả lời, nội dung tin nhắn được xử lý bởi dịch vụ AI. ADS-Nolimit nói rõ dùng dịch vụ nào ngay ở bước thiết kế.',
       },
     ] as { icon: IconName; title: string; text: string }[],
-    securityNote: `Khi khách yêu cầu xóa dữ liệu, anh/chị xóa được ngay trong bảng tính của mình. Đọc thêm: <a href="${lawPost}">chủ shop cần biết gì về Luật AI và Luật Bảo vệ dữ liệu cá nhân</a>.`,
+    securityNote: `Khi khách yêu cầu xóa dữ liệu, bạn xóa được ngay trong bảng tính của mình. Đọc thêm: <a href="${lawPost}">chủ shop cần biết gì về Luật AI và Luật Bảo vệ dữ liệu cá nhân</a>.`,
     plansTitle: 'Gói & giá',
     plansLead: 'Phí cài đặt trả khi triển khai, phí duy trì trả hằng tháng trong giới hạn hội thoại của gói.',
     planCta: 'Tư vấn gói này qua Zalo',
     faqTitle: 'Câu hỏi thường gặp về AI Agent',
-    ctaTitle: 'Muốn biết AI Agent trả lời khách của anh/chị thế nào?',
+    ctaTitle: 'Muốn biết AI Agent trả lời khách của bạn thế nào?',
     ctaText:
-      'Gửi vài câu khách hay hỏi qua Zalo. ADS-Nolimit sẽ cho anh/chị xem bản nháp cách AI trả lời trước khi quyết định.',
+      'Gửi vài câu khách hay hỏi qua Zalo. ADS-Nolimit sẽ cho bạn xem bản nháp cách AI trả lời trước khi quyết định.',
   },
   en: {
     title: 'AI agents for sales & customer care | ADS-Nolimit',

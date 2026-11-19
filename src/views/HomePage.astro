@@ -6,6 +6,7 @@
 import BaseLayout from '../layouts/BaseLayout.astro';
 import HeroLoop from '../components/HeroLoop.astro';
 import ChatDemo from '../components/ChatDemo.astro';
+import System3D from '../components/System3D.astro';
 import type { ChatMessage } from '../components/ChatDemo.astro';
 import ProcessSteps from '../components/ProcessSteps.astro';
 import ReportBotCase from '../components/ReportBotCase.astro';
@@ -79,14 +80,14 @@ const copy = {
         text: 'Ngân sách rải cho nhiều chiến dịch, không rõ nhóm nào mang khách về, nhóm nào chỉ tốn tiền.',
       },
     ],
-    solutionsTitle: 'ADS-Nolimit làm gì cho anh/chị',
+    solutionsTitle: 'ADS-Nolimit làm gì cho bạn',
     solutionsLead: 'Ba mảng chính, có thể làm riêng hoặc ghép lại. Thêm hai dịch vụ hỗ trợ cho shop muốn tự chủ hơn.',
     solutions: [
       {
         tone: 'violet',
         icon: 'chat',
         title: 'AI Agent bán hàng & chăm sóc khách',
-        text: 'Trả lời tin nhắn trên Messenger, Zalo OA hoặc website theo tài liệu của chính anh/chị, kể cả lúc nửa đêm.',
+        text: 'Trả lời tin nhắn trên Messenger, Zalo OA hoặc website theo tài liệu của chính bạn, kể cả lúc nửa đêm.',
         points: ['Trả lời câu hỏi thường gặp', 'Xin số điện thoại, lưu khách vào Google Sheet', 'Báo khách mới qua Telegram/Zalo'],
         price: `${starter.name}: ${priceInline(starter, lang)}`,
         href: L('/giai-phap-ai-agent/'),
@@ -104,7 +105,7 @@ const copy = {
         tone: 'green',
         icon: 'bolt',
         title: 'Tự động hóa quy trình',
-        text: 'Biến việc lặp lại hằng ngày thành quy trình tự chạy, kết nối các phần mềm anh/chị đang dùng.',
+        text: 'Biến việc lặp lại hằng ngày thành quy trình tự chạy, kết nối các phần mềm bạn đang dùng.',
         points: ['Báo cáo quảng cáo tự động mỗi sáng', 'Đồng bộ đơn hàng', 'Soạn nội dung hàng loạt, nhắc lịch khách'],
         price: priceInline(automation, lang),
         href: L('/tu-dong-hoa/'),
@@ -155,11 +156,11 @@ const copy = {
       },
     ] as ChatMessage[],
     processTitle: 'Cách ADS-Nolimit làm việc',
-    processLead: 'Bốn bước, anh/chị duyệt ở từng bước trước khi đi tiếp.',
+    processLead: 'Bốn bước, bạn duyệt ở từng bước trước khi đi tiếp.',
     caseLabel: 'Case study nội bộ',
     caseMore: 'Xem dự án và case study',
     pricingTitle: 'Bảng giá rút gọn',
-    pricingLead: 'Giá công khai để anh/chị ước lượng trước khi trao đổi.',
+    pricingLead: 'Giá công khai để bạn ước lượng trước khi trao đổi.',
     faqTitle: 'Câu hỏi thường gặp',
   },
   en: {
@@ -390,6 +391,23 @@ const faq = getFaq(lang);
           ))
         }
       </div>
+    </div>
+  </section>
+
+  <!-- 3b. Mô hình 3D: hệ thống làm việc thế nào -->
+  <section class="section" aria-labelledby="system3d-title">
+    <div class="container">
+      <div class="section-head">
+        <h2 id="system3d-title">{lang === 'en' ? 'How the ADS-Nolimit system works' : 'Hệ thống ADS-Nolimit làm việc thế nào'}</h2>
+        <p class="lead">
+          {
+            lang === 'en'
+              ? 'From the ad that brings a customer in to the report on your phone the next morning: six stations working in a chain, most of it automatic. Drag to rotate the model, or press “Run one customer”.'
+              : 'Từ lúc quảng cáo đưa khách tới đến khi báo cáo về điện thoại của bạn sáng hôm sau: sáu trạm chạy nối nhau, phần lớn tự động. Kéo để xoay mô hình, hoặc bấm “Chạy thử 1 khách”.'
+          }
+        </p>
+      </div>
+      <System3D lang={lang} />
     </div>
   </section>
 

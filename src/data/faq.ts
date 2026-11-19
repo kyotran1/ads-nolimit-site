@@ -27,19 +27,19 @@ export const getFaq = (lang: Lang = 'vi') => {
     },
     leadTime: {
       q: 'Bao lâu thì AI Agent chạy được?',
-      a: `Gói ${starter.name} thường triển khai trong ${lead}, tính từ khi anh/chị gửi đủ tài liệu: bảng giá, câu hỏi khách hay hỏi, chính sách đổi trả, giờ làm việc. Gói nhiều kênh hoặc cần kết nối tồn kho sẽ báo thời gian cụ thể sau khảo sát.`,
+      a: `Gói ${starter.name} thường triển khai trong ${lead}, tính từ khi bạn gửi đủ tài liệu: bảng giá, câu hỏi khách hay hỏi, chính sách đổi trả, giờ làm việc. Gói nhiều kênh hoặc cần kết nối tồn kho sẽ báo thời gian cụ thể sau khảo sát.`,
     },
     data: {
       q: 'Dữ liệu khách hàng có an toàn không?',
-      a: `AI Agent chỉ hỏi những thông tin cần cho việc chăm sóc khách, như tên và số điện thoại. Thông tin được lưu vào Google Sheet hoặc tài khoản do chính doanh nghiệp sở hữu; ADS-Nolimit chỉ dùng quyền truy cập để cài đặt, bảo trì, và anh/chị có thể thu hồi quyền bất cứ lúc nào. Khi khách yêu cầu xóa dữ liệu, anh/chị xóa được ngay. Xem thêm <a href="${privacy}">chính sách bảo mật</a>.`,
+      a: `AI Agent chỉ hỏi những thông tin cần cho việc chăm sóc khách, như tên và số điện thoại. Thông tin được lưu vào Google Sheet hoặc tài khoản do chính doanh nghiệp sở hữu; ADS-Nolimit chỉ dùng quyền truy cập để cài đặt, bảo trì, và bạn có thể thu hồi quyền bất cứ lúc nào. Khi khách yêu cầu xóa dữ liệu, bạn xóa được ngay. Xem thêm <a href="${privacy}">chính sách bảo mật</a>.`,
     },
     tech: {
       q: 'Tôi không rành công nghệ, có dùng được không?',
-      a: 'Được. ADS-Nolimit cài đặt toàn bộ. Anh/chị chỉ cần gửi tài liệu bán hàng, duyệt kịch bản trả lời và nhận thông báo khách mới qua Telegram hoặc Zalo như nhắn tin bình thường.',
+      a: 'Được. ADS-Nolimit cài đặt toàn bộ. Bạn chỉ cần gửi tài liệu bán hàng, duyệt kịch bản trả lời và nhận thông báo khách mới qua Telegram hoặc Zalo như nhắn tin bình thường.',
     },
     wrongAnswer: {
       q: 'Nếu AI trả lời sai thì sao?',
-      a: 'AI Agent chỉ trả lời dựa trên tài liệu anh/chị cung cấp. Với câu hỏi ngoài tài liệu hoặc nhạy cảm (khiếu nại, sức khỏe, giảm giá ngoài chính sách), AI được cài để chuyển cho nhân viên thay vì tự đoán. Trong giai đoạn đo và tối ưu, ADS-Nolimit xem lại các câu AI chưa trả lời được để bổ sung tài liệu.',
+      a: 'AI Agent chỉ trả lời dựa trên tài liệu bạn cung cấp. Với câu hỏi ngoài tài liệu hoặc nhạy cảm (khiếu nại, sức khỏe, giảm giá ngoài chính sách), AI được cài để chuyển cho nhân viên thay vì tự đoán. Trong giai đoạn đo và tối ưu, ADS-Nolimit xem lại các câu AI chưa trả lời được để bổ sung tài liệu.',
     },
     automation: {
       q: 'Tự động hóa một quy trình tốn bao nhiêu?',

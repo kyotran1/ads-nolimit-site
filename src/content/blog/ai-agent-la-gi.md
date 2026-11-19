@@ -47,4 +47,4 @@ Không cần làm mọi thứ một lúc. Cách an toàn nhất là bắt đầu
 
 Gói AI Agent Khởi đầu của ADS-Nolimit được thiết kế cho đúng bước này. Xem chi tiết ở trang [giải pháp AI Agent](/giai-phap-ai-agent/).
 
-Nếu anh/chị dùng AI để tạo hình ảnh, nội dung, hoặc để AI Agent lưu thông tin khách, nên đọc thêm bài [Luật Trí tuệ nhân tạo và Luật Bảo vệ dữ liệu cá nhân: chủ shop cần biết gì năm 2026](/blog/luat-tri-tue-nhan-tao-va-bao-ve-du-lieu-ca-nhan-2026/).
+Nếu bạn dùng AI để tạo hình ảnh, nội dung, hoặc để AI Agent lưu thông tin khách, nên đọc thêm bài [Luật Trí tuệ nhân tạo và Luật Bảo vệ dữ liệu cá nhân: chủ shop cần biết gì năm 2026](/blog/luat-tri-tue-nhan-tao-va-bao-ve-du-lieu-ca-nhan-2026/).
