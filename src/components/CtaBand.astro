@@ -2,16 +2,47 @@
 /** Khối kêu gọi liên hệ cuối trang + các kênh liên hệ. */
 import Icon from './Icon.astro';
 import { contact, links } from '../config/site';
+import { t } from '../config/i18n';
+import type { Lang } from '../config/i18n';
 
 interface Props {
+  lang?: Lang;
   title?: string;
   text?: string;
 }
 
-const {
-  title = 'Kể cho ADS-Nolimit nghe việc đang tốn thời gian nhất của anh/chị',
-  text = 'Tư vấn miễn phí, không ràng buộc. Chúng tôi sẽ nói thẳng việc nào AI làm tốt, việc nào chưa nên làm.',
-} = Astro.props;
+const { lang = 'vi' } = Astro.props;
+const c = t(lang).contactLabels;
+
+const defaults = {
+  vi: {
+    title: 'Kể cho ADS-Nolimit nghe việc đang tốn thời gian nhất của anh/chị',
+    text: 'Tư vấn miễn phí, không ràng buộc. Chúng tôi sẽ nói thẳng việc nào AI làm tốt, việc nào chưa nên làm.',
+  },
+  en: {
+    title: 'Tell us which task takes up most of your week',
+    text: 'Free consultation, no strings attached. We will tell you plainly what AI does well for your business and what is not worth automating yet.',
+  },
+}[lang];
+
+const { title = defaults.title, text = defaults.text } = Astro.props;
+
+const channels =
+  lang === 'en'
+    ? [
+        { label: c.zalo, value: contact.zaloPhone, href: links.zalo, external: true },
+        { label: c.messenger, value: `${c.fanpage} ${contact.facebookName}`, href: links.messenger, external: true },
+        { label: c.hotline, value: contact.hotline, href: links.hotline },
+        { label: c.phone, value: contact.zaloPhone, href: links.phone },
+        { label: c.assistant, value: contact.assistantPhone, href: links.assistant },
+      ]
+    : [
+        { label: c.messenger, value: `Nhắn fanpage ${contact.facebookName}`, href: links.messenger, external: true },
+        { label: c.telegram, value: `@${contact.telegramUser}`, href: links.telegram, external: true },
+        { label: c.phone, value: contact.zaloPhone, href: links.phone },
+        { label: c.assistant, value: contact.assistantPhone, href: links.assistant },
+        { label: c.email, value: contact.email, href: links.email },
+      ];
 ---
 
 <section class="cta section" aria-labelledby="cta-title">
@@ -20,61 +51,72 @@ const {
       <div class="cta-main">
         <h2 id="cta-title">{title}</h2>
         <p class="cta-text">{text}</p>
-        <div class="btn-row btn-row--stack-mobile">
-          <a class="btn btn-primary" href={links.zalo} rel="noopener">
-            <Icon name="zalo" /> Tư vấn miễn phí qua Zalo
-          </a>
-          <a class="btn" href={links.hotline}>
-            <Icon name="phone" /> Gọi {contact.hotline}
-          </a>
-        </div>
+        {
+          lang === 'en' ? (
+            <div class="btn-row btn-row--stack-mobile">
+              <a class="btn btn-primary" href={links.telegram} rel="noopener">
+                <Icon name="telegram" /> Message us on Telegram
+              </a>
+              <a class="btn btn-secondary" href={links.email}>
+                <Icon name="mail" /> {contact.email}
+              </a>
+            </div>
+          ) : (
+            <div class="btn-row btn-row--stack-mobile">
+              <a class="btn btn-primary" href={links.zalo} rel="noopener">
+                <Icon name="zalo" /> Tư vấn miễn phí qua Zalo
+              </a>
+              <a class="btn btn-secondary" href={links.hotline}>
+                <Icon name="phone" /> Gọi {contact.hotline}
+              </a>
+            </div>
+          )
+        }
       </div>
 
-      <ul class="cta-channels">
-        <li>
-          <span>Messenger</span>
-          <a href={links.messenger} rel="noopener">Nhắn fanpage {contact.facebookName}</a>
-        </li>
-        <li>
-          <span>Telegram</span>
-          <a href={links.telegram} rel="noopener">@{contact.telegramUser}</a>
-        </li>
-        <li>
-          <span>Điện thoại & Zalo</span>
-          <a href={links.phone}>{contact.zaloPhone}</a>
-        </li>
-        <li>
-          <span>Trợ lý</span>
-          <a href={links.assistant}>{contact.assistantPhone}</a>
-        </li>
-        <li>
-          <span>Email</span>
-          <a href={links.email}>{contact.email}</a>
-        </li>
-      </ul>
+      <dl class="cta-channels">
+        {
+          channels.map((ch) => (
+            <div>
+              <dt>{ch.label}</dt>
+              <dd>
+                <a href={ch.href} rel={ch.external ? 'noopener' : undefined}>
+                  {ch.value}
+                </a>
+              </dd>
+            </div>
+          ))
+        }
+      </dl>
     </div>
   </div>
 </section>
 
 <style>
   .cta-box {
+    position: relative;
     display: grid;
     gap: 2rem;
     padding: clamp(1.5rem, 1rem + 3vw, 3.5rem);
-    border-radius: var(--r-lg);
+    border-radius: var(--r-xl);
     background:
-      radial-gradient(80% 100% at 0% 100%, rgb(0 216 120 / 0.14), transparent 60%),
-      radial-gradient(70% 90% at 100% 0%, rgb(72 0 168 / 0.4), transparent 60%),
-      var(--bg-raise);
+      radial-gradient(80% 100% at 0% 100%, rgb(0 216 120 / 0.13), transparent 60%),
+      radial-gradient(70% 90% at 100% 0%, rgb(72 0 168 / 0.42), transparent 60%),
+      var(--surface);
     border: 1px solid var(--line-strong);
+    overflow: hidden;
   }
 
   @media (min-width: 960px) {
     .cta-box {
-      grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr);
+      grid-template-columns: minmax(0, 1.45fr) minmax(0, 1fr);
       gap: 3.5rem;
       align-items: center;
     }
+  }
+
+  .cta-main h2 {
+    max-width: 20em;
   }
 
   .cta-text {
@@ -85,25 +127,31 @@ const {
   }
 
   .cta-channels {
-    list-style: none;
+    margin: 0;
     display: grid;
-    gap: 0.85rem;
+    gap: 0;
+    padding: 0.25rem 1.25rem;
+    border-radius: var(--r-md);
+    background: rgb(7 10 26 / 0.55);
+    border: 1px solid var(--line);
   }
 
-  .cta-channels li {
+  .cta-channels div {
     display: grid;
     gap: 0.1rem;
-    padding-bottom: 0.85rem;
+    padding-block: 0.8rem;
     border-bottom: 1px solid var(--line);
   }
-  .cta-channels li:last-child {
+  .cta-channels div:last-child {
     border-bottom: 0;
-    padding-bottom: 0;
   }
 
-  .cta-channels span {
+  .cta-channels dt {
     font-size: 0.8125rem;
     color: var(--text-3);
+  }
+  .cta-channels dd {
+    margin: 0;
   }
 
   .cta-channels a {
@@ -114,5 +162,6 @@ const {
   }
   .cta-channels a:hover {
     text-decoration: underline;
+    text-decoration-color: var(--green);
   }
 </style>

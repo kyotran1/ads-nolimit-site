@@ -4,49 +4,84 @@
  * Chỉ mô tả cách làm — KHÔNG đưa số liệu kết quả (chưa có số liệu được phép công bố).
  */
 import Icon from './Icon.astro';
+import { localize } from '../config/i18n';
+import type { Lang } from '../config/i18n';
 
 interface Props {
-  /** Bản đầy đủ cho trang /du-an/ và /tu-dong-hoa/ */
+  lang?: Lang;
+  /** Bản đầy đủ cho trang dự án và trang tự động hóa */
   detailed?: boolean;
   headingLevel?: 'h2' | 'h3';
   /** Link xem thêm hiện dưới đoạn mở đầu */
   moreLink?: { href: string; label: string };
 }
 
-const { detailed = false, headingLevel = 'h2', moreLink } = Astro.props;
+const { lang = 'vi', detailed = false, headingLevel = 'h2', moreLink } = Astro.props;
 const Heading = headingLevel;
+const automationHref = localize('/tu-dong-hoa/', lang);
 
-const nodes = [
-  {
-    icon: 'chart' as const,
-    title: 'Tài khoản quảng cáo Meta',
-    text: 'Nơi có số liệu các chiến dịch đang chạy.',
+const copy = {
+  vi: {
+    tag: 'Case study nội bộ',
+    title: 'Bot tự nhập báo cáo quảng cáo mỗi ngày',
+    lead: 'ADS-Nolimit dùng tự động hóa cho chính mình trước khi làm cho khách. Chúng tôi đang vận hành một bot Telegram, mỗi ngày tự lấy số liệu quảng cáo Meta và nhập vào bảng tính, thay cho việc chép số bằng tay.',
+    flowLabel: 'Luồng hoạt động của bot báo cáo',
+    problemTitle: 'Vấn đề',
+    problem:
+      'Mở trình quản lý quảng cáo, chép số liệu từng chiến dịch sang bảng tính: việc nhỏ nhưng lặp lại mỗi ngày, dễ sót, dễ gõ nhầm, và lấy mất thời gian lẽ ra dùng để đọc số và ra quyết định.',
+    howTitle: 'Cách làm',
+    how: [
+      'Chốt một mẫu bảng tính cố định: cột nào, thứ tự nào, mỗi ngày ghi thế nào.',
+      'Bot kết nối tài khoản quảng cáo Meta, chạy theo lịch hằng ngày.',
+      'Bot nhập số liệu vào đúng mẫu; người trong nhóm làm việc với bot ngay trên Telegram.',
+    ],
+    applyTitle: 'Áp dụng cho khách hàng',
+    apply: `Cùng cách làm này, ADS-Nolimit dựng quy trình “báo cáo quảng cáo tự động mỗi sáng” cho doanh nghiệp, theo mẫu báo cáo anh/chị đang dùng. Xem <a href="${automationHref}">dịch vụ tự động hóa</a>.`,
+    nodes: [
+      { icon: 'chart' as const, title: 'Tài khoản quảng cáo Meta', text: 'Nơi có số liệu các chiến dịch đang chạy.' },
+      { icon: 'telegram' as const, title: 'Bot Telegram', text: 'Chạy theo lịch mỗi ngày: lấy số liệu và nhập vào bảng tính.' },
+      { icon: 'sheet' as const, title: 'Bảng tính báo cáo', text: 'Số liệu theo một mẫu cố định, sẵn để lọc, so sánh, theo dõi.' },
+    ],
   },
-  {
-    icon: 'telegram' as const,
-    title: 'Bot Telegram',
-    text: 'Chạy theo lịch mỗi ngày: lấy số liệu và nhập vào bảng tính.',
+  en: {
+    tag: 'Internal case study',
+    title: 'A bot that files our ad report every day',
+    lead: 'ADS-Nolimit uses automation on its own work before offering it to clients. We run a Telegram bot that pulls our Meta ad data every day and enters it into a spreadsheet, instead of someone copying the numbers by hand.',
+    flowLabel: 'How the reporting bot works',
+    problemTitle: 'The problem',
+    problem:
+      'Open Ads Manager, copy each campaign’s numbers into a spreadsheet: a small task, but it repeats every day, it is easy to miss or mistype something, and it eats the time that should go into reading the numbers and making decisions.',
+    howTitle: 'How it works',
+    how: [
+      'We fixed one spreadsheet template: which columns, in which order, how each day is recorded.',
+      'The bot connects to the Meta ad account and runs on a daily schedule.',
+      'It writes the data into the template, and the team works with the bot directly in Telegram.',
+    ],
+    applyTitle: 'What it means for clients',
+    apply: `We use the same approach to build an “automatic ad report every morning” workflow for businesses, based on the report template you already use. See <a href="${automationHref}">workflow automation</a>.`,
+    nodes: [
+      { icon: 'chart' as const, title: 'Meta ad account', text: 'Where the data for running campaigns lives.' },
+      { icon: 'telegram' as const, title: 'Telegram bot', text: 'Runs on a daily schedule: pulls the data and enters it into the sheet.' },
+      { icon: 'sheet' as const, title: 'Report spreadsheet', text: 'Data in one fixed template, ready to filter, compare and track.' },
+    ],
   },
-  {
-    icon: 'sheet' as const,
-    title: 'Bảng tính báo cáo',
-    text: 'Số liệu theo một mẫu cố định, sẵn để lọc, so sánh, theo dõi.',
-  },
-];
+}[lang];
+
+const tones = ['tone-teal', 'tone-violet', 'tone-green'];
 ---
 
 <div class="case">
   <div class="case-text">
-    <span class="tag tag--green">Case study nội bộ</span>
-    <Heading class="case-title">Bot tự nhập báo cáo quảng cáo mỗi ngày</Heading>
-    <p class="case-lead">
-      ADS-Nolimit dùng tự động hóa cho chính mình trước khi làm cho khách. Chúng tôi đang vận hành một bot Telegram,
-      mỗi ngày tự lấy số liệu quảng cáo Meta và nhập vào bảng tính, thay cho việc chép số bằng tay.
-    </p>
+    <span class="tag tag--green">{copy.tag}</span>
+    <Heading class="case-title">{copy.title}</Heading>
+    <p class="case-lead">{copy.lead}</p>
     {
       moreLink && (
         <p class="case-more">
-          <a href={moreLink.href}>{moreLink.label}</a>
+          <a class="text-link" href={moreLink.href}>
+            {moreLink.label}
+            <Icon name="arrow" />
+          </a>
         </p>
       )
     }
@@ -54,48 +89,37 @@ const nodes = [
       detailed && (
         <div class="case-detail">
           <div>
-            <h3>Vấn đề</h3>
-            <p>
-              Mở trình quản lý quảng cáo, chép số liệu từng chiến dịch sang bảng tính: việc nhỏ nhưng lặp lại mỗi ngày,
-              dễ sót, dễ gõ nhầm, và lấy mất thời gian lẽ ra dùng để đọc số và ra quyết định.
-            </p>
+            <h3>{copy.problemTitle}</h3>
+            <p>{copy.problem}</p>
           </div>
           <div>
-            <h3>Cách làm</h3>
+            <h3>{copy.howTitle}</h3>
             <ul class="checklist">
-              <li>Chốt một mẫu bảng tính cố định: cột nào, thứ tự nào, mỗi ngày ghi thế nào.</li>
-              <li>Bot kết nối tài khoản quảng cáo Meta, chạy theo lịch hằng ngày.</li>
-              <li>Bot nhập số liệu vào đúng mẫu; người trong nhóm làm việc với bot ngay trên Telegram.</li>
+              {copy.how.map((item) => (
+                <li>{item}</li>
+              ))}
             </ul>
           </div>
           <div>
-            <h3>Áp dụng cho khách hàng</h3>
-            <p>
-              Cùng cách làm này, ADS-Nolimit dựng quy trình “báo cáo quảng cáo tự động mỗi sáng” cho doanh nghiệp, theo
-              mẫu báo cáo anh/chị đang dùng. Xem <a href="/tu-dong-hoa/">dịch vụ tự động hóa</a>.
-            </p>
+            <h3>{copy.applyTitle}</h3>
+            <p set:html={copy.apply} />
           </div>
         </div>
       )
     }
   </div>
 
-  <ol class="flow" aria-label="Luồng hoạt động của bot báo cáo">
+  <ol class="flow" aria-label={copy.flowLabel}>
     {
-      nodes.map((n, i) => (
-        <li class="flow-node">
-          <span class="flow-icon">
+      copy.nodes.map((n, i) => (
+        <li class:list={['flow-node', tones[i]]}>
+          <span class="icon-tile">
             <Icon name={n.icon} />
           </span>
           <span class="flow-body">
             <strong>{n.title}</strong>
             <span>{n.text}</span>
           </span>
-          {i < nodes.length - 1 && (
-            <span class="flow-arrow" aria-hidden="true">
-              <Icon name="arrow" />
-            </span>
-          )}
         </li>
       ))
     }
@@ -105,23 +129,23 @@ const nodes = [
 <style>
   .case {
     display: grid;
-    gap: 2rem;
+    gap: 2.5rem;
     align-items: start;
   }
 
   @media (min-width: 960px) {
     .case {
       grid-template-columns: minmax(0, 1.1fr) minmax(0, 0.9fr);
-      gap: 4rem;
+      gap: clamp(3rem, 1rem + 4vw, 5rem);
     }
   }
 
   .case-title {
-    margin-top: 0.85rem;
+    margin-top: 1rem;
     font-size: var(--step-3);
-    line-height: 1.18;
-    letter-spacing: -0.022em;
-    font-weight: 800;
+    line-height: 1.16;
+    letter-spacing: -0.026em;
+    font-weight: 700;
   }
 
   .case-lead {
@@ -132,14 +156,17 @@ const nodes = [
   }
 
   .case-more {
-    margin-top: 1.25rem;
-    font-weight: 600;
+    margin-top: 1.5rem;
+  }
+  .case-more :global(svg) {
+    width: 1rem;
+    height: 1rem;
   }
 
   .case-detail {
     display: grid;
-    gap: 1.5rem;
-    margin-top: 2rem;
+    gap: 1.75rem;
+    margin-top: 2.25rem;
     max-width: 38rem;
   }
   .case-detail h3 {
@@ -152,61 +179,43 @@ const nodes = [
 
   .flow {
     list-style: none;
+    position: relative;
     display: grid;
-    gap: 2.25rem;
-    padding: clamp(1.25rem, 1rem + 1vw, 1.75rem);
+    gap: 1.75rem;
+    padding: clamp(1.35rem, 1rem + 1.2vw, 2rem);
     border-radius: var(--r-lg);
     border: 1px solid var(--line);
-    background: var(--bg-raise);
+    background: var(--card-bg);
   }
 
   .flow-node {
     position: relative;
     display: grid;
-    grid-template-columns: 3rem 1fr;
+    grid-template-columns: 2.75rem 1fr;
     gap: 1rem;
     align-items: start;
   }
-
-  .flow-icon {
-    display: grid;
-    place-items: center;
-    width: 3rem;
-    height: 3rem;
-    border-radius: 14px;
-    background: var(--bg);
-    border: 1px solid var(--line-strong);
-    color: var(--teal-ink);
+  /* đường nối giữa các bước */
+  .flow-node:not(:last-child)::after {
+    content: '';
+    position: absolute;
+    left: 1.375rem;
+    top: 3.25rem;
+    bottom: -1.25rem;
+    width: 1px;
+    background: linear-gradient(var(--line-strong), transparent);
   }
-  .flow-node:nth-child(2) .flow-icon {
-    color: var(--violet-ink);
-  }
-  .flow-node:nth-child(3) .flow-icon {
-    color: var(--green-ink);
-  }
-  .flow-icon svg {
-    width: 1.4rem;
-    height: 1.4rem;
+  .flow-node .icon-tile {
+    background: color-mix(in srgb, var(--tone-fill) 16%, var(--surface));
   }
 
   .flow-body {
     display: grid;
     gap: 0.2rem;
+    padding-top: 0.1rem;
   }
   .flow-body span {
     color: var(--text-2);
     font-size: 0.9375rem;
-  }
-
-  .flow-arrow {
-    position: absolute;
-    left: 0.85rem;
-    bottom: -1.95rem;
-    color: var(--text-3);
-    transform: rotate(90deg);
-  }
-  .flow-arrow svg {
-    width: 1.3rem;
-    height: 1.3rem;
   }
 </style>

@@ -1,0 +1,207 @@
+---
+/** Trang Công cụ & phần mềm AI (/phan-mem/ và /en/software/). */
+import BaseLayout from '../layouts/BaseLayout.astro';
+import PageHero from '../components/PageHero.astro';
+import AiOfficeTeaser from '../components/AiOfficeTeaser.astro';
+import CtaBand from '../components/CtaBand.astro';
+import Icon from '../components/Icon.astro';
+import type { IconName } from '../components/Icon.astro';
+import { localize } from '../config/i18n';
+import type { Lang } from '../config/i18n';
+import { getPlan, priceInline } from '../data/pricing';
+
+interface Props {
+  lang: Lang;
+}
+const { lang } = Astro.props;
+const L = (href: string) => localize(href, lang);
+
+const starter = getPlan('ai-starter', lang);
+const automation = getPlan('automation', lang);
+const training = getPlan('training', lang);
+const web = getPlan('web', lang);
+
+interface Tool {
+  icon: IconName;
+  tone: string;
+  title: string;
+  text: string;
+  meta: string;
+  href: string;
+}
+
+const copy = {
+  vi: {
+    title: 'Công cụ & phần mềm AI | ADS-Nolimit',
+    description:
+      'Công cụ và phần mềm AI của ADS-Nolimit cho cá nhân và doanh nghiệp: AI Agent, tự động hóa quy trình, phần mềm bán hàng online. ADS-NOLIMIT AI Office sắp ra mắt.',
+    h1: 'Công cụ & phần mềm AI cho cá nhân và doanh nghiệp',
+    lead: 'Những công cụ ADS-Nolimit đang cung cấp để anh/chị tự động hóa việc phức tạp, và phần mềm văn phòng AI do chính ADS-Nolimit phát triển, sắp ra mắt.',
+    toolsTitle: 'Đang cung cấp',
+    tools: [
+      {
+        icon: 'chat',
+        tone: 'tone-violet',
+        title: 'AI Agent bán hàng & chăm sóc khách',
+        text: 'Trợ lý AI trả lời tin nhắn trên Messenger, Zalo OA, website theo tài liệu của doanh nghiệp.',
+        meta: `Từ gói ${starter.name}: ${priceInline(starter, lang)}`,
+        href: L('/giai-phap-ai-agent/'),
+      },
+      {
+        icon: 'bolt',
+        tone: 'tone-green',
+        title: 'Tự động hóa quy trình theo yêu cầu',
+        text: 'Quy trình tự chạy nối các phần mềm anh/chị đang dùng: báo cáo, đơn hàng, nội dung, lịch hẹn.',
+        meta: priceInline(automation, lang),
+        href: L('/tu-dong-hoa/'),
+      },
+      {
+        icon: 'code',
+        tone: 'tone-blue',
+        title: 'Phần mềm hỗ trợ bán hàng online',
+        text: 'Phần mềm hỗ trợ anh/chị bán hàng online trên mạng xã hội.',
+        meta: web.prices[0].value,
+        href: L('/thiet-ke-website/'),
+      },
+      {
+        icon: 'school',
+        tone: 'tone-sun',
+        title: 'Bộ mẫu câu lệnh AI cho chủ shop',
+        text: 'Đi kèm workshop Đào tạo AI cho chủ shop (1 buổi), để anh/chị tự dùng AI trong việc hằng ngày.',
+        meta: priceInline(training, lang),
+        href: L('/bang-gia/#training'),
+      },
+    ] as Tool[],
+    ctaTitle: 'Chưa biết công cụ nào hợp với mình?',
+    ctaText:
+      'Kể cho ADS-Nolimit nghe công việc hằng ngày của anh/chị. Chúng tôi gợi ý công cụ phù hợp, kể cả khi câu trả lời là chưa cần AI.',
+  },
+  en: {
+    title: 'AI tools & software | ADS-Nolimit',
+    description:
+      'AI tools and software from ADS-Nolimit for individuals and businesses: AI agents, workflow automation and online sales software. ADS-NOLIMIT AI Office is coming soon.',
+    h1: 'AI tools & software for individuals and businesses',
+    lead: 'The tools ADS-Nolimit offers today to help you automate complex work, plus the AI office suite we are building ourselves, coming soon.',
+    toolsTitle: 'Available now',
+    tools: [
+      {
+        icon: 'chat',
+        tone: 'tone-violet',
+        title: 'AI agents for sales & customer care',
+        text: 'An AI assistant that answers messages on Messenger, Zalo OA and your website, based on your business documents.',
+        meta: `${starter.name} plan: ${priceInline(starter, lang)}`,
+        href: L('/giai-phap-ai-agent/'),
+      },
+      {
+        icon: 'bolt',
+        tone: 'tone-green',
+        title: 'Custom workflow automation',
+        text: 'Workflows that run on their own and connect the software you already use: reports, orders, content, bookings.',
+        meta: priceInline(automation, lang),
+        href: L('/tu-dong-hoa/'),
+      },
+      {
+        icon: 'code',
+        tone: 'tone-blue',
+        title: 'Online sales software',
+        text: 'Software that helps you sell online on social media.',
+        meta: web.prices[0].value,
+        href: L('/thiet-ke-website/'),
+      },
+      {
+        icon: 'school',
+        tone: 'tone-sun',
+        title: 'AI prompt templates for shop owners',
+        text: 'Included with the AI training for shop owners workshop (one session), so you can use AI in your everyday work.',
+        meta: priceInline(training, lang),
+        href: L('/bang-gia/#training'),
+      },
+    ] as Tool[],
+    ctaTitle: 'Not sure which tool fits?',
+    ctaText:
+      'Tell us about your day-to-day work. We will suggest the right tool, even if the honest answer is that you do not need AI yet.',
+  },
+}[lang];
+---
+
+<BaseLayout title={copy.title} description={copy.description} lang={lang}>
+  <PageHero title={copy.h1} lead={copy.lead} />
+
+  <section class="section" aria-labelledby="tools-title">
+    <div class="container">
+      <div class="section-head">
+        <h2 id="tools-title">{copy.toolsTitle}</h2>
+      </div>
+      <ul class="tools">
+        {
+          copy.tools.map((tool) => (
+            <li>
+              <a class:list={['tool card', tool.tone]} href={tool.href}>
+                <span class="icon-tile">
+                  <Icon name={tool.icon} />
+                </span>
+                <span class="tool-body">
+                  <strong class="tool-title">{tool.title}</strong>
+                  <span class="tool-text">{tool.text}</span>
+                  <span class="tool-meta">{tool.meta}</span>
+                </span>
+              </a>
+            </li>
+          ))
+        }
+      </ul>
+    </div>
+  </section>
+
+  <section class="section section--tight" aria-label="ADS-NOLIMIT AI Office">
+    <div class="container">
+      <AiOfficeTeaser lang={lang} />
+    </div>
+  </section>
+
+  <CtaBand lang={lang} title={copy.ctaTitle} text={copy.ctaText} />
+</BaseLayout>
+
+<style>
+  .tools {
+    list-style: none;
+    display: grid;
+    gap: 1rem;
+  }
+  @media (min-width: 820px) {
+    .tools {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 1.25rem;
+    }
+  }
+
+  .tool {
+    display: flex;
+    gap: 1.1rem;
+    align-items: flex-start;
+    height: 100%;
+  }
+  .tool:hover .tool-title {
+    text-decoration: underline;
+    text-decoration-color: var(--green);
+  }
+
+  .tool-body {
+    display: grid;
+    gap: 0.45rem;
+  }
+  .tool-title {
+    font-size: var(--step-1);
+  }
+  .tool-text {
+    color: var(--text-2);
+  }
+  .tool-meta {
+    margin-top: 0.35rem;
+    padding-top: 0.75rem;
+    border-top: 1px solid var(--line);
+    font-size: 0.9375rem;
+    font-weight: 600;
+    color: var(--text);
+  }
+</style>

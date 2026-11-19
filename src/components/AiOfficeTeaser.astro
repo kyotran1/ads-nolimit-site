@@ -2,77 +2,126 @@
 /**
  * ADS-NOLIMIT AI Office — chỉ được nói "Sắp ra mắt" + đăng ký nhận tin.
  * KHÔNG mô tả tính năng chi tiết.
- * Site tĩnh chưa có backend: nút đăng ký mở email soạn sẵn hoặc Zalo.
+ * Site tĩnh chưa có backend: nút đăng ký mở email soạn sẵn hoặc Zalo/Telegram.
  * TODO: thay bằng dịch vụ form/newsletter khi có.
  */
 import { contact, links } from '../config/site';
+import { localize } from '../config/i18n';
+import type { Lang } from '../config/i18n';
 
 interface Props {
+  lang?: Lang;
   headingLevel?: 'h2' | 'h3';
 }
-const { headingLevel = 'h2' } = Astro.props;
+const { lang = 'vi', headingLevel = 'h2' } = Astro.props;
 const Heading = headingLevel;
+const privacy = localize('/chinh-sach-bao-mat/', lang);
 
-const subject = 'Đăng ký nhận tin ADS-NOLIMIT AI Office';
-const body = [
-  'Chào ADS-Nolimit,',
-  '',
-  'Tôi muốn nhận tin khi ADS-NOLIMIT AI Office ra mắt.',
-  '',
-  'Họ tên:',
-  'Số điện thoại / Zalo:',
-  'Lĩnh vực kinh doanh:',
-].join('\r\n');
-const mailto = `mailto:${contact.email}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+const copy = {
+  vi: {
+    tag: 'Sắp ra mắt',
+    text: 'Phần mềm văn phòng AI do ADS-Nolimit phát triển. Để lại liên hệ, chúng tôi báo anh/chị ngay khi ra mắt.',
+    email: 'Đăng ký nhận tin qua email',
+    chat: { label: 'Nhắn Zalo để nhận tin', href: links.zalo },
+    fine: `Email đăng ký chỉ dùng để báo tin ra mắt. Xem <a href="${privacy}">chính sách bảo mật</a>.`,
+    subject: 'Đăng ký nhận tin ADS-NOLIMIT AI Office',
+    body: [
+      'Chào ADS-Nolimit,',
+      '',
+      'Tôi muốn nhận tin khi ADS-NOLIMIT AI Office ra mắt.',
+      '',
+      'Họ tên:',
+      'Số điện thoại / Zalo:',
+      'Lĩnh vực kinh doanh:',
+    ],
+  },
+  en: {
+    tag: 'Coming soon',
+    text: 'An AI office suite built by ADS-Nolimit. Leave your details and we will let you know as soon as it launches.',
+    email: 'Get launch news by email',
+    chat: { label: 'Ask on Telegram', href: links.telegram },
+    fine: `Your email is only used to tell you about the launch. See our <a href="${privacy}">privacy policy</a>.`,
+    subject: 'ADS-NOLIMIT AI Office launch updates',
+    body: [
+      'Hello ADS-Nolimit,',
+      '',
+      'Please let me know when ADS-NOLIMIT AI Office launches.',
+      '',
+      'Name:',
+      'Phone / Telegram / Zalo:',
+      'Line of business:',
+    ],
+  },
+}[lang];
+
+const mailto = `mailto:${contact.email}?subject=${encodeURIComponent(copy.subject)}&body=${encodeURIComponent(copy.body.join('\r\n'))}`;
 ---
 
 <div class="office">
   <div class="office-inner">
-    <span class="tag tag--sun">Sắp ra mắt</span>
-    <Heading class="office-title">ADS-NOLIMIT AI Office</Heading>
-    <p class="office-text">
-      Phần mềm văn phòng AI do ADS-Nolimit phát triển. Để lại liên hệ, chúng tôi báo anh/chị ngay khi ra mắt.
-    </p>
-    <div class="btn-row btn-row--stack-mobile">
-      <a class="btn btn-sun" href={mailto}>Đăng ký nhận tin qua email</a>
-      <a class="btn" href={links.zalo} rel="noopener">Nhắn Zalo để nhận tin</a>
+    <div class="office-copy">
+      <span class="tag tag--sun">{copy.tag}</span>
+      <Heading class="office-title">ADS-NOLIMIT AI Office</Heading>
+      <p class="office-text">{copy.text}</p>
     </div>
-    <p class="office-fine">
-      Email đăng ký chỉ dùng để báo tin ra mắt. Xem <a href="/chinh-sach-bao-mat/">chính sách bảo mật</a>.
-    </p>
+    <div class="office-actions">
+      <div class="btn-row btn-row--stack-mobile">
+        <a class="btn btn-sun" href={mailto}>{copy.email}</a>
+        <a class="btn btn-secondary" href={copy.chat.href} rel="noopener">{copy.chat.label}</a>
+      </div>
+      <p class="office-fine" set:html={copy.fine} />
+    </div>
   </div>
 </div>
 
 <style>
   .office {
     position: relative;
-    border-radius: var(--r-lg);
-    padding: 1.5px;
+    border-radius: var(--r-xl);
+    padding: 1px;
     background: var(--grad);
   }
 
   .office-inner {
-    border-radius: calc(var(--r-lg) - 1.5px);
+    display: grid;
+    gap: 1.75rem;
+    border-radius: calc(var(--r-xl) - 1px);
     padding: clamp(1.5rem, 1rem + 2.5vw, 3rem);
     background:
-      radial-gradient(90% 120% at 100% 0%, rgb(238 214 90 / 0.08), transparent 55%),
-      var(--bg-raise);
+      radial-gradient(70% 140% at 100% 0%, rgb(238 214 90 / 0.09), transparent 55%),
+      radial-gradient(60% 120% at 0% 100%, rgb(72 0 168 / 0.25), transparent 60%),
+      var(--surface);
+  }
+
+  @media (min-width: 960px) {
+    .office-inner {
+      grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr);
+      align-items: end;
+      gap: 3rem;
+    }
   }
 
   .office-title {
     margin-top: 1rem;
     font-size: var(--step-3);
-    line-height: 1.18;
-    letter-spacing: -0.02em;
-    font-weight: 800;
+    line-height: 1.16;
+    letter-spacing: -0.026em;
+    font-weight: 700;
   }
 
   .office-text {
     margin-top: 0.75rem;
-    margin-bottom: 1.5rem;
-    max-width: 36rem;
+    max-width: 34rem;
     color: var(--text-2);
     font-size: var(--step-1);
+  }
+
+  @media (min-width: 960px) {
+    .office-actions .btn-row {
+      flex-direction: column;
+      align-items: stretch;
+      max-width: 22rem;
+    }
   }
 
   .office-fine {
@@ -80,7 +129,7 @@ const mailto = `mailto:${contact.email}?subject=${encodeURIComponent(subject)}&b
     font-size: 0.8125rem;
     color: var(--text-3);
   }
-  .office-fine a {
+  .office-fine :global(a) {
     color: var(--text-2);
   }
 </style>

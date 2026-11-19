@@ -1,0 +1,14 @@
+---
+// English blog posts (src/content/blog-en/). Layout: src/views/BlogPostPage.astro.
+import { getCollection } from 'astro:content';
+import BlogPostPage from '../../../views/BlogPostPage.astro';
+
+export async function getStaticPaths() {
+  const posts = await getCollection('blogEn');
+  return posts.map((post) => ({ params: { slug: post.id }, props: { post } }));
+}
+
+const { post } = Astro.props;
+---
+
+<BlogPostPage lang="en" post={post} />

@@ -1,0 +1,277 @@
+---
+/** Trang Tự động hóa quy trình (/tu-dong-hoa/ và /en/automation/). */
+import BaseLayout from '../layouts/BaseLayout.astro';
+import PageHero from '../components/PageHero.astro';
+import ReportBotCase from '../components/ReportBotCase.astro';
+import PlanCard from '../components/PlanCard.astro';
+import Faq from '../components/Faq.astro';
+import CtaBand from '../components/CtaBand.astro';
+import Icon from '../components/Icon.astro';
+import { primaryChannel } from '../config/site';
+import type { Lang } from '../config/i18n';
+import { getPlan, getPriceNote } from '../data/pricing';
+import { getFaq } from '../data/faq';
+
+interface Props {
+  lang: Lang;
+}
+const { lang } = Astro.props;
+
+const automation = getPlan('automation', lang);
+const build = automation.prices[1];
+const primary = primaryChannel[lang];
+
+const copy = {
+  vi: {
+    title: 'Tự động hóa quy trình cho shop & doanh nghiệp nhỏ | ADS-Nolimit',
+    description: `Tự động hóa báo cáo quảng cáo, đồng bộ đơn hàng, soạn nội dung hàng loạt, nhắc lịch khách. Khảo sát miễn phí, triển khai ${build.value}${build.unit ?? ''}.`,
+    h1: 'Tự động hóa những việc lặp lại mỗi ngày',
+    lead: 'Việc nào làm theo cùng một cách mỗi ngày, việc đó có thể tự chạy. ADS-Nolimit khảo sát miễn phí, dựng quy trình kết nối các phần mềm anh/chị đang dùng, rồi bảo trì để nó chạy ổn định.',
+    primary: 'Đặt lịch khảo sát miễn phí',
+    priceBtn: 'Xem giá',
+    examplesTitle: 'Trước và sau khi tự động hóa',
+    examplesLead: 'Bốn quy trình shop và doanh nghiệp nhỏ hay nhờ ADS-Nolimit làm nhất.',
+    before: 'Trước',
+    after: 'Sau',
+    examples: [
+      {
+        title: 'Báo cáo quảng cáo tự động mỗi sáng',
+        before: 'Mở trình quản lý quảng cáo, chép số liệu từng chiến dịch sang bảng tính, rồi nhắn cho người phụ trách.',
+        after: 'Số liệu tự vào bảng tính theo mẫu cố định; bản tóm tắt gửi vào nhóm Zalo hoặc Telegram trước giờ làm.',
+      },
+      {
+        title: 'Đồng bộ đơn hàng',
+        before: 'Đơn từ fanpage, Zalo, website nằm rải rác; nhân viên gõ lại từng đơn vào một file chung.',
+        after: 'Đơn mới tự gom về một bảng: tên khách, số điện thoại, sản phẩm, trạng thái. Không gõ lại, không sót đơn.',
+      },
+      {
+        title: 'Soạn nội dung hàng loạt',
+        before: 'Mỗi sản phẩm mới phải tự viết mô tả, caption cho từng kênh, mất cả buổi cho vài chục sản phẩm.',
+        after: 'Từ bảng thông tin sản phẩm, AI soạn bản nháp mô tả và caption theo giọng của shop. Người duyệt trước khi đăng.',
+      },
+      {
+        title: 'Nhắc lịch khách',
+        before: 'Lễ tân lật sổ hẹn, nhắn từng khách trước ngày hẹn, dễ quên khi đông khách.',
+        after: 'Khách có lịch ngày mai tự nhận tin nhắc qua kênh đã đồng ý nhận; khách muốn đổi lịch được báo cho lễ tân.',
+      },
+    ],
+    examplesNote:
+      'Nội dung do AI soạn luôn có người duyệt trước khi đăng. Hình ảnh do AI tạo cần gắn nhãn theo Luật Trí tuệ nhân tạo (134/2025/QH15).',
+    fitTitle: 'Việc nào nên tự động hóa?',
+    fitLead:
+      'Một quy trình đáng tự động hóa thường có đủ ba dấu hiệu dưới đây. Nếu chưa chắc, buổi khảo sát miễn phí sẽ trả lời giúp anh/chị.',
+    fits: [
+      'Việc làm theo cùng một cách, lặp lại mỗi ngày hoặc mỗi tuần',
+      'Dữ liệu đã nằm trong phần mềm: trình quản lý quảng cáo, Google Sheet, fanpage, phần mềm bán hàng',
+      'Kết quả kiểm tra được: đúng hay sai nhìn là biết',
+    ],
+    caseLabel: 'Case study nội bộ',
+    priceTitle: 'Giá tự động hóa',
+    priceLead: 'Giá phụ thuộc số bước và số phần mềm cần kết nối. ADS-Nolimit báo giá cụ thể sau buổi khảo sát miễn phí.',
+    planCta: 'Đặt lịch khảo sát qua Zalo',
+    faqTitle: 'Câu hỏi thường gặp',
+    ctaTitle: 'Việc nào đang lặp lại mỗi ngày ở cửa hàng của anh/chị?',
+    ctaText:
+      'Kể cho ADS-Nolimit nghe. Buổi khảo sát miễn phí sẽ cho biết việc đó có nên tự động hóa không, và tốn bao nhiêu.',
+  },
+  en: {
+    title: 'Workflow automation for shops & small businesses | ADS-Nolimit',
+    description: `Automate ad reports, order syncing, bulk content drafting and appointment reminders. Free assessment; builds ${build.value}${build.unit ?? ''}.`,
+    h1: 'Automate the work you repeat every day',
+    lead: 'If a task is done the same way every day, it can run on its own. ADS-Nolimit assesses it for free, builds a workflow that connects the software you already use, then maintains it so it keeps running smoothly.',
+    primary: 'Book a free assessment',
+    priceBtn: 'See pricing',
+    examplesTitle: 'Before and after automation',
+    examplesLead: 'The four workflows shops and small businesses most often ask ADS-Nolimit to build.',
+    before: 'Before',
+    after: 'After',
+    examples: [
+      {
+        title: 'Automatic ad report every morning',
+        before: 'Open Ads Manager, copy each campaign’s numbers into a spreadsheet, then message the person in charge.',
+        after: 'The numbers land in the spreadsheet in a fixed template, and a summary reaches your Zalo or Telegram group before the workday starts.',
+      },
+      {
+        title: 'Order syncing',
+        before: 'Orders from your Facebook page, Zalo and website are scattered; staff retype each one into a shared file.',
+        after: 'New orders collect in one sheet automatically: customer name, phone number, product, status. No retyping, no missed orders.',
+      },
+      {
+        title: 'Bulk content drafting',
+        before: 'Every new product needs a description and captions for each channel, which takes a whole afternoon for a few dozen products.',
+        after: 'From your product sheet, AI drafts descriptions and captions in your shop’s voice. A person approves them before anything is posted.',
+      },
+      {
+        title: 'Appointment reminders',
+        before: 'Reception goes through the booking book and messages each customer the day before, which is easy to forget on busy days.',
+        after: 'Customers booked for tomorrow get a reminder on the channel they agreed to; anyone who wants to reschedule is flagged to reception.',
+      },
+    ],
+    examplesNote:
+      'AI-written content is always approved by a person before it is published. AI-generated images must be labelled under Vietnam’s Law on Artificial Intelligence (134/2025/QH15).',
+    fitTitle: 'Which tasks are worth automating?',
+    fitLead:
+      'A workflow worth automating usually shows all three signs below. If you are not sure, the free assessment will tell you.',
+    fits: [
+      'It is done the same way, every day or every week',
+      'The data already lives in software: Ads Manager, Google Sheets, your Facebook page, your sales software',
+      'The result is easy to check: you can see at a glance whether it is right',
+    ],
+    caseLabel: 'Internal case study',
+    priceTitle: 'Automation pricing',
+    priceLead:
+      'The price depends on the number of steps and the apps to connect. ADS-Nolimit sends an exact quote after the free assessment.',
+    planCta: 'Book an assessment on Telegram',
+    faqTitle: 'Frequently asked questions',
+    ctaTitle: 'Which task repeats every day in your business?',
+    ctaText: 'Tell us about it. The free assessment will show whether it is worth automating, and what it would cost.',
+  },
+}[lang];
+
+const faq = getFaq(lang);
+---
+
+<BaseLayout title={copy.title} description={copy.description} lang={lang}>
+  <PageHero title={copy.h1} lead={copy.lead}>
+    <a class="btn btn-primary" href={primary.href} rel="noopener"><Icon name={primary.icon} /> {copy.primary}</a>
+    <a class="btn btn-secondary" href="#gia">{copy.priceBtn}</a>
+  </PageHero>
+
+  <section class="section" aria-labelledby="examples-title">
+    <div class="container">
+      <div class="section-head">
+        <h2 id="examples-title">{copy.examplesTitle}</h2>
+        <p>{copy.examplesLead}</p>
+      </div>
+      <div class="examples">
+        {
+          copy.examples.map((ex) => (
+            <article class="example card">
+              <h3>{ex.title}</h3>
+              <div class="ba">
+                <div class="ba-col ba-before">
+                  <p class="ba-label">{copy.before}</p>
+                  <p>{ex.before}</p>
+                </div>
+                <div class="ba-col ba-after">
+                  <p class="ba-label">{copy.after}</p>
+                  <p>{ex.after}</p>
+                </div>
+              </div>
+            </article>
+          ))
+        }
+      </div>
+      <p class="note">{copy.examplesNote}</p>
+    </div>
+  </section>
+
+  <section class="section section--raise" aria-labelledby="fit-title">
+    <div class="container split">
+      <div>
+        <h2 id="fit-title">{copy.fitTitle}</h2>
+        <p class="lead fit-lead">{copy.fitLead}</p>
+      </div>
+      <ul class="checklist fit-list panel">
+        {copy.fits.map((f) => <li>{f}</li>)}
+      </ul>
+    </div>
+  </section>
+
+  <section class="section" aria-label={copy.caseLabel}>
+    <div class="container">
+      <ReportBotCase lang={lang} detailed />
+    </div>
+  </section>
+
+  <section class="section section--raise" id="gia" aria-labelledby="price-title">
+    <div class="container split">
+      <div>
+        <h2 id="price-title">{copy.priceTitle}</h2>
+        <p class="lead fit-lead">{copy.priceLead}</p>
+        <p class="note">{getPriceNote(lang)}</p>
+      </div>
+      <PlanCard lang={lang} plan={automation} showLink={false} cta={{ href: primary.href, label: copy.planCta, external: true }} />
+    </div>
+  </section>
+
+  <section class="section" aria-labelledby="faq-title">
+    <div class="container faq-layout">
+      <div class="section-head">
+        <h2 id="faq-title">{copy.faqTitle}</h2>
+      </div>
+      <Faq items={[faq.automation, faq.tech, faq.data]} />
+    </div>
+  </section>
+
+  <CtaBand lang={lang} title={copy.ctaTitle} text={copy.ctaText} />
+</BaseLayout>
+
+<style>
+  .examples {
+    display: grid;
+    gap: 1rem;
+  }
+  @media (min-width: 960px) {
+    .examples {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 1.25rem;
+    }
+  }
+
+  .example h3 {
+    font-size: var(--step-1);
+    margin-bottom: 1rem;
+  }
+
+  .ba {
+    display: grid;
+    gap: 0.75rem;
+  }
+  @media (min-width: 560px) {
+    .ba {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+  }
+
+  .ba-col {
+    padding: 0.9rem 1rem;
+    border-radius: var(--r-md);
+    font-size: 0.9375rem;
+  }
+
+  .ba-before {
+    background: rgb(7 10 26 / 0.6);
+    border: 1px dashed var(--line-strong);
+    color: var(--text-2);
+  }
+
+  .ba-after {
+    background: rgb(0 216 120 / 0.06);
+    border: 1px solid rgb(0 216 120 / 0.35);
+  }
+
+  .ba-label {
+    margin-bottom: 0.35rem;
+    font-weight: 700;
+    font-size: 0.8125rem;
+  }
+  .ba-before .ba-label {
+    color: var(--text-3);
+  }
+  .ba-after .ba-label {
+    color: var(--green-ink);
+  }
+  .ba-col p + p {
+    margin-top: 0;
+  }
+
+  .fit-lead {
+    margin-top: 1.25rem;
+  }
+
+  .fit-list {
+    font-size: var(--step-1);
+    gap: 1.1rem;
+  }
+</style>

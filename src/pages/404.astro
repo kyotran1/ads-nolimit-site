@@ -1,38 +1,111 @@
 ---
+/**
+ * Trang 404 (GitHub Pages dùng một file 404.html cho mọi đường dẫn sai).
+ * Hiện tiếng Việt và tiếng Anh. Với đường dẫn /en/…, script đưa phần tiếng Anh lên trước
+ * và đổi <html lang="en">. Đường dẫn viết hoa (ví dụ /EN/pricing/) được chuyển về chữ thường.
+ */
 import BaseLayout from '../layouts/BaseLayout.astro';
 import Icon from '../components/Icon.astro';
 import { links, solutionsNav } from '../config/site';
+import { localize } from '../config/i18n';
+
+const viLinks = [
+  ...solutionsNav.map((item) => ({ href: item.href, label: item.label.vi })),
+  { href: '/bang-gia/', label: 'Bảng giá' },
+  { href: '/lien-he/', label: 'Liên hệ' },
+];
+const enLinks = [
+  ...solutionsNav.map((item) => ({ href: localize(item.href, 'en'), label: item.label.en })),
+  { href: '/en/pricing/', label: 'Pricing' },
+  { href: '/en/contact/', label: 'Contact' },
+];
 ---
 
 <BaseLayout
-  title="Không tìm thấy trang | ADS-Nolimit"
-  description="Trang anh/chị tìm không tồn tại hoặc đã được chuyển. Quay về trang chủ ADS-Nolimit hoặc liên hệ qua Zalo."
+  title="Không tìm thấy trang | Page not found | ADS-Nolimit"
+  description="Trang anh/chị tìm không tồn tại hoặc đã được chuyển. The page you are looking for does not exist or has moved."
   noindex
 >
+  <script is:inline>
+    // /EN/…, /En/… → /en/… (chỉ khi có chữ hoa, nên không thể lặp vô hạn)
+    (function () {
+      var p = location.pathname;
+      if (/[A-Z]/.test(p) && p.toLowerCase() !== p) location.replace(p.toLowerCase() + location.search + location.hash);
+    })();
+  </script>
+
   <section class="nf">
-    <div class="container">
+    <div class="container nf-inner">
       <p class="nf-code" aria-hidden="true">404</p>
-      <h1>Không tìm thấy trang này</h1>
-      <p class="lead nf-lead">
-        Đường dẫn có thể đã cũ hoặc gõ nhầm. Anh/chị thử một trong các trang dưới đây, hoặc nhắn Zalo để được hỗ trợ ngay.
-      </p>
-      <div class="btn-row btn-row--stack-mobile">
-        <a class="btn btn-primary" href="/">Về trang chủ</a>
-        <a class="btn" href={links.zalo} rel="noopener"><Icon name="zalo" /> Nhắn Zalo</a>
+
+      <div class="nf-block" data-lang="vi" lang="vi">
+        <h1>Không tìm thấy trang này</h1>
+        <p class="lead nf-lead">
+          Đường dẫn có thể đã cũ hoặc gõ nhầm. Anh/chị thử một trong các trang dưới đây, hoặc nhắn Zalo để được hỗ trợ
+          ngay.
+        </p>
+        <div class="btn-row btn-row--stack-mobile">
+          <a class="btn btn-primary" href="/">Về trang chủ</a>
+          <a class="btn btn-secondary" href={links.zalo} rel="noopener"><Icon name="zalo" /> Nhắn Zalo</a>
+        </div>
+        <ul class="nf-links">
+          {
+            viLinks.map((item) => (
+              <li>
+                <a href={item.href}>{item.label}</a>
+              </li>
+            ))
+          }
+        </ul>
       </div>
-      <ul class="nf-links">
-        {
-          solutionsNav.map((item) => (
-            <li>
-              <a href={item.href}>{item.label}</a>
-            </li>
-          ))
-        }
-        <li><a href="/bang-gia/">Bảng giá</a></li>
-        <li><a href="/lien-he/">Liên hệ</a></li>
-      </ul>
+
+      <div class="nf-block" data-lang="en" lang="en">
+        <h2 class="nf-h">Page not found</h2>
+        <p class="lead nf-lead">
+          The link may be out of date or mistyped. Try one of the pages below, or message us on Telegram and we will help
+          you find what you need.
+        </p>
+        <div class="btn-row btn-row--stack-mobile">
+          <a class="btn btn-primary" href="/en/">Go to the English homepage</a>
+          <a class="btn btn-secondary" href={links.telegram} rel="noopener"><Icon name="telegram" /> Telegram</a>
+        </div>
+        <ul class="nf-links">
+          {
+            enLinks.map((item) => (
+              <li>
+                <a href={item.href}>{item.label}</a>
+              </li>
+            ))
+          }
+        </ul>
+      </div>
     </div>
   </section>
+
+  <script is:inline>
+    // Khách đang ở /en/…: đưa phần tiếng Anh lên trước, đổi tiêu đề chính và ngôn ngữ trang.
+    (function () {
+      if (!/^\/en(\/|$)/.test(location.pathname)) return;
+      var root = document.querySelector('.nf-inner');
+      var vi = root && root.querySelector('[data-lang="vi"]');
+      var en = root && root.querySelector('[data-lang="en"]');
+      if (!vi || !en) return;
+      root.insertBefore(en, vi);
+      var viH = vi.querySelector('h1');
+      var enH = en.querySelector('h2');
+      if (viH && enH) {
+        var h1 = document.createElement('h1');
+        h1.textContent = enH.textContent;
+        enH.replaceWith(h1);
+        var h2 = document.createElement('h2');
+        h2.className = 'nf-h';
+        h2.textContent = viH.textContent;
+        viH.replaceWith(h2);
+      }
+      document.documentElement.lang = 'en';
+      document.title = 'Page not found | ADS-Nolimit';
+    })();
+  </script>
 </BaseLayout>
 
 <style>
@@ -44,11 +117,19 @@ import { links, solutionsNav } from '../config/site';
     font-weight: 800;
     line-height: 1;
     letter-spacing: -0.04em;
-    background: var(--grad);
+    background: var(--grad-ink);
     -webkit-background-clip: text;
     background-clip: text;
     color: transparent;
-    margin-bottom: 1rem;
+    margin-bottom: 1.5rem;
+  }
+  .nf-block + .nf-block {
+    margin-top: clamp(2.5rem, 2rem + 2vw, 3.5rem);
+    padding-top: clamp(2rem, 1.5rem + 2vw, 3rem);
+    border-top: 1px solid var(--line);
+  }
+  .nf-block :global(.nf-h) {
+    font-size: var(--step-3);
   }
   .nf-lead {
     margin: 1rem 0 1.75rem;
@@ -58,6 +139,6 @@ import { links, solutionsNav } from '../config/site';
     display: flex;
     flex-wrap: wrap;
     gap: 0.5rem 1.5rem;
-    margin-top: 2.5rem;
+    margin-top: 2rem;
   }
 </style>

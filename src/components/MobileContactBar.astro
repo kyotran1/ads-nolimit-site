@@ -1,26 +1,44 @@
 ---
+/**
+ * Thanh liên hệ nổi trên điện thoại.
+ * Tiếng Việt: Zalo · Gọi · Messenger. Tiếng Anh: Telegram · Zalo · Email
+ * (khách nước ngoài thường dùng Telegram/email hơn gọi số Việt Nam).
+ */
 import Icon from './Icon.astro';
+import type { IconName } from './Icon.astro';
 import { links } from '../config/site';
+import { t } from '../config/i18n';
+import type { Lang } from '../config/i18n';
 
 interface Props {
-  lang?: 'vi' | 'en';
+  lang?: Lang;
 }
 const { lang = 'vi' } = Astro.props;
+const s = t(lang);
+
+const items: { href: string; icon: IconName; label: string; main?: boolean; external?: boolean }[] =
+  lang === 'en'
+    ? [
+        { href: links.telegram, icon: 'telegram', label: 'Telegram', main: true, external: true },
+        { href: links.zalo, icon: 'zalo', label: 'Zalo', external: true },
+        { href: links.email, icon: 'mail', label: 'Email' },
+      ]
+    : [
+        { href: links.zalo, icon: 'zalo', label: 'Zalo', main: true, external: true },
+        { href: links.hotline, icon: 'phone', label: s.call },
+        { href: links.messenger, icon: 'messenger', label: 'Messenger', external: true },
+      ];
 ---
 
-<nav class="contact-bar" aria-label={lang === 'en' ? 'Quick contact' : 'Liên hệ nhanh'}>
-  <a href={links.zalo} class="cb-zalo" rel="noopener">
-    <Icon name="zalo" />
-    <span>Zalo</span>
-  </a>
-  <a href={links.hotline}>
-    <Icon name="phone" />
-    <span>{lang === 'en' ? 'Call' : 'Gọi'}</span>
-  </a>
-  <a href={links.messenger} rel="noopener">
-    <Icon name="messenger" />
-    <span>Messenger</span>
-  </a>
+<nav class="contact-bar" aria-label={s.quickContact}>
+  {
+    items.map((item) => (
+      <a href={item.href} class:list={{ 'cb-main': item.main }} rel={item.external ? 'noopener' : undefined}>
+        <Icon name={item.icon} />
+        <span>{item.label}</span>
+      </a>
+    ))
+  }
 </nav>
 
 <style>
@@ -34,10 +52,10 @@ const { lang = 'vi' } = Astro.props;
     grid-template-columns: repeat(3, minmax(0, 1fr));
     gap: 8px;
     padding: 8px 12px calc(8px + env(safe-area-inset-bottom, 0px));
-    background: rgb(7 10 26 / 0.94);
-    backdrop-filter: blur(12px);
-    -webkit-backdrop-filter: blur(12px);
-    border-top: 1px solid var(--line);
+    background: rgb(7 10 26 / 0.92);
+    backdrop-filter: saturate(140%) blur(14px);
+    -webkit-backdrop-filter: saturate(140%) blur(14px);
+    border-top: 1px solid rgb(255 255 255 / 0.07);
   }
 
   .contact-bar a {
@@ -48,8 +66,9 @@ const { lang = 'vi' } = Astro.props;
     min-width: 0;
     min-height: 48px;
     padding-inline: 4px;
-    border-radius: 12px;
-    border: 1.5px solid var(--line-strong);
+    border-radius: var(--r-sm);
+    border: 1px solid var(--line-strong);
+    background: rgb(255 255 255 / 0.03);
     color: var(--text);
     font-weight: 700;
     font-size: 0.875rem;
@@ -63,10 +82,10 @@ const { lang = 'vi' } = Astro.props;
     flex: none;
   }
 
-  .contact-bar .cb-zalo {
+  .contact-bar .cb-main {
     background: var(--green);
     border-color: var(--green);
-    color: #04140c;
+    color: var(--on-green);
   }
 
   @media (min-width: 960px) {

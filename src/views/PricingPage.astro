@@ -1,0 +1,226 @@
+---
+/** Trang Bảng giá (/bang-gia/ và /en/pricing/). Mọi giá lấy từ src/data/pricing.ts. */
+import BaseLayout from '../layouts/BaseLayout.astro';
+import PageHero from '../components/PageHero.astro';
+import PlanCard from '../components/PlanCard.astro';
+import CtaBand from '../components/CtaBand.astro';
+import Icon from '../components/Icon.astro';
+import { primaryChannel } from '../config/site';
+import type { Lang } from '../config/i18n';
+import { getPlans, getPilotOffer, getPriceNote, currencyNote } from '../data/pricing';
+import type { Plan } from '../data/pricing';
+
+interface Props {
+  lang: Lang;
+}
+const { lang } = Astro.props;
+
+const plans = getPlans(lang);
+const pilot = getPilotOffer(lang);
+const primary = primaryChannel[lang];
+
+// Gom các gói theo nhóm, giữ thứ tự nhóm như trong src/data/pricing.ts.
+// Nhóm có từ 2 gói: một khối riêng. Các nhóm 1 gói: gom chung một hàng ở cuối.
+const groupIds: Record<string, string> = {
+  'ai-starter': 'nhom-ai-agent',
+  ads: 'nhom-quang-cao',
+};
+const groups: { name: string; id: string; plans: Plan[] }[] = [];
+for (const plan of plans) {
+  const group = groups.find((g) => g.name === plan.group);
+  if (group) group.plans.push(plan);
+  else groups.push({ name: plan.group, id: groupIds[plan.id] ?? `nhom-${plan.id}`, plans: [plan] });
+}
+const bigGroups = groups.filter((g) => g.plans.length > 1);
+const singles = groups.filter((g) => g.plans.length === 1);
+
+const copy = {
+  vi: {
+    title: 'Bảng giá dịch vụ quảng cáo, AI Agent, tự động hóa | ADS-Nolimit',
+    description:
+      'Bảng giá ADS-Nolimit: AI Agent Khởi đầu, AI Agent Bán hàng, quảng cáo hiệu suất 10–15% ngân sách, tự động hóa quy trình, website, đào tạo AI cho chủ shop.',
+    h1: 'Bảng giá',
+    lead: 'Giá công khai cho từng dịch vụ để anh/chị ước lượng trước. Với việc làm theo yêu cầu, ADS-Nolimit báo giá cụ thể sau buổi khảo sát miễn phí.',
+    primary: 'Hỏi giá qua Zalo',
+    jump: 'Đi tới nhóm dịch vụ',
+    othersTitle: 'Tự động hóa, website và đào tạo',
+    othersId: 'nhom-khac',
+    planCta: 'Tư vấn gói này qua Zalo',
+    ctaTitle: 'Chưa chắc gói nào hợp?',
+    ctaText:
+      'Nhắn Zalo cho ADS-Nolimit: anh/chị bán gì, khách nhắn qua kênh nào, mỗi ngày khoảng bao nhiêu tin. Chúng tôi gợi ý gói vừa đủ dùng.',
+  },
+  en: {
+    title: 'Pricing: advertising, AI agents and automation | ADS-Nolimit',
+    description:
+      'ADS-Nolimit pricing in VND: AI Agent Starter, AI Agent Sales, performance advertising at 10–15% of ad spend, workflow automation, websites and AI training for shop owners.',
+    h1: 'Pricing',
+    lead: 'Public prices for every service, so you can estimate before we talk. For custom work, ADS-Nolimit sends an exact quote after a free assessment.',
+    primary: 'Ask about pricing on Telegram',
+    jump: 'Jump to a service group',
+    othersTitle: 'Automation, websites and training',
+    othersId: 'nhom-khac',
+    planCta: 'Ask about this plan',
+    ctaTitle: 'Not sure which plan fits?',
+    ctaText:
+      'Tell us what you sell, where customers message you and roughly how many messages you get a day. We will suggest the plan that is just enough.',
+  },
+}[lang];
+
+const jumpLinks = [
+  ...bigGroups.map((g) => ({ href: `#${g.id}`, label: g.name })),
+  ...(singles.length ? [{ href: `#${copy.othersId}`, label: copy.othersTitle }] : []),
+];
+const cta = { href: primary.href, label: copy.planCta, external: true };
+---
+
+<BaseLayout title={copy.title} description={copy.description} lang={lang}>
+  <PageHero title={copy.h1} lead={copy.lead}>
+    <a class="btn btn-primary" href={primary.href} rel="noopener"><Icon name={primary.icon} /> {copy.primary}</a>
+  </PageHero>
+
+  <div class="container price-top">
+    <nav class="jump" aria-label={copy.jump}>
+      <ul>
+        {
+          jumpLinks.map((j) => (
+            <li>
+              <a href={j.href}>{j.label}</a>
+            </li>
+          ))
+        }
+      </ul>
+    </nav>
+    {
+      pilot.active && (
+        <p class="pilot pilot-top">
+          <span>
+            <strong>{pilot.title}:</strong> {pilot.text}
+          </span>
+        </p>
+      )
+    }
+    {lang === 'en' && <p class="note currency">{currencyNote}</p>}
+  </div>
+
+  {
+    bigGroups.map((group, i) => (
+      <section
+        class:list={['section', 'section--tight', 'group', { 'section--raise': i % 2 === 0 }]}
+        id={group.id}
+        aria-labelledby={`${group.id}-title`}
+      >
+        <div class="container">
+          <h2 class="group-title" id={`${group.id}-title`}>
+            {group.name}
+          </h2>
+          <div class="plans">
+            {group.plans.map((plan) => (
+              <PlanCard lang={lang} plan={plan} cta={cta} />
+            ))}
+          </div>
+        </div>
+      </section>
+    ))
+  }
+
+  {
+    singles.length > 0 && (
+      <section
+        class:list={['section', 'section--tight', 'group', { 'section--raise': bigGroups.length % 2 === 0 }]}
+        id={copy.othersId}
+        aria-labelledby={`${copy.othersId}-title`}
+      >
+        <div class="container">
+          <h2 class="group-title" id={`${copy.othersId}-title`}>
+            {copy.othersTitle}
+          </h2>
+          <div class="plans plans--three">
+            {singles.map((group) => (
+              <PlanCard lang={lang} plan={group.plans[0]} kicker={group.name} cta={cta} />
+            ))}
+          </div>
+          <p class="price-note">{getPriceNote(lang)}</p>
+        </div>
+      </section>
+    )
+  }
+
+  <CtaBand lang={lang} title={copy.ctaTitle} text={copy.ctaText} />
+</BaseLayout>
+
+<style>
+  .price-top {
+    padding-top: clamp(1.5rem, 1rem + 2vw, 2.5rem);
+    padding-bottom: clamp(2rem, 1.5rem + 2vw, 3rem);
+  }
+
+  .jump ul {
+    list-style: none;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+  }
+  .jump a {
+    display: inline-flex;
+    align-items: center;
+    min-height: 40px;
+    padding: 0 0.95rem;
+    border-radius: 999px;
+    border: 1px solid var(--line-strong);
+    background: rgb(255 255 255 / 0.03);
+    color: var(--text);
+    font-size: 0.9375rem;
+    font-weight: 600;
+    text-decoration: none;
+    transition:
+      border-color 0.15s ease,
+      background-color 0.15s ease;
+  }
+  .jump a:hover {
+    border-color: var(--text-3);
+    background: rgb(255 255 255 / 0.07);
+  }
+
+  .pilot-top {
+    margin-top: 1.5rem;
+  }
+  .currency {
+    margin-top: 1rem;
+  }
+
+  .group-title {
+    font-size: var(--step-2);
+    margin-bottom: 1.5rem;
+  }
+
+  .plans {
+    display: grid;
+    gap: 1rem;
+  }
+  @media (min-width: 768px) {
+    .plans {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 1.25rem;
+    }
+  }
+  @media (min-width: 1100px) {
+    .plans--three {
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+  }
+  @media (min-width: 768px) and (max-width: 1099.98px) {
+    .plans--three > :global(:last-child) {
+      grid-column: 1 / -1;
+    }
+  }
+
+  .price-note {
+    margin-top: 2rem;
+    padding: 1rem 1.25rem;
+    border-radius: var(--r-md);
+    border: 1px solid var(--line-strong);
+    font-weight: 600;
+    max-width: 60rem;
+  }
+</style>

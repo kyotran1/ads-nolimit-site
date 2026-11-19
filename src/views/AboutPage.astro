@@ -1,0 +1,300 @@
+---
+/** Trang Về chúng tôi (/ve-chung-toi/ và /en/about/). */
+import BaseLayout from '../layouts/BaseLayout.astro';
+import PageHero from '../components/PageHero.astro';
+import CtaBand from '../components/CtaBand.astro';
+import PartnerStrip from '../components/PartnerStrip.astro';
+import type { Lang } from '../config/i18n';
+
+interface Props {
+  lang: Lang;
+}
+const { lang } = Astro.props;
+
+const copy = {
+  vi: {
+    title: 'Về ADS-Nolimit | Làm quảng cáo từ 2016, nay thêm AI Agent',
+    description:
+      'ADS-Nolimit làm quảng cáo từ 2016, đã phục vụ hơn 800 khách hàng. Nay mở rộng sang AI Agent, tự động hóa quy trình và phần mềm AI cho cá nhân, doanh nghiệp nhỏ Việt Nam.',
+    h1: 'Về ADS-Nolimit',
+    lead: 'Từ một đội chạy quảng cáo năm 2016 đến đội dựng nhân viên AI cho cá nhân và doanh nghiệp nhỏ Việt Nam.',
+    storyTitle: 'Câu chuyện',
+    story: [
+      'ADS-Nolimit bắt đầu làm quảng cáo từ năm 2016. Mười năm qua, chúng tôi đã phục vụ hơn 800 khách hàng: chạy và tối ưu quảng cáo trên Facebook, Google, TikTok, cung cấp tài khoản quảng cáo Agency doanh nghiệp, làm website và phần mềm hỗ trợ bán hàng online.',
+      'Làm quảng cáo đủ lâu, ai cũng thấy một chuyện lặp lại: doanh nghiệp bỏ tiền để có tin nhắn, rồi tin nhắn nguội đi vì không ai trả lời kịp; báo cáo làm tay ngốn cả buổi sáng. Quảng cáo tốt thôi là chưa đủ, phần việc phía sau cũng phải chạy được.',
+      'Vì vậy ADS-Nolimit mở rộng sang AI. Chúng tôi dùng cho chính mình trước: một bot Telegram tự nhập báo cáo quảng cáo Meta vào bảng tính mỗi ngày. Giờ chúng tôi mang cách làm đó đến cho cá nhân và doanh nghiệp, để họ làm được nhiều việc hơn với ít người hơn.',
+    ],
+    facts: [
+      { label: 'Bắt đầu làm quảng cáo', value: '2016' },
+      { label: 'Khách hàng đã phục vụ', value: '800+' },
+    ],
+    shiftTitle: 'Từ quảng cáo đến AI',
+    beforeTitle: 'Từ 2016',
+    nowTitle: 'Và bây giờ',
+    before: [
+      'Chạy và tối ưu quảng cáo đa kênh: Facebook Ads, Google Ads, TikTok Ads',
+      'Cung cấp tài khoản quảng cáo Agency doanh nghiệp (BM2500)',
+      'Lập trình và thiết kế website',
+      'Phần mềm hỗ trợ khách bán hàng online trên mạng xã hội',
+    ],
+    now: [
+      'AI Agent bán hàng & chăm sóc khách',
+      'Tự động hóa quy trình theo yêu cầu',
+      'Công cụ & phần mềm AI, trong đó có ADS-NOLIMIT AI Office (sắp ra mắt)',
+      'Đào tạo AI cho chủ shop',
+    ],
+    principlesTitle: 'Cách chúng tôi làm việc',
+    principles: [
+      {
+        title: 'Nói thẳng việc AI làm được và chưa làm được',
+        text: 'Không phải việc nào cũng nên giao cho AI. Nếu chưa nên, chúng tôi nói chưa nên.',
+      },
+      {
+        title: 'Không cam kết doanh thu',
+        text: 'Chúng tôi cam kết cách làm và báo cáo trung thực, không hứa con số mình không kiểm soát được.',
+      },
+      {
+        title: 'Chạy đúng chính sách',
+        text: 'Quảng cáo tuân thủ chính sách của nền tảng và pháp luật Việt Nam. Nội dung do AI tạo được gắn nhãn khi cần.',
+      },
+      {
+        title: 'Tự dùng trước khi bán',
+        text: 'Chúng tôi thử cách làm trên chính công việc của mình trước, như bot báo cáo quảng cáo đang chạy mỗi ngày.',
+      },
+      {
+        title: 'Dữ liệu của khách thuộc về khách',
+        text: 'Dữ liệu khách hàng của anh/chị nằm trong tài khoản của anh/chị, không phải của chúng tôi.',
+      },
+    ],
+  },
+  en: {
+    title: 'About ADS-Nolimit | Running ads since 2016, now building AI agents',
+    description:
+      'ADS-Nolimit has run ads since 2016 and served more than 800 clients. We are now expanding into AI agents, workflow automation and AI software for individuals and small businesses in Vietnam.',
+    h1: 'About ADS-Nolimit',
+    lead: 'From an ad team in 2016 to a team that builds AI staff for individuals and small businesses in Vietnam.',
+    storyTitle: 'Our story',
+    story: [
+      'ADS-Nolimit started running ads in 2016. Over the past ten years we have served more than 800 clients: running and optimising ads on Facebook, Google and TikTok, providing agency business ad accounts, and building websites and software that helps people sell online.',
+      'Work in advertising long enough and you see the same thing again and again: businesses pay for messages, then those messages go cold because nobody replies in time, and manual reports eat whole mornings. Good ads are not enough; the work behind them has to keep up too.',
+      'That is why ADS-Nolimit expanded into AI. We used it on ourselves first: a Telegram bot that enters our Meta ad report into a spreadsheet every day. Now we bring the same approach to individuals and businesses, so they can do more with fewer people.',
+    ],
+    facts: [
+      { label: 'Running ads since', value: '2016' },
+      { label: 'Clients served', value: '800+' },
+    ],
+    shiftTitle: 'From advertising to AI',
+    beforeTitle: 'Since 2016',
+    nowTitle: 'And now',
+    before: [
+      'Running and optimising multi-channel ads: Facebook Ads, Google Ads, TikTok Ads',
+      'Providing agency business ad accounts (BM2500)',
+      'Website development and design',
+      'Software that helps clients sell online on social media',
+    ],
+    now: [
+      'AI agents for sales & customer care',
+      'Custom workflow automation',
+      'AI tools & software, including ADS-NOLIMIT AI Office (coming soon)',
+      'AI training for shop owners',
+    ],
+    principlesTitle: 'How we work',
+    principles: [
+      {
+        title: 'Straight talk about what AI can and cannot do',
+        text: 'Not every task should be handed to AI. If one should not, we say so.',
+      },
+      {
+        title: 'No revenue promises',
+        text: 'We commit to how we work and to honest reporting, not to numbers we cannot control.',
+      },
+      {
+        title: 'Playing by the rules',
+        text: 'Ads follow platform policies and Vietnamese law. AI-generated content is labelled where required.',
+      },
+      {
+        title: 'We use it before we sell it',
+        text: 'We test every approach on our own work first, like the ad reporting bot that runs every day.',
+      },
+      {
+        title: 'Your customer data belongs to you',
+        text: 'Your customers’ data lives in your accounts, not ours.',
+      },
+    ],
+  },
+}[lang];
+---
+
+<BaseLayout title={copy.title} description={copy.description} lang={lang}>
+  <PageHero title={copy.h1} lead={copy.lead} />
+
+  <PartnerStrip band lang={lang} />
+
+  <section class="section" aria-labelledby="story-title">
+    <div class="container story">
+      <div class="prose">
+        <h2 id="story-title">{copy.storyTitle}</h2>
+        {copy.story.map((p) => <p>{p}</p>)}
+      </div>
+
+      <dl class="facts">
+        {
+          copy.facts.map((f) => (
+            <div>
+              <dt>{f.label}</dt>
+              <dd>{f.value}</dd>
+            </div>
+          ))
+        }
+      </dl>
+    </div>
+  </section>
+
+  <section class="section section--raise" aria-labelledby="shift-title">
+    <div class="container">
+      <div class="section-head">
+        <h2 id="shift-title">{copy.shiftTitle}</h2>
+      </div>
+      <div class="shift">
+        <div class="shift-col card">
+          <h3>{copy.beforeTitle}</h3>
+          <ul class="checklist">{copy.before.map((b) => <li>{b}</li>)}</ul>
+        </div>
+        <div class="shift-col shift-now">
+          <h3>{copy.nowTitle}</h3>
+          <ul class="checklist">{copy.now.map((n) => <li>{n}</li>)}</ul>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="section" aria-labelledby="principles-title">
+    <div class="container">
+      <div class="section-head">
+        <h2 id="principles-title">{copy.principlesTitle}</h2>
+      </div>
+      <ul class="principles">
+        {
+          copy.principles.map((p) => (
+            <li>
+              <h3>{p.title}</h3>
+              <p>{p.text}</p>
+            </li>
+          ))
+        }
+      </ul>
+    </div>
+  </section>
+
+  <CtaBand lang={lang} />
+</BaseLayout>
+
+<style>
+  .story {
+    display: grid;
+    gap: 2.5rem;
+    align-items: start;
+  }
+  @media (min-width: 960px) {
+    .story {
+      grid-template-columns: minmax(0, 1fr) 15rem;
+      gap: clamp(3rem, 1rem + 5vw, 6rem);
+    }
+  }
+  .story .prose h2 {
+    margin-top: 0;
+    font-size: var(--step-3);
+  }
+  .story .prose p {
+    color: var(--text-2);
+    font-size: var(--step-1);
+  }
+
+  .facts {
+    margin: 0;
+    display: grid;
+    gap: 1.5rem;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  @media (min-width: 960px) {
+    .facts {
+      grid-template-columns: 1fr;
+      gap: 2rem;
+      padding-left: 2.25rem;
+      border-left: 1px solid var(--line);
+    }
+  }
+  .facts div {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+  }
+  .facts dd {
+    order: -1;
+    margin: 0;
+    font-size: clamp(2.25rem, 1.6rem + 2.5vw, 3.5rem);
+    font-weight: 800;
+    letter-spacing: -0.035em;
+    line-height: 1.05;
+    background: var(--grad-ink);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+  }
+  .facts dt {
+    color: var(--text-2);
+  }
+
+  .shift {
+    display: grid;
+    gap: 1rem;
+  }
+  @media (min-width: 768px) {
+    .shift {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 1.25rem;
+    }
+  }
+  .shift-col {
+    padding: clamp(1.35rem, 1rem + 1.2vw, 2rem);
+  }
+  .shift-col h3 {
+    font-size: var(--step-2);
+    margin-bottom: 1.25rem;
+  }
+  .shift-now {
+    border-radius: var(--r-lg);
+    background:
+      linear-gradient(var(--surface), var(--surface)) padding-box,
+      var(--grad) border-box;
+    border: 1px solid transparent;
+  }
+
+  .principles {
+    list-style: none;
+    display: grid;
+    gap: 2rem;
+  }
+  @media (min-width: 768px) {
+    .principles {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 2.5rem 3rem;
+    }
+  }
+  @media (min-width: 1100px) {
+    .principles {
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+  }
+  .principles li {
+    padding-top: 1.1rem;
+    border-top: 1px solid var(--line-strong);
+  }
+  .principles h3 {
+    font-size: var(--step-1);
+  }
+  .principles p {
+    margin-top: 0.45rem;
+    color: var(--text-2);
+  }
+</style>

@@ -2,7 +2,7 @@
  * CẤU HÌNH CHUNG & THÔNG TIN LIÊN HỆ — sửa liên hệ DUY NHẤT ở file này.
  *
  * Mọi số điện thoại, Zalo, Telegram, email, fanpage trên toàn site
- * (header, footer, thanh liên hệ nổi, trang Liên hệ, JSON-LD, trang /en/)
+ * (header, footer, thanh liên hệ nổi, trang Liên hệ, JSON-LD, mọi trang /en/)
  * đều lấy từ object `contact` bên dưới. Đổi ở đây là đổi ở mọi nơi.
  */
 
@@ -27,9 +27,12 @@ export const site = {
   name: 'ADS-Nolimit',
   url: 'https://www.ads-nolimit.agency',
   tagline: 'Quảng cáo & AI Agent cho doanh nghiệp',
+  taglineEn: 'Advertising & AI agents for businesses',
   defaultDescription:
     'ADS-Nolimit dựng nhân viên AI trả lời khách 24/7, tự động hóa việc lặp lại và chạy quảng cáo Facebook, Google, TikTok cho shop online và doanh nghiệp nhỏ. Làm quảng cáo từ 2016, hơn 800 khách hàng.',
   locale: 'vi_VN',
+  defaultDescriptionEn:
+    'ADS-Nolimit builds AI agents that answer customers 24/7, automates repetitive work and runs Facebook, Google and TikTok ads for online shops and small businesses in Vietnam. Running ads since 2016, for 800+ clients.',
   /** Ảnh chia sẻ mạng xã hội (1200×630) trong thư mục public/. */
   ogImage: '/og-image.png',
   foundedYear: 2016,
@@ -72,20 +75,20 @@ export const links = {
 /** Số điện thoại dạng quốc tế cho JSON-LD (+84...). */
 export const intlPhone = (s: string) => `+84${digits(s).replace(/^0/, '')}`;
 
-/** Danh sách kênh liên hệ dùng cho trang Liên hệ, footer, CTA. */
+/** Danh sách kênh liên hệ dùng cho trang Liên hệ (nhãn theo ngôn ngữ ở src/config/i18n.ts). */
 export const channels = [
-  { id: 'zalo', label: 'Zalo', value: contact.zaloPhone, href: links.zalo, external: true },
-  { id: 'hotline', label: 'Hotline', value: contact.hotline, href: links.hotline, external: false },
-  { id: 'phone', label: 'Điện thoại & Zalo', value: contact.zaloPhone, href: links.phone, external: false },
-  { id: 'assistant', label: 'Trợ lý', value: contact.assistantPhone, href: links.assistant, external: false },
-  { id: 'messenger', label: 'Messenger', value: `Fanpage ${contact.facebookName}`, href: links.messenger, external: true },
-  { id: 'telegram', label: 'Telegram', value: `@${contact.telegramUser}`, href: links.telegram, external: true },
-  { id: 'email', label: 'Email', value: contact.email, href: links.email, external: false },
-  { id: 'facebook', label: 'Fanpage', value: contact.facebookName, href: links.facebook, external: true },
+  { id: 'zalo', value: contact.zaloPhone, href: links.zalo, external: true },
+  { id: 'hotline', value: contact.hotline, href: links.hotline, external: false },
+  { id: 'phone', value: contact.zaloPhone, href: links.phone, external: false },
+  { id: 'assistant', value: contact.assistantPhone, href: links.assistant, external: false },
+  { id: 'messenger', value: `Fanpage ${contact.facebookName}`, href: links.messenger, external: true },
+  { id: 'telegram', value: `@${contact.telegramUser}`, href: links.telegram, external: true },
+  { id: 'email', value: contact.email, href: links.email, external: false },
+  { id: 'fanpage', value: contact.facebookName, href: links.facebook, external: true },
 ] as const;
 
 /**
- * Huy hiệu đối tác nền tảng (dải "Đối tác nền tảng" ở trang chủ, /quang-cao/, /ve-chung-toi/, /en/).
+ * Huy hiệu đối tác nền tảng (dải "Đối tác nền tảng" ở trang chủ, /quang-cao/, /ve-chung-toi/ và bản tiếng Anh).
  * Ảnh nằm trong src/assets/partners/ (Astro tự xuất WebP). Mọi ảnh cùng khung 260×104,
  * hiển thị 130×52, logo đã căn giữa sẵn trong khung.
  *
@@ -99,18 +102,30 @@ export const partners: readonly Partner[] = [
   { name: 'TikTok', alt: 'TikTok Shop', image: tiktokShopBadge, verifyUrl: '' },
 ];
 
-/** Điều hướng chính. */
+/**
+ * Điều hướng chính. `href` luôn là đường dẫn tiếng Việt; bản tiếng Anh
+ * được đổi tự động qua bảng `routes` trong src/config/i18n.ts.
+ */
 export const solutionsNav = [
-  { href: '/giai-phap-ai-agent/', label: 'AI Agent bán hàng & CSKH' },
-  { href: '/tu-dong-hoa/', label: 'Tự động hóa quy trình' },
-  { href: '/quang-cao/', label: 'Quảng cáo hiệu suất' },
-  { href: '/thiet-ke-website/', label: 'Website & phần mềm bán hàng' },
-  { href: '/phan-mem/', label: 'Công cụ & phần mềm AI' },
+  { href: '/giai-phap-ai-agent/', label: { vi: 'AI Agent bán hàng & CSKH', en: 'AI agents for sales & support' } },
+  { href: '/tu-dong-hoa/', label: { vi: 'Tự động hóa quy trình', en: 'Workflow automation' } },
+  { href: '/quang-cao/', label: { vi: 'Quảng cáo hiệu suất', en: 'Performance advertising' } },
+  { href: '/thiet-ke-website/', label: { vi: 'Website & phần mềm bán hàng', en: 'Websites & sales software' } },
+  { href: '/phan-mem/', label: { vi: 'Công cụ & phần mềm AI', en: 'AI tools & software' } },
 ] as const;
 
 export const mainNav = [
-  { href: '/bang-gia/', label: 'Bảng giá' },
-  { href: '/du-an/', label: 'Dự án' },
-  { href: '/blog/', label: 'Blog' },
-  { href: '/ve-chung-toi/', label: 'Về chúng tôi' },
+  { href: '/bang-gia/', label: { vi: 'Bảng giá', en: 'Pricing' } },
+  { href: '/du-an/', label: { vi: 'Dự án', en: 'Projects' } },
+  { href: '/blog/', label: { vi: 'Blog', en: 'Blog' } },
+  { href: '/ve-chung-toi/', label: { vi: 'Về chúng tôi', en: 'About' } },
 ] as const;
+
+/**
+ * Kênh liên hệ chính cho nút lớn ở từng ngôn ngữ.
+ * Tiếng Việt: Zalo. Tiếng Anh: Telegram (khách nước ngoài dùng nhiều hơn), email hiện ngay bên cạnh.
+ */
+export const primaryChannel = {
+  vi: { href: links.zalo, icon: 'zalo', label: 'Tư vấn miễn phí qua Zalo', short: 'Nhắn Zalo' },
+  en: { href: links.telegram, icon: 'telegram', label: 'Message us on Telegram', short: 'Telegram' },
+} as const;

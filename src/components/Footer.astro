@@ -1,190 +1,267 @@
 ---
 import { Image } from 'astro:assets';
 import logoFull from '../assets/brand/logo-full.png';
-import { site, contact, links, solutionsNav } from '../config/site';
+import Icon from './Icon.astro';
+import LangSwitch from './LangSwitch.astro';
+import { site, contact, links, solutionsNav, mainNav } from '../config/site';
+import { homeOf, localize, t } from '../config/i18n';
+import type { Lang } from '../config/i18n';
 
 interface Props {
-  lang?: 'vi' | 'en';
+  lang?: Lang;
 }
 const { lang = 'vi' } = Astro.props;
+const s = t(lang);
+const c = s.contactLabels;
 const year = new Date().getFullYear();
+
+const solutions = solutionsNav.map((item) => ({ href: localize(item.href, lang), label: item.label[lang] }));
+const company = [
+  ...mainNav.map((item) => ({ href: localize(item.href, lang), label: item.label[lang] })),
+  { href: localize('/lien-he/', lang), label: s.contact },
+  { href: localize('/chinh-sach-bao-mat/', lang), label: s.privacy },
+];
+
+const contacts = [
+  { label: c.hotline, value: contact.hotline, href: links.hotline },
+  { label: c.phone, value: contact.zaloPhone, href: links.phone },
+  { label: c.assistant, value: contact.assistantPhone, href: links.assistant },
+  { label: c.telegram, value: `@${contact.telegramUser}`, href: links.telegram, external: true },
+  { label: c.email, value: contact.email, href: links.email },
+  { label: c.fanpage, value: contact.facebookName, href: links.facebook, external: true },
+];
 ---
 
 <footer class="site-footer">
-  <div class="container footer-grid">
-    <div class="footer-brand">
-      <a href={lang === 'en' ? '/en/' : '/'} class="footer-logo" aria-label={site.name}>
-        <Image src={logoFull} alt="Logo ADS-Nolimit" width={150} densities={[1, 2]} />
-      </a>
-      {
-        lang === 'en' ? (
-          <p class="muted small">Advertising and AI agents for Vietnamese businesses. Running ads since 2016.</p>
-        ) : (
-          <p class="muted small">
-            Quảng cáo & AI Agent cho doanh nghiệp. Làm quảng cáo từ 2016, đã phục vụ hơn 800 khách hàng.
-          </p>
-        )
-      }
-    </div>
+  <div class="container">
+    <div class="footer-grid">
+      <div class="footer-brand">
+        <a href={homeOf[lang]} class="footer-logo" aria-label={`${site.name}, ${s.home}`}>
+          <Image src={logoFull} alt="" width={132} densities={[1, 2]} />
+        </a>
+        <p class="footer-about">{s.footerAbout}</p>
+        <ul class="footer-quick" aria-label={s.quickContact}>
+          <li>
+            <a href={links.zalo} rel="noopener"><Icon name="zalo" /> Zalo</a>
+          </li>
+          <li>
+            <a href={links.telegram} rel="noopener"><Icon name="telegram" /> Telegram</a>
+          </li>
+          <li>
+            <a href={links.email}><Icon name="mail" /> Email</a>
+          </li>
+          <li>
+            <a href={links.messenger} rel="noopener"><Icon name="messenger" /> Messenger</a>
+          </li>
+        </ul>
+      </div>
 
-    {
-      lang === 'vi' && (
-        <nav class="footer-col" aria-label="Giải pháp">
-          <p class="footer-title">Giải pháp</p>
-          <ul>
-            {solutionsNav.map((item) => (
+      <nav class="footer-col" aria-label={s.solutions}>
+        <p class="footer-title">{s.solutions}</p>
+        <ul>
+          {
+            solutions.map((item) => (
               <li>
                 <a href={item.href}>{item.label}</a>
               </li>
-            ))}
-          </ul>
-        </nav>
-      )
-    }
+            ))
+          }
+        </ul>
+      </nav>
 
-    {
-      lang === 'vi' && (
-        <nav class="footer-col" aria-label="ADS-Nolimit">
-          <p class="footer-title">ADS-Nolimit</p>
-          <ul>
-            <li>
-              <a href="/bang-gia/">Bảng giá</a>
-            </li>
-            <li>
-              <a href="/du-an/">Dự án</a>
-            </li>
-            <li>
-              <a href="/blog/">Blog</a>
-            </li>
-            <li>
-              <a href="/ve-chung-toi/">Về chúng tôi</a>
-            </li>
-            <li>
-              <a href="/lien-he/">Liên hệ</a>
-            </li>
-            <li>
-              <a href="/chinh-sach-bao-mat/">Chính sách bảo mật</a>
-            </li>
-            <li>
-              <a href="/en/" lang="en" hreflang="en">
-                English
-              </a>
-            </li>
-          </ul>
-        </nav>
-      )
-    }
+      <nav class="footer-col" aria-label={s.company}>
+        <p class="footer-title">{s.company}</p>
+        <ul>
+          {
+            company.map((item) => (
+              <li>
+                <a href={item.href}>{item.label}</a>
+              </li>
+            ))
+          }
+        </ul>
+      </nav>
 
-    <div class="footer-col">
-      <p class="footer-title">{lang === 'en' ? 'Contact' : 'Liên hệ'}</p>
-      <ul class="footer-contacts">
-        <li>Hotline: <a href={links.hotline}>{contact.hotline}</a></li>
-        <li>{lang === 'en' ? 'Phone & Zalo' : 'Điện thoại & Zalo'}: <a href={links.phone}>{contact.zaloPhone}</a></li>
-        <li>{lang === 'en' ? 'Assistant' : 'Trợ lý'}: <a href={links.assistant}>{contact.assistantPhone}</a></li>
-        <li>Telegram: <a href={links.telegram} rel="noopener">@{contact.telegramUser}</a></li>
-        <li>Email: <a href={links.email}>{contact.email}</a></li>
-        <li>Fanpage: <a href={links.facebook} rel="noopener">{contact.facebookName}</a></li>
-      </ul>
+      <div class="footer-col">
+        <p class="footer-title">{s.contact}</p>
+        <dl class="footer-contacts">
+          {
+            contacts.map((item) => (
+              <div>
+                <dt>{item.label}</dt>
+                <dd>
+                  <a href={item.href} rel={item.external ? 'noopener' : undefined}>
+                    {item.value}
+                  </a>
+                </dd>
+              </div>
+            ))
+          }
+        </dl>
+      </div>
     </div>
-  </div>
 
-  <div class="container">
     <div class="footer-bottom">
-    <p>© {year} {site.name}</p>
-    {
-      lang === 'en' ? (
-        <p>Illustrations on this site are drawn in SVG/CSS with AI assistance.</p>
-      ) : (
-        <p>Hình minh họa trên site được vẽ bằng SVG/CSS, có sử dụng AI.</p>
-      )
-    }
+      <p>© {year} {site.name}</p>
+      <p class="footer-ai">{s.footerAiNote}</p>
+      <LangSwitch lang={lang} />
     </div>
   </div>
 </footer>
 
 <style>
   .site-footer {
-    border-top: 1px solid var(--line);
+    position: relative;
     background: #050716;
-    padding-top: clamp(2.5rem, 2rem + 3vw, 4rem);
+    padding-top: clamp(3rem, 2.25rem + 3vw, 4.5rem);
     font-size: 0.9375rem;
+  }
+  .site-footer::before {
+    content: '';
+    position: absolute;
+    inset: 0 0 auto;
+    height: 1px;
+    background: var(--grad);
+    opacity: 0.45;
   }
 
   .footer-grid {
     display: grid;
-    gap: 2rem;
+    gap: 2.25rem 2rem;
   }
 
   @media (min-width: 640px) {
     .footer-grid {
       grid-template-columns: repeat(2, minmax(0, 1fr));
     }
+    .footer-brand {
+      grid-column: 1 / -1;
+    }
   }
   @media (min-width: 1024px) {
     .footer-grid {
-      grid-template-columns: 1.3fr 1fr 0.8fr 1.3fr;
+      grid-template-columns: minmax(0, 1.35fr) minmax(0, 1fr) minmax(0, 0.8fr) minmax(0, 1.25fr);
       gap: 2.5rem;
+    }
+    .footer-brand {
+      grid-column: auto;
     }
   }
 
   .footer-logo {
     display: inline-block;
-    margin-bottom: 0.75rem;
+    margin-bottom: 1rem;
   }
   .footer-logo img {
-    width: 150px;
+    width: 132px;
   }
 
-  .footer-brand p {
+  .footer-about {
     max-width: 22rem;
+    color: var(--text-2);
+    line-height: 1.6;
+  }
+
+  .footer-quick {
+    list-style: none;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    margin-top: 1.25rem;
+  }
+  .footer-quick a {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    min-height: 40px;
+    padding: 0 0.85rem;
+    border-radius: 999px;
+    border: 1px solid var(--line-strong);
+    color: var(--text);
+    font-size: 0.875rem;
+    font-weight: 600;
+    text-decoration: none;
+    transition:
+      border-color 0.15s ease,
+      background-color 0.15s ease;
+  }
+  .footer-quick a:hover {
+    border-color: var(--text-3);
+    background: rgb(255 255 255 / 0.04);
+  }
+  .footer-quick svg {
+    width: 1rem;
+    height: 1rem;
+    color: var(--green-ink);
   }
 
   .footer-title {
+    margin-bottom: 0.9rem;
     font-weight: 700;
-    margin-bottom: 0.75rem;
+    font-size: 0.9375rem;
+    color: var(--text);
   }
 
   .footer-col ul {
     list-style: none;
     display: grid;
-    gap: 0.5rem;
+    gap: 0.15rem;
   }
 
-  .footer-col a {
+  .footer-col ul a {
+    display: inline-block;
+    padding-block: 0.3rem;
     color: var(--text-2);
     text-decoration: none;
   }
-  .footer-col a:hover {
+  .footer-col ul a:hover {
     color: var(--text);
     text-decoration: underline;
+    text-decoration-color: var(--green);
   }
 
-  .footer-contacts li {
+  .footer-contacts {
+    margin: 0;
+    display: grid;
+    gap: 0.6rem;
+  }
+  .footer-contacts div {
+    display: grid;
+    gap: 0.05rem;
+  }
+  .footer-contacts dt {
+    font-size: 0.8125rem;
     color: var(--text-3);
+  }
+  .footer-contacts dd {
+    margin: 0;
     overflow-wrap: anywhere;
   }
   .footer-contacts a {
     color: var(--text);
-    text-decoration: underline;
-    text-decoration-color: var(--line-strong);
-    text-underline-offset: 0.25em;
+    font-weight: 400;
+    text-decoration: none;
   }
   .footer-contacts a:hover {
-    text-decoration-color: var(--text);
+    text-decoration: underline;
+    text-decoration-color: var(--green);
   }
 
   .footer-bottom {
     display: flex;
     flex-wrap: wrap;
-    justify-content: space-between;
-    gap: 0.5rem 2rem;
-    margin-top: 2.5rem;
-    padding-block: 1.25rem 1.5rem;
+    align-items: center;
+    gap: 0.5rem 1.5rem;
+    margin-top: clamp(2.5rem, 2rem + 2vw, 3.5rem);
+    padding-block: 1.1rem 1.4rem;
     border-top: 1px solid var(--line);
     color: var(--text-3);
     font-size: 0.8125rem;
   }
   .footer-bottom p {
     margin: 0;
+  }
+  .footer-bottom .footer-ai {
+    margin-right: auto;
   }
 </style>

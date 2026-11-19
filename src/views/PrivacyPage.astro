@@ -1,0 +1,247 @@
+---
+/** Trang Chính sách bảo mật (/chinh-sach-bao-mat/ và /en/privacy/). */
+import BaseLayout from '../layouts/BaseLayout.astro';
+import PageHero from '../components/PageHero.astro';
+import { contact, links } from '../config/site';
+import { analytics } from '../config/analytics';
+import type { Lang } from '../config/i18n';
+
+interface Props {
+  lang: Lang;
+}
+const { lang } = Astro.props;
+
+/** Ngày cập nhật — sửa khi chính sách thay đổi (cả hai ngôn ngữ). */
+const updated = { vi: '19/11/2026', en: '19 November 2026' };
+---
+
+{
+  lang === 'vi' ? (
+    <BaseLayout
+      title="Chính sách bảo mật | ADS-Nolimit"
+      description="ADS-Nolimit thu thập thông tin gì qua website, form liên hệ và AI Agent, dùng để làm gì, lưu bao lâu, và cách yêu cầu xem, sửa, xóa dữ liệu."
+      lang="vi"
+    >
+      <PageHero title="Chính sách bảo mật" lead={`Cập nhật lần cuối: ${updated.vi}.`} />
+      <section class="section">
+        <div class="container">
+          <div class="prose policy">
+            <p>
+              Trang này giải thích ADS-Nolimit thu thập thông tin gì khi anh/chị dùng website www.ads-nolimit.agency, liên
+              hệ với chúng tôi, hoặc trò chuyện với một AI Agent do ADS-Nolimit triển khai; thông tin đó được dùng để làm
+              gì; và anh/chị có quyền gì với dữ liệu của mình.
+            </p>
+
+            <h2>1. Thông tin chúng tôi thu thập</h2>
+            <h3>Qua website</h3>
+            <ul>
+              <li>
+                Website không có tài khoản người dùng và không lưu thông tin anh/chị nhập vào form. Form liên hệ chỉ soạn
+                sẵn nội dung rồi mở ứng dụng email hoặc Zalo của anh/chị.
+              </li>
+              <li>
+                Thông tin chỉ đến ADS-Nolimit khi anh/chị bấm gửi trong ứng dụng đó, gồm: họ tên, số điện thoại/Zalo,
+                email (nếu có), nhu cầu và lời nhắn.
+              </li>
+              <li>
+                Nhà cung cấp hạ tầng lưu trữ website có thể ghi nhật ký kỹ thuật (như địa chỉ IP, thời điểm truy cập) để
+                vận hành và bảo vệ hệ thống.
+              </li>
+            </ul>
+
+            <h3 id="cookie">Cookie & công cụ đo lường</h3>
+            {analytics.enabled ? (
+              <p>
+                Website dùng công cụ đo lường (Google Analytics và/hoặc Meta Pixel) để hiểu khách truy cập trang nào, đến
+                từ quảng cáo nào. Các công cụ này có thể đặt cookie trên trình duyệt của anh/chị.
+              </p>
+            ) : (
+              <p>
+                Hiện tại website không dùng Google Analytics, Meta Pixel hay cookie theo dõi. Nếu sau này bật công cụ đo
+                lường, chúng tôi sẽ cập nhật mục này trước khi bật.
+              </p>
+            )}
+
+            <h3>Qua các kênh liên hệ</h3>
+            <p>
+              Khi anh/chị nhắn Zalo, Messenger, Telegram, gửi email hoặc gọi điện, chúng tôi nhận những thông tin anh/chị
+              chủ động gửi, cùng tên hiển thị và số điện thoại/tài khoản của kênh đó.
+            </p>
+
+            <h3>Qua AI Agent do ADS-Nolimit triển khai cho doanh nghiệp</h3>
+            <ul>
+              <li>
+                AI Agent chỉ hỏi thông tin cần cho việc chăm sóc khách, như tên, số điện thoại và nhu cầu. AI Agent không
+                hỏi giấy tờ tùy thân hay số tài khoản ngân hàng.
+              </li>
+              <li>
+                Thông tin khách được lưu trong tài khoản do doanh nghiệp sử dụng AI Agent sở hữu (ví dụ Google Sheet,
+                fanpage, Zalo OA). Doanh nghiệp đó quyết định việc sử dụng dữ liệu khách hàng của họ.
+              </li>
+              <li>
+                Để tạo câu trả lời, nội dung tin nhắn được xử lý bởi dịch vụ AI của bên thứ ba. ADS-Nolimit thông báo cho
+                doanh nghiệp dịch vụ AI được dùng trước khi triển khai.
+              </li>
+              <li>ADS-Nolimit chỉ dùng quyền truy cập được cấp để cài đặt, bảo trì AI Agent.</li>
+            </ul>
+
+            <h2>2. Chúng tôi dùng thông tin để làm gì</h2>
+            <ul>
+              <li>Liên hệ lại để tư vấn, báo giá và cung cấp dịch vụ anh/chị yêu cầu.</li>
+              <li>Báo tin khi ADS-NOLIMIT AI Office ra mắt, nếu anh/chị đăng ký nhận tin.</li>
+            </ul>
+            <p>ADS-Nolimit không bán, không cho thuê thông tin cá nhân của anh/chị.</p>
+
+            <h2>3. Lưu trữ bao lâu</h2>
+            <p>
+              Chúng tôi giữ thông tin liên hệ trong thời gian cần để tư vấn và cung cấp dịch vụ, hoặc cho tới khi anh/chị
+              yêu cầu xóa.
+            </p>
+
+            <h2>4. Quyền của anh/chị</h2>
+            <p>
+              Anh/chị có thể yêu cầu ADS-Nolimit cho xem, sửa hoặc xóa thông tin cá nhân của mình, và rút lại đồng ý nhận
+              tin bất cứ lúc nào. Luật Bảo vệ dữ liệu cá nhân (số 91/2025/QH15, có hiệu lực từ 01/01/2026) cho người dân
+              quyền yêu cầu xóa dữ liệu cá nhân của mình.
+            </p>
+            <p>
+              Với dữ liệu thu thập qua AI Agent của một doanh nghiệp khác, anh/chị liên hệ trực tiếp doanh nghiệp đó;
+              ADS-Nolimit sẽ hỗ trợ doanh nghiệp thực hiện yêu cầu.
+            </p>
+
+            <h2>5. Liên hệ về dữ liệu cá nhân</h2>
+            <p>
+              Gửi yêu cầu tới email <a href={links.email}>{contact.email}</a>, ghi rõ thông tin anh/chị muốn xem, sửa hoặc
+              xóa.
+            </p>
+
+            <h2>6. Thay đổi chính sách</h2>
+            <p>Khi chính sách thay đổi, chúng tôi cập nhật trang này và ghi ngày cập nhật ở đầu trang.</p>
+          </div>
+        </div>
+      </section>
+    </BaseLayout>
+  ) : (
+    <BaseLayout
+      title="Privacy policy | ADS-Nolimit"
+      description="What ADS-Nolimit collects through this website, the contact form and AI agents, how it is used and how long it is kept, and how to ask to see, correct or delete your data."
+      lang="en"
+    >
+      <PageHero title="Privacy policy" lead={`Last updated: ${updated.en}.`} />
+      <section class="section">
+        <div class="container">
+          <div class="prose policy">
+            <p>
+              This page explains what information ADS-Nolimit collects when you use the website www.ads-nolimit.agency,
+              contact us, or chat with an AI agent that ADS-Nolimit has set up for a business; what that information is
+              used for; and what rights you have over your data. It is an English translation of our{' '}
+              <a href="/chinh-sach-bao-mat/" lang="vi" hreflang="vi">
+                Vietnamese privacy policy
+              </a>
+              .
+            </p>
+
+            <h2>1. Information we collect</h2>
+            <h3>Through the website</h3>
+            <ul>
+              <li>
+                The website has no user accounts and does not store anything you type into the form. The contact form only
+                prepares a message and opens your own email or chat app.
+              </li>
+              <li>
+                Information reaches ADS-Nolimit only when you press send in that app. It includes your name, phone, Zalo or
+                Telegram contact, email (if given), what you are interested in and your message.
+              </li>
+              <li>
+                The website hosting provider may keep technical logs (such as IP address and time of access) to operate and
+                protect its systems.
+              </li>
+            </ul>
+
+            <h3 id="cookie">Cookies & analytics</h3>
+            {analytics.enabled ? (
+              <p>
+                The website uses analytics tools (Google Analytics and/or Meta Pixel) to understand which pages visitors view
+                and which ads they come from. These tools may set cookies in your browser.
+              </p>
+            ) : (
+              <p>
+                The website currently does not use Google Analytics, Meta Pixel or tracking cookies. If we turn on analytics
+                in the future, we will update this section before doing so.
+              </p>
+            )}
+
+            <h3>Through our contact channels</h3>
+            <p>
+              When you message us on Zalo, Messenger or Telegram, send an email or call, we receive the information you
+              choose to send, along with your display name and phone number or account on that channel.
+            </p>
+
+            <h3>Through AI agents ADS-Nolimit sets up for businesses</h3>
+            <ul>
+              <li>
+                The AI agent only asks for information needed for customer care, such as name, phone number and what the
+                customer needs. It does not ask for ID documents or bank account numbers.
+              </li>
+              <li>
+                Customer information is stored in accounts owned by the business using the AI agent (for example a Google
+                Sheet, Facebook page or Zalo OA). That business decides how its customer data is used.
+              </li>
+              <li>
+                To generate replies, message content is processed by a third-party AI service. ADS-Nolimit tells the
+                business which AI service is used before deployment.
+              </li>
+              <li>ADS-Nolimit only uses the access it is given to set up and maintain the AI agent.</li>
+            </ul>
+
+            <h2>2. How we use information</h2>
+            <ul>
+              <li>To get back to you with advice and quotes, and to provide the services you ask for.</li>
+              <li>To tell you when ADS-NOLIMIT AI Office launches, if you signed up for news.</li>
+            </ul>
+            <p>ADS-Nolimit does not sell or rent out your personal information.</p>
+
+            <h2>3. How long we keep it</h2>
+            <p>
+              We keep contact information for as long as we need it to advise you and provide our services, or until you
+              ask us to delete it.
+            </p>
+
+            <h2>4. Your rights</h2>
+            <p>
+              You can ask ADS-Nolimit to show you, correct or delete your personal information, and withdraw your consent to
+              receive news at any time. Vietnam’s Personal Data Protection Law (No. 91/2025/QH15, in force since 1 January
+              2026) gives people the right to request deletion of their personal data.
+            </p>
+            <p>
+              For data collected through another business’s AI agent, please contact that business directly; ADS-Nolimit
+              will help the business carry out your request.
+            </p>
+
+            <h2>5. Contact about personal data</h2>
+            <p>
+              Email your request to <a href={links.email}>{contact.email}</a>, stating which information you want to see,
+              correct or delete.
+            </p>
+
+            <h2>6. Changes to this policy</h2>
+            <p>When this policy changes, we update this page and the date at the top.</p>
+          </div>
+        </div>
+      </section>
+    </BaseLayout>
+  )
+}
+
+<style>
+  .policy {
+    max-width: 44rem;
+  }
+  .policy h2 {
+    font-size: var(--step-2);
+  }
+  .policy p,
+  .policy li {
+    color: var(--text-2);
+  }
+</style>

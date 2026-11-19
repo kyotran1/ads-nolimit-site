@@ -1,8 +1,25 @@
 ---
 /** Bảng giá rút gọn cho trang chủ. Dữ liệu từ src/data/pricing.ts */
-import { plans, pilotOffer, priceNote } from '../data/pricing';
+import Icon from './Icon.astro';
+import { getPlans, getPilotOffer, getPriceNote } from '../data/pricing';
+import { localize } from '../config/i18n';
+import type { Lang } from '../config/i18n';
 
-const rows = plans.filter((p) => p.showOnHome);
+interface Props {
+  lang?: Lang;
+}
+const { lang = 'vi' } = Astro.props;
+
+const rows = getPlans(lang).filter((p) => p.showOnHome);
+const pilot = getPilotOffer(lang);
+const pricing = localize('/bang-gia/', lang);
+const linkFor = (href: string, id: string) =>
+  /(^|\/)(bang-gia|pricing)\//.test(href.split('#')[0]) ? `${pricing}#${id}` : href;
+
+const s = {
+  vi: { full: 'Xem bảng giá đầy đủ', pilotTag: 'Ưu đãi thí điểm' },
+  en: { full: 'See full pricing', pilotTag: 'Pilot offer' },
+}[lang];
 ---
 
 <div class="summary">
@@ -10,13 +27,14 @@ const rows = plans.filter((p) => p.showOnHome);
     {
       rows.map((plan) => (
         <li class="row">
-          <a class="row-name" href={plan.href.startsWith('/bang-gia/') ? `/bang-gia/#${plan.id}` : plan.href}>
-            {plan.name}
-          </a>
+          <span class="row-name">
+            <a href={linkFor(plan.href, plan.id)}>{plan.name}</a>
+            {plan.pilot && pilot.active && <span class="row-pilot">{s.pilotTag}</span>}
+          </span>
           <span class="row-prices">
             {plan.prices.map((p) => (
               <span class="row-price">
-                {p.label !== 'Giá' && <span class="row-label">{p.label} </span>}<strong>{p.value}</strong>{p.unit && <span class="row-unit">{p.unit}</span>}
+                {!p.bare && <span class="row-label">{p.label} </span>}<strong>{p.value}</strong>{p.unit && <span class="row-unit">{p.unit}</span>}
               </span>
             ))}
           </span>
@@ -25,56 +43,94 @@ const rows = plans.filter((p) => p.showOnHome);
     }
   </ul>
 
-  {
-    pilotOffer.active && (
-      <p class="pilot">
-        <strong>{pilotOffer.title}:</strong> {pilotOffer.text}
-      </p>
-    )
-  }
-  <p class="note">{priceNote}</p>
-  <a class="btn" href="/bang-gia/">Xem bảng giá đầy đủ</a>
+  <div class="summary-foot">
+    {
+      pilot.active && (
+        <p class="pilot">
+          <span>
+            <strong>{pilot.title}:</strong> {pilot.text}
+          </span>
+        </p>
+      )
+    }
+    <div class="summary-actions">
+      <a class="btn btn-secondary" href={pricing}>
+        {s.full}
+        <Icon name="arrow" />
+      </a>
+      <p class="note">{getPriceNote(lang)}</p>
+    </div>
+  </div>
 </div>
 
 <style>
   .rows {
     list-style: none;
-    border-top: 1px solid var(--line);
+    border-radius: var(--r-lg);
+    border: 1px solid var(--line);
+    background: var(--card-bg);
+    overflow: hidden;
   }
 
   .row {
     display: grid;
-    gap: 0.4rem;
-    padding-block: 1rem;
+    gap: 0.35rem;
+    padding: 1.05rem clamp(1.1rem, 0.8rem + 1vw, 1.75rem);
     border-bottom: 1px solid var(--line);
+    transition: background-color 0.15s ease;
+  }
+  .row:last-child {
+    border-bottom: 0;
+  }
+  .row:hover {
+    background: rgb(255 255 255 / 0.025);
   }
 
   @media (min-width: 820px) {
     .row {
-      grid-template-columns: minmax(0, 1fr) minmax(0, 1.4fr);
+      grid-template-columns: minmax(0, 1fr) minmax(0, 1.35fr);
       gap: 2rem;
       align-items: baseline;
     }
   }
 
   .row-name {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: 0.25rem 0.6rem;
+  }
+  .row-name a {
     font-weight: 700;
     font-size: var(--step-1);
     color: var(--text);
     text-decoration: none;
   }
-  .row-name:hover {
+  .row-name a:hover {
     text-decoration: underline;
+    text-decoration-color: var(--green);
+  }
+
+  .row-pilot {
+    font-size: 0.75rem;
+    font-weight: 700;
+    color: var(--sun);
+    padding: 0 0.5rem;
+    border-radius: 999px;
+    border: 1px solid rgb(238 214 90 / 0.45);
+    line-height: 1.6;
   }
 
   .row-prices {
     display: flex;
     flex-wrap: wrap;
-    gap: 0.25rem 1.5rem;
+    gap: 0.2rem 1.5rem;
   }
 
-  .row-price {
-    white-space: nowrap;
+  @media (min-width: 480px) {
+    .row-price {
+      white-space: nowrap;
+    }
   }
 
   .row-label,
@@ -87,8 +143,22 @@ const rows = plans.filter((p) => p.showOnHome);
     font-variant-numeric: tabular-nums;
   }
 
-
-  .summary .btn {
+  .summary-foot {
+    display: grid;
+    gap: 1.25rem;
     margin-top: 1.25rem;
+  }
+  .summary-foot .pilot {
+    margin-top: 0;
+  }
+
+  .summary-actions {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.75rem 1.5rem;
+  }
+  .summary-actions .note {
+    margin: 0;
   }
 </style>

@@ -1,0 +1,410 @@
+---
+/** Trang AI Agent bán hàng & chăm sóc khách (/giai-phap-ai-agent/ và /en/ai-agent/). */
+import BaseLayout from '../layouts/BaseLayout.astro';
+import PageHero from '../components/PageHero.astro';
+import ChatDemo from '../components/ChatDemo.astro';
+import type { ChatMessage } from '../components/ChatDemo.astro';
+import ProcessSteps from '../components/ProcessSteps.astro';
+import PlanCard from '../components/PlanCard.astro';
+import Faq from '../components/Faq.astro';
+import CtaBand from '../components/CtaBand.astro';
+import Icon from '../components/Icon.astro';
+import type { IconName } from '../components/Icon.astro';
+import { primaryChannel } from '../config/site';
+import { localize } from '../config/i18n';
+import type { Lang } from '../config/i18n';
+import { getPlan, getPilotOffer, getPriceNote, getStarterLeadTime } from '../data/pricing';
+import { getFaq } from '../data/faq';
+
+interface Props {
+  lang: Lang;
+}
+const { lang } = Astro.props;
+
+const starter = getPlan('ai-starter', lang);
+const sales = getPlan('ai-sales', lang);
+const pilot = getPilotOffer(lang);
+const lead = getStarterLeadTime(lang);
+const primary = primaryChannel[lang];
+const lawPost = localize('/blog/luat-tri-tue-nhan-tao-va-bao-ve-du-lieu-ca-nhan-2026/', lang);
+
+const copy = {
+  vi: {
+    title: 'Giải pháp AI Agent bán hàng & chăm sóc khách | ADS-Nolimit',
+    description: `AI Agent trả lời khách 24/7 trên Messenger, Zalo OA, website theo tài liệu của cửa hàng; xin số điện thoại, lưu Google Sheet, báo khách mới. Gói Khởi đầu cài đặt ${starter.prices[0].value}.`,
+    h1: 'AI Agent: nhân viên trực tin nhắn không nghỉ, trả lời theo tài liệu của chính anh/chị',
+    lead: 'AI Agent trả lời khách trên Messenger, Zalo OA hoặc website. Nó dựa vào bảng giá, chính sách và câu hỏi thường gặp của cửa hàng, giữ lại thông tin khách và báo anh/chị khi có khách mới.',
+    plansBtn: 'Xem gói & giá',
+    canTitle: 'AI Agent làm được gì',
+    canLead: 'Và quan trọng không kém: những việc nó được cài để không làm.',
+    canLabel: 'Làm được',
+    cannotLabel: 'Không tự làm',
+    can: [
+      'Trả lời câu hỏi thường gặp dựa trên tài liệu của cửa hàng: giá, giờ mở cửa, chính sách đổi trả, phí giao hàng',
+      'Xin số điện thoại, lưu khách vào Google Sheet',
+      'Báo khách mới cho anh/chị qua Telegram hoặc Zalo',
+      'Tra bảng giá, tồn kho và tạo đơn nháp (gói Bán hàng)',
+      'Chuyển cuộc trò chuyện cho nhân viên khi cần (gói Bán hàng)',
+      'Gửi báo cáo hằng tuần (gói Bán hàng)',
+    ],
+    cannot: [
+      'Tự hứa giảm giá hay ưu đãi ngoài chính sách anh/chị đưa',
+      'Tư vấn chuyên môn nhạy cảm như sức khỏe, pháp lý: chuyển cho người thật',
+      'Tự chốt đơn: đơn nháp luôn chờ nhân viên xác nhận',
+      'Nhắn tin hàng loạt hay làm phiền khách chưa hỏi',
+    ],
+    demoTitle: 'Hội thoại minh họa: shop mỹ phẩm trên Zalo OA',
+    demoLead:
+      'Khách hỏi hàng lúc 9 giờ tối. AI tra giá và tồn kho, lên đơn nháp, rồi chuyển cho nhân viên khi khách hỏi chuyện da kích ứng: câu hỏi cần người có chuyên môn trả lời.',
+    demoPoints: [
+      'Giá và tồn kho lấy từ bảng của shop, không phải AI tự đoán',
+      'Đơn nháp chờ nhân viên xác nhận trước khi giao',
+      'Câu hỏi nhạy cảm được chuyển cho người thật',
+    ],
+    agentName: 'Trợ lý AI của Shop Mỹ Phẩm Mẫu',
+    chat: [
+      { from: 'customer', text: 'Serum vitamin C loại 30ml còn hàng không shop?', time: '21:05' },
+      { from: 'ai', text: 'Dạ còn ạ. Serum vitamin C 30ml giá 420.000đ/chai. Chị muốn lấy mấy chai ạ?' },
+      { from: 'customer', text: 'Lấy 2 chai, giao về quận 7 nha.' },
+      { from: 'event', text: 'Đã tạo đơn nháp: 2 chai serum vitamin C 30ml', icon: 'sheet' },
+      {
+        from: 'ai',
+        text: 'Dạ em đã lên đơn nháp 2 chai, tổng 840.000đ, chưa gồm phí giao hàng. Chị cho em xin tên, số điện thoại và địa chỉ để nhân viên xác nhận đơn nhé.',
+      },
+      { from: 'customer', text: 'Mà da chị đang bị kích ứng thì dùng được không em?' },
+      {
+        from: 'ai',
+        text: 'Trường hợp da đang kích ứng, em xin chuyển chị sang nhân viên tư vấn để được hỗ trợ kỹ hơn ạ.',
+      },
+      { from: 'event', text: 'Đã chuyển cuộc trò chuyện cho nhân viên', icon: 'user' },
+    ] as ChatMessage[],
+    stepsTitle: 'Triển khai trong 4 bước',
+    stepsLead: 'Anh/chị duyệt kịch bản trước khi AI nói chuyện với khách thật.',
+    steps: [
+      {
+        title: 'Khảo sát',
+        text: 'Xem khách hay nhắn ở kênh nào, câu hỏi nào lặp lại nhiều nhất, ai đang trả lời và trả lời mất bao lâu. Miễn phí.',
+      },
+      {
+        title: 'Thiết kế',
+        text: 'Gom bảng giá, chính sách, câu hỏi thường gặp. Thống nhất giọng trả lời, thông tin cần xin của khách và lúc nào chuyển cho người thật.',
+      },
+      {
+        title: 'Triển khai',
+        text: `Kết nối kênh chat, nạp tài liệu, chạy thử nội bộ rồi mới mở cho khách. Gói ${starter.name} thường mất ${lead}.`,
+      },
+      {
+        title: 'Đo và tối ưu',
+        text: 'Xem lại những câu AI chưa trả lời được, bổ sung tài liệu, chỉnh kịch bản. Anh/chị góp ý trực tiếp qua Zalo hoặc Telegram.',
+      },
+    ],
+    securityTitle: 'Bảo mật dữ liệu khách hàng',
+    securityLead:
+      'Luật Bảo vệ dữ liệu cá nhân (91/2025/QH15) có hiệu lực từ 01/01/2026. AI Agent được thiết kế để anh/chị chủ động với dữ liệu của khách.',
+    security: [
+      {
+        icon: 'sheet',
+        title: 'Dữ liệu nằm trong tài khoản của anh/chị',
+        text: 'Danh sách khách được lưu vào Google Sheet, fanpage, Zalo OA do chính doanh nghiệp sở hữu.',
+      },
+      {
+        icon: 'chat',
+        title: 'Chỉ hỏi điều cần thiết',
+        text: 'AI Agent chỉ xin thông tin phục vụ việc chăm sóc khách: tên, số điện thoại, nhu cầu. Không hỏi giấy tờ tùy thân hay số tài khoản.',
+      },
+      {
+        icon: 'lock',
+        title: 'Quyền truy cập thu hồi được',
+        text: 'ADS-Nolimit dùng quyền quản trị để cài đặt và bảo trì. Anh/chị có thể thu hồi bất cứ lúc nào.',
+      },
+      {
+        icon: 'bolt',
+        title: 'Minh bạch về dịch vụ AI',
+        text: 'Để tạo câu trả lời, nội dung tin nhắn được xử lý bởi dịch vụ AI. ADS-Nolimit nói rõ dùng dịch vụ nào ngay ở bước thiết kế.',
+      },
+    ] as { icon: IconName; title: string; text: string }[],
+    securityNote: `Khi khách yêu cầu xóa dữ liệu, anh/chị xóa được ngay trong bảng tính của mình. Đọc thêm: <a href="${lawPost}">chủ shop cần biết gì về Luật AI và Luật Bảo vệ dữ liệu cá nhân</a>.`,
+    plansTitle: 'Gói & giá',
+    plansLead: 'Phí cài đặt trả khi triển khai, phí duy trì trả hằng tháng trong giới hạn hội thoại của gói.',
+    planCta: 'Tư vấn gói này qua Zalo',
+    faqTitle: 'Câu hỏi thường gặp về AI Agent',
+    ctaTitle: 'Muốn biết AI Agent trả lời khách của anh/chị thế nào?',
+    ctaText:
+      'Gửi vài câu khách hay hỏi qua Zalo. ADS-Nolimit sẽ cho anh/chị xem bản nháp cách AI trả lời trước khi quyết định.',
+  },
+  en: {
+    title: 'AI agents for sales & customer care | ADS-Nolimit',
+    description: `AI agents that answer customers 24/7 on Messenger, Zalo OA and your website using your own documents. They collect phone numbers, save leads to Google Sheets and alert your team. Starter setup ${starter.prices[0].value}.`,
+    h1: 'AI agents: a chat assistant that never clocks off and answers from your own documents',
+    lead: 'An AI agent answers customers on Messenger, Zalo OA or your website. It works from your price list, policies and FAQs, keeps every customer’s details and tells you when a new lead comes in.',
+    plansBtn: 'See plans & pricing',
+    canTitle: 'What an AI agent can do',
+    canLead: 'And just as important: what it is set up not to do.',
+    canLabel: 'Can do',
+    cannotLabel: 'Won’t do on its own',
+    can: [
+      'Answer common questions from your documents: prices, opening hours, returns policy, delivery fees',
+      'Ask for phone numbers and save leads to Google Sheets',
+      'Alert you to new leads via Telegram or Zalo',
+      'Look up prices and stock and create draft orders (Sales plan)',
+      'Hand the conversation to a staff member when needed (Sales plan)',
+      'Send a weekly report (Sales plan)',
+    ],
+    cannot: [
+      'Promise discounts or offers outside the policy you give it',
+      'Give sensitive expert advice such as health or legal matters: it hands over to a person',
+      'Close a sale by itself: draft orders always wait for staff to confirm',
+      'Send bulk messages or contact customers who have not asked',
+    ],
+    demoTitle: 'Illustrative conversation: a cosmetics shop on Zalo OA',
+    demoLead:
+      'A customer asks about a product at 9 pm. The AI checks the price and stock, drafts an order, then hands over to staff when the customer mentions irritated skin, a question that needs someone with expertise.',
+    demoPoints: [
+      'Prices and stock come from the shop’s own sheet, not AI guesswork',
+      'Draft orders wait for staff to confirm before anything ships',
+      'Sensitive questions go to a real person',
+    ],
+    agentName: 'Sample Beauty Shop AI assistant',
+    chat: [
+      { from: 'customer', text: 'Is the 30ml vitamin C serum in stock?', time: '21:05' },
+      { from: 'ai', text: 'Yes, it is. The 30ml vitamin C serum is 420,000 VND a bottle. How many would you like?' },
+      { from: 'customer', text: 'Two bottles please, delivered to District 7.' },
+      { from: 'event', text: 'Draft order created: 2 × vitamin C serum 30ml', icon: 'sheet' },
+      {
+        from: 'ai',
+        text: 'I’ve drafted an order for 2 bottles, 840,000 VND in total, not including delivery. Could I have your name, phone number and address so our staff can confirm it?',
+      },
+      { from: 'customer', text: 'Oh, my skin is a bit irritated at the moment. Can I still use it?' },
+      {
+        from: 'ai',
+        text: 'Since your skin is irritated, let me connect you with one of our consultants so they can advise you properly.',
+      },
+      { from: 'event', text: 'Conversation handed to a staff member', icon: 'user' },
+    ] as ChatMessage[],
+    stepsTitle: 'Live in 4 steps',
+    stepsLead: 'You approve the reply scripts before the AI talks to real customers.',
+    steps: [
+      {
+        title: 'Assess',
+        text: 'We look at where customers message you, which questions come up most, who answers them today and how long replies take. Free.',
+      },
+      {
+        title: 'Design',
+        text: 'We gather your price list, policies and FAQs, then agree on the tone of voice, the details to collect and when to hand over to a person.',
+      },
+      {
+        title: 'Build',
+        text: `We connect the chat channel, load your documents and test internally before going live. The ${starter.name} plan usually takes ${lead}.`,
+      },
+      {
+        title: 'Measure & improve',
+        text: 'We review the questions the AI could not answer, fill the gaps and refine the scripts. You can send feedback directly on Zalo or Telegram.',
+      },
+    ],
+    securityTitle: 'Protecting your customers’ data',
+    securityLead:
+      'Vietnam’s Personal Data Protection Law (91/2025/QH15) took effect on 1 January 2026. The AI agent is designed so that you stay in control of your customers’ data.',
+    security: [
+      {
+        icon: 'sheet',
+        title: 'Data stays in your accounts',
+        text: 'Your customer list is saved to a Google Sheet, Facebook page or Zalo OA owned by your business.',
+      },
+      {
+        icon: 'chat',
+        title: 'Only asks for what it needs',
+        text: 'The AI agent only asks for what customer care needs: name, phone number and what they are looking for. Never ID documents or bank details.',
+      },
+      {
+        icon: 'lock',
+        title: 'Access you can revoke',
+        text: 'ADS-Nolimit uses admin access to set up and maintain the agent. You can revoke it at any time.',
+      },
+      {
+        icon: 'bolt',
+        title: 'Clear about the AI service',
+        text: 'To write replies, message content is processed by an AI service. We tell you exactly which one at the design stage.',
+      },
+    ] as { icon: IconName; title: string; text: string }[],
+    securityNote: `If a customer asks for their data to be deleted, you can delete it straight away in your own spreadsheet. Read more: <a href="${lawPost}">what shop owners need to know about Vietnam’s AI and personal data laws</a>.`,
+    plansTitle: 'Plans & pricing',
+    plansLead: 'You pay the setup fee once at launch, then a monthly fee that covers the conversations included in your plan.',
+    planCta: 'Ask about this plan',
+    faqTitle: 'AI agent FAQ',
+    ctaTitle: 'Want to see how an AI agent would answer your customers?',
+    ctaText:
+      'Send us a few questions your customers often ask. We will show you a draft of how the AI would reply before you decide anything.',
+  },
+}[lang];
+
+const faq = getFaq(lang);
+const tones = ['tone-teal', 'tone-violet', 'tone-blue', 'tone-green'];
+---
+
+<BaseLayout title={copy.title} description={copy.description} lang={lang}>
+  <PageHero title={copy.h1} lead={copy.lead}>
+    <a class="btn btn-primary" href={primary.href} rel="noopener"><Icon name={primary.icon} /> {primary.label}</a>
+    <a class="btn btn-secondary" href="#goi-gia">{copy.plansBtn}</a>
+  </PageHero>
+
+  <section class="section" aria-labelledby="can-title">
+    <div class="container">
+      <div class="section-head">
+        <h2 id="can-title">{copy.canTitle}</h2>
+        <p>{copy.canLead}</p>
+      </div>
+      <div class="grid-2 can-grid">
+        <div class="panel can-panel">
+          <h3 class="list-title">{copy.canLabel}</h3>
+          <ul class="checklist">{copy.can.map((item) => <li>{item}</li>)}</ul>
+        </div>
+        <div class="panel cannot-panel">
+          <h3 class="list-title">{copy.cannotLabel}</h3>
+          <ul class="crosslist">{copy.cannot.map((item) => <li>{item}</li>)}</ul>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="section section--raise" aria-labelledby="demo-title">
+    <div class="container split demo">
+      <div>
+        <h2 id="demo-title">{copy.demoTitle}</h2>
+        <p class="lead demo-lead">{copy.demoLead}</p>
+        <ul class="checklist">{copy.demoPoints.map((pt) => <li>{pt}</li>)}</ul>
+      </div>
+      <div class="demo-chat">
+        <ChatDemo lang={lang} agentName={copy.agentName} channel="Zalo OA" messages={copy.chat} clock="21:05" />
+      </div>
+    </div>
+  </section>
+
+  <section class="section" aria-labelledby="steps-title">
+    <div class="container">
+      <div class="section-head">
+        <h2 id="steps-title">{copy.stepsTitle}</h2>
+        <p>{copy.stepsLead}</p>
+      </div>
+      <ProcessSteps lang={lang} steps={copy.steps} />
+    </div>
+  </section>
+
+  <section class="section section--raise" aria-labelledby="security-title">
+    <div class="container">
+      <div class="section-head">
+        <h2 id="security-title">{copy.securityTitle}</h2>
+        <p>{copy.securityLead}</p>
+      </div>
+      <ul class="security">
+        {
+          copy.security.map((s, i) => (
+            <li class={tones[i]}>
+              <span class="icon-tile">
+                <Icon name={s.icon} />
+              </span>
+              <h3>{s.title}</h3>
+              <p>{s.text}</p>
+            </li>
+          ))
+        }
+      </ul>
+      <p class="note security-note" set:html={copy.securityNote} />
+    </div>
+  </section>
+
+  <section class="section" id="goi-gia" aria-labelledby="plans-title">
+    <div class="container">
+      <div class="section-head">
+        <h2 id="plans-title">{copy.plansTitle}</h2>
+        <p>{copy.plansLead}</p>
+      </div>
+      {
+        pilot.active && (
+          <p class="pilot pilot-top">
+            <span>
+              <strong>{pilot.title}:</strong> {pilot.text}
+            </span>
+          </p>
+        )
+      }
+      <div class="grid-2 plans">
+        <PlanCard lang={lang} plan={starter} showLink={false} cta={{ href: primary.href, label: copy.planCta, external: true }} />
+        <PlanCard lang={lang} plan={sales} showLink={false} cta={{ href: primary.href, label: copy.planCta, external: true }} />
+      </div>
+      <p class="note">{getPriceNote(lang)}</p>
+    </div>
+  </section>
+
+  <section class="section section--raise" aria-labelledby="faq-title">
+    <div class="container faq-layout">
+      <div class="section-head">
+        <h2 id="faq-title">{copy.faqTitle}</h2>
+      </div>
+      <Faq items={faq.agent} />
+    </div>
+  </section>
+
+  <CtaBand lang={lang} title={copy.ctaTitle} text={copy.ctaText} />
+</BaseLayout>
+
+<style>
+  .list-title {
+    font-size: var(--step-1);
+    margin-bottom: 1.25rem;
+  }
+  .can-panel {
+    border-color: rgb(0 216 120 / 0.28);
+  }
+
+  .demo {
+    align-items: center;
+  }
+  .demo-lead {
+    margin: 1.25rem 0 1.5rem;
+  }
+  .demo-chat {
+    display: flex;
+    justify-content: center;
+  }
+  @media (min-width: 960px) {
+    .demo-chat {
+      justify-content: flex-end;
+    }
+  }
+
+  .security {
+    list-style: none;
+    display: grid;
+    gap: 2rem;
+  }
+  @media (min-width: 768px) {
+    .security {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 2.25rem 3rem;
+    }
+  }
+  @media (min-width: 1100px) {
+    .security {
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 2.5rem;
+    }
+  }
+
+  .security .icon-tile {
+    margin-bottom: 1rem;
+  }
+  .security h3 {
+    font-size: var(--step-1);
+  }
+  .security p {
+    margin-top: 0.45rem;
+    color: var(--text-2);
+  }
+  .security-note {
+    margin-top: 2.5rem;
+  }
+
+  .pilot-top {
+    margin: 0 0 1.25rem;
+  }
+</style>

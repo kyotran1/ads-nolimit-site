@@ -1,0 +1,313 @@
+---
+/** Trang Quảng cáo hiệu suất (/quang-cao/ và /en/advertising/). */
+import BaseLayout from '../layouts/BaseLayout.astro';
+import PageHero from '../components/PageHero.astro';
+import PlanCard from '../components/PlanCard.astro';
+import CtaBand from '../components/CtaBand.astro';
+import PartnerStrip from '../components/PartnerStrip.astro';
+import Icon from '../components/Icon.astro';
+import { primaryChannel } from '../config/site';
+import { localize } from '../config/i18n';
+import type { Lang } from '../config/i18n';
+import { getPlan, getPriceNote } from '../data/pricing';
+
+interface Props {
+  lang: Lang;
+}
+const { lang } = Astro.props;
+
+const ads = getPlan('ads', lang);
+const agency = getPlan('agency-account', lang);
+const primary = primaryChannel[lang];
+const projects = localize('/du-an/', lang);
+
+const copy = {
+  vi: {
+    title: 'Quảng cáo hiệu suất Facebook, Google, TikTok | ADS-Nolimit',
+    description:
+      'ADS-Nolimit chạy và tối ưu quảng cáo Facebook, Google, TikTok mỗi ngày, báo cáo minh bạch. Phí quản lý 10–15% ngân sách, dùng thử 7 ngày. Tài khoản quảng cáo Agency doanh nghiệp (BM2500).',
+    h1: 'Quảng cáo hiệu suất trên Facebook, Google, TikTok',
+    lead: 'ADS-Nolimit làm quảng cáo từ 2016. Chúng tôi lên kế hoạch, dựng chiến dịch, tối ưu mỗi ngày và báo cáo rõ ràng để anh/chị biết từng đồng ngân sách đi đâu.',
+    primary: 'Đăng ký dùng thử 7 ngày',
+    feesBtn: 'Xem phí dịch vụ',
+    channelsTitle: 'Đa kênh, chọn kênh theo sản phẩm',
+    channelsLead:
+      'Không phải shop nào cũng cần chạy cả ba. Chúng tôi chọn kênh theo sản phẩm, khách hàng và ngân sách của anh/chị.',
+    channels: [
+      {
+        name: 'Facebook Ads',
+        text: 'Tiếp cận khách theo sở thích, độ tuổi, khu vực. Hợp với việc tạo nhu cầu và kéo tin nhắn về fanpage, Messenger, Instagram.',
+      },
+      {
+        name: 'Google Ads',
+        text: 'Xuất hiện khi khách đang chủ động tìm kiếm. Hợp với dịch vụ và sản phẩm khách đã biết mình cần.',
+      },
+      { name: 'TikTok Ads', text: 'Quảng cáo dạng video ngắn. Hợp với sản phẩm cần trình diễn, dùng thử, trước–sau.' },
+    ],
+    dailyTitle: 'Tối ưu hằng ngày',
+    dailyLead: 'Quảng cáo không phải bật lên rồi để đó. Mỗi ngày, ADS-Nolimit làm những việc sau với tài khoản của anh/chị:',
+    daily: [
+      'Kiểm tra chi tiêu và ngân sách của từng chiến dịch',
+      'Tắt hoặc giảm nhóm quảng cáo kém, dồn ngân sách cho nhóm tốt hơn',
+      'Thử mẫu quảng cáo mới và so sánh với mẫu đang chạy',
+      'Đối chiếu tin nhắn, đơn hàng thực tế với số liệu trên nền tảng',
+      'Ghi lại mọi thay đổi để cuối tuần nhìn lại cùng anh/chị',
+    ],
+    reportTitle: 'Báo cáo minh bạch',
+    reportLead: 'Báo cáo định kỳ lấy số liệu từ chính nền tảng quảng cáo, kèm giải thích ngắn, dễ hiểu:',
+    report: [
+      'Tiền đã chi vào đâu, cho chiến dịch nào',
+      'Kết quả theo mục tiêu đã thống nhất từ đầu: tin nhắn, khách để lại số, đơn hàng',
+      'Việc đã làm trong kỳ và kế hoạch kỳ tới',
+    ],
+    reportNote: `Báo cáo có thể tự động hóa giống bot báo cáo ADS-Nolimit đang dùng nội bộ. <a href="${projects}">Xem case study</a>.`,
+    honestTitle: 'ADS-Nolimit không cam kết doanh thu',
+    honestText:
+      'Kết quả quảng cáo phụ thuộc sản phẩm, giá bán, nội dung, mùa vụ và cả đối thủ. Điều chúng tôi cam kết là cách làm: tối ưu mỗi ngày, báo cáo trung thực, và nói thẳng khi một kênh không hợp với sản phẩm của anh/chị.',
+    agencyTitle: 'Tài khoản quảng cáo Agency doanh nghiệp (BM2500)',
+    agencyLead:
+      'ADS-Nolimit cung cấp tài khoản quảng cáo Agency dành cho doanh nghiệp. Đây là tài khoản doanh nghiệp, dùng để chạy quảng cáo đúng chính sách quảng cáo của nền tảng.',
+    agencyPoints: [
+      'Sản phẩm, nội dung quảng cáo và trang đích phải tuân thủ chính sách của nền tảng và pháp luật Việt Nam về quảng cáo',
+      'ADS-Nolimit trao đổi trước về sản phẩm và nội dung dự định chạy, chỉ nhận những gì được phép quảng cáo',
+      'Có thể dùng kèm dịch vụ quản lý quảng cáo hoặc để đội của anh/chị tự chạy',
+    ],
+    agencyAside: 'Giá tài khoản quảng cáo Agency',
+    agencyBtn: 'Hỏi giá qua Zalo',
+    trialTitle: 'Dùng thử 7 ngày trước khi quyết định',
+    trialLead:
+      'Làm việc thật với ADS-Nolimit trong 7 ngày: xem cách chúng tôi dựng chiến dịch, tối ưu và báo cáo. Sau đó anh/chị mới quyết định có hợp tác lâu dài hay không. Điều kiện dùng thử được trao đổi cụ thể khi tư vấn.',
+    planCta: 'Đăng ký dùng thử qua Zalo',
+    ctaTitle: 'Đang chạy quảng cáo mà chưa rõ hiệu quả?',
+    ctaText:
+      'Nhắn Zalo cho ADS-Nolimit biết anh/chị đang chạy kênh nào, ngân sách khoảng bao nhiêu. Tư vấn miễn phí, góp ý thẳng thắn trước khi bàn chuyện hợp tác.',
+  },
+  en: {
+    title: 'Performance advertising on Facebook, Google & TikTok | ADS-Nolimit',
+    description:
+      'ADS-Nolimit runs and optimises Facebook, Google and TikTok ads every day, with transparent reporting. Management fee 10–15% of ad spend, 7-day trial. Agency business ad accounts (BM2500).',
+    h1: 'Performance advertising on Facebook, Google and TikTok',
+    lead: 'ADS-Nolimit has been running ads since 2016. We plan, build campaigns, optimise them every day and report clearly, so you always know where your budget goes.',
+    primary: 'Start a 7-day trial',
+    feesBtn: 'See fees',
+    channelsTitle: 'Multi-channel, chosen to fit your product',
+    channelsLead: 'Not every shop needs all three. We choose channels based on your product, your customers and your budget.',
+    channels: [
+      {
+        name: 'Facebook Ads',
+        text: 'Reach people by interest, age and location. Good for creating demand and driving messages to your Facebook page, Messenger and Instagram.',
+      },
+      {
+        name: 'Google Ads',
+        text: 'Show up when customers are actively searching. Good for services and products people already know they need.',
+      },
+      { name: 'TikTok Ads', text: 'Short video ads. Good for products that need a demo, a try-on or a before-and-after.' },
+    ],
+    dailyTitle: 'Daily optimisation',
+    dailyLead: 'Ads are not set-and-forget. Every day, ADS-Nolimit does the following in your account:',
+    daily: [
+      'Check spend and budget for each campaign',
+      'Pause or scale back weak ad sets and move budget to stronger ones',
+      'Test new ads against the ones already running',
+      'Compare real messages and orders with the platform’s numbers',
+      'Log every change so we can review the week with you',
+    ],
+    reportTitle: 'Transparent reporting',
+    reportLead: 'Regular reports use data straight from the ad platforms, with a short, plain-language explanation:',
+    report: [
+      'Where the money went, and on which campaigns',
+      'Results against the goals agreed at the start: messages, leads who left a number, orders',
+      'What we did this period and the plan for the next',
+    ],
+    reportNote: `Reports can be automated, like the reporting bot ADS-Nolimit uses internally. <a href="${projects}">See the case study</a>.`,
+    honestTitle: 'ADS-Nolimit does not promise revenue',
+    honestText:
+      'Ad results depend on your product, price, content, the season and your competitors. What we commit to is how we work: daily optimisation, honest reporting, and telling you straight when a channel does not suit your product.',
+    agencyTitle: 'Agency business ad accounts (BM2500)',
+    agencyLead:
+      'ADS-Nolimit provides agency ad accounts for businesses. These are business accounts, used to run ads in line with each platform’s advertising policies.',
+    agencyPoints: [
+      'Products, ad content and landing pages must comply with platform policies and Vietnamese advertising law',
+      'We discuss the products and content you plan to advertise in advance, and only take on what is allowed to be advertised',
+      'Use it with our ad management service, or let your own team run the ads',
+    ],
+    agencyAside: 'Agency ad account pricing',
+    agencyBtn: 'Ask for a quote on Telegram',
+    trialTitle: 'Try us for 7 days before you decide',
+    trialLead:
+      'Work with ADS-Nolimit for real for 7 days: see how we build campaigns, optimise and report. Then decide whether to continue. Trial terms are agreed during the consultation.',
+    planCta: 'Start a trial on Telegram',
+    ctaTitle: 'Running ads but not sure they are working?',
+    ctaText:
+      'Tell us which channels you run and roughly what you spend. Free consultation and honest feedback before we talk about working together.',
+  },
+}[lang];
+
+const channelTones = ['tone-blue', 'tone-teal', 'tone-green'];
+---
+
+<BaseLayout title={copy.title} description={copy.description} lang={lang}>
+  <PageHero title={copy.h1} lead={copy.lead}>
+    <a class="btn btn-primary" href={primary.href} rel="noopener"><Icon name={primary.icon} /> {copy.primary}</a>
+    <a class="btn btn-secondary" href="#gia">{copy.feesBtn}</a>
+  </PageHero>
+
+  <PartnerStrip band lang={lang} />
+
+  <section class="section" aria-labelledby="channels-title">
+    <div class="container">
+      <div class="section-head">
+        <h2 id="channels-title">{copy.channelsTitle}</h2>
+        <p>{copy.channelsLead}</p>
+      </div>
+      <ul class="channels">
+        {
+          copy.channels.map((c, i) => (
+            <li class={channelTones[i]}>
+              <h3>{c.name}</h3>
+              <p>{c.text}</p>
+            </li>
+          ))
+        }
+      </ul>
+    </div>
+  </section>
+
+  <section class="section section--raise" aria-labelledby="daily-title">
+    <div class="container grid-2 two-lists">
+      <div class="panel">
+        <h2 id="daily-title">{copy.dailyTitle}</h2>
+        <p class="muted list-lead">{copy.dailyLead}</p>
+        <ul class="checklist">{copy.daily.map((d) => <li>{d}</li>)}</ul>
+      </div>
+      <div class="panel">
+        <h2 id="report-title">{copy.reportTitle}</h2>
+        <p class="muted list-lead">{copy.reportLead}</p>
+        <ul class="checklist">{copy.report.map((r) => <li>{r}</li>)}</ul>
+        <p class="note" set:html={copy.reportNote} />
+      </div>
+    </div>
+  </section>
+
+  <section class="section section--tight" aria-labelledby="honest-title">
+    <div class="container">
+      <div class="honest">
+        <h2 id="honest-title">{copy.honestTitle}</h2>
+        <p>{copy.honestText}</p>
+      </div>
+    </div>
+  </section>
+
+  <section class="section section--raise" id="tai-khoan-agency" aria-labelledby="agency-title">
+    <div class="container split">
+      <div>
+        <h2 id="agency-title">{copy.agencyTitle}</h2>
+        <p class="lead agency-lead">{copy.agencyLead}</p>
+        <ul class="checklist">{copy.agencyPoints.map((p) => <li>{p}</li>)}</ul>
+      </div>
+      <aside class="panel price-aside" aria-label={copy.agencyAside}>
+        <p class="price-aside-label">{agency.prices[0].label}</p>
+        <p class="price-aside-value">{agency.prices[0].value}</p>
+        <p class="price-aside-text">{agency.summary}</p>
+        <a class="btn btn-primary" href={primary.href} rel="noopener"><Icon name={primary.icon} /> {copy.agencyBtn}</a>
+      </aside>
+    </div>
+  </section>
+
+  <section class="section" id="gia" aria-labelledby="price-title">
+    <div class="container split">
+      <div>
+        <h2 id="price-title">{copy.trialTitle}</h2>
+        <p class="lead agency-lead">{copy.trialLead}</p>
+        <p class="note">{getPriceNote(lang)}</p>
+      </div>
+      <PlanCard lang={lang} plan={ads} showLink={false} cta={{ href: primary.href, label: copy.planCta, external: true }} />
+    </div>
+  </section>
+
+  <CtaBand lang={lang} title={copy.ctaTitle} text={copy.ctaText} />
+</BaseLayout>
+
+<style>
+  .channels {
+    list-style: none;
+    display: grid;
+    gap: 2rem;
+  }
+  @media (min-width: 900px) {
+    .channels {
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: clamp(2rem, 1rem + 2vw, 3rem);
+    }
+  }
+  .channels li {
+    position: relative;
+    padding-top: 1.25rem;
+    border-top: 1px solid var(--line-strong);
+  }
+  .channels li::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: -1px;
+    width: 3rem;
+    height: 2px;
+    background: var(--tone);
+  }
+  .channels h3 {
+    font-size: var(--step-2);
+  }
+  .channels p {
+    margin-top: 0.6rem;
+    color: var(--text-2);
+  }
+
+  .two-lists h2 {
+    font-size: var(--step-2);
+  }
+  .list-lead {
+    margin: 0.75rem 0 1.25rem;
+  }
+
+  .honest {
+    max-width: 50rem;
+    padding: clamp(1.25rem, 1rem + 1vw, 2rem) clamp(1.25rem, 1rem + 2vw, 2.5rem);
+    border-radius: var(--r-lg);
+    border: 1px solid rgb(238 214 90 / 0.3);
+    background:
+      linear-gradient(100deg, rgb(238 214 90 / 0.07), transparent 70%),
+      var(--surface);
+  }
+  .honest h2 {
+    font-size: var(--step-2);
+  }
+  .honest p {
+    margin-top: 0.75rem;
+    color: var(--text-2);
+    font-size: var(--step-1);
+  }
+
+  .price-aside {
+    display: grid;
+    gap: 0.4rem;
+    justify-items: start;
+  }
+  .price-aside-label {
+    color: var(--text-3);
+    font-size: 0.875rem;
+  }
+  .price-aside-value {
+    font-size: var(--step-3);
+    font-weight: 800;
+    letter-spacing: -0.025em;
+    line-height: 1.2;
+  }
+  .price-aside-text {
+    margin: 0.25rem 0 1.25rem;
+    color: var(--text-2);
+  }
+
+  .agency-lead {
+    margin: 1.25rem 0 1.5rem;
+  }
+</style>

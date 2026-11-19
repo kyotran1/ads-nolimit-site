@@ -1,6 +1,5 @@
 ---
 import '@fontsource/be-vietnam-pro/400.css';
-import '@fontsource/be-vietnam-pro/500.css';
 import '@fontsource/be-vietnam-pro/600.css';
 import '@fontsource/be-vietnam-pro/700.css';
 import '@fontsource/be-vietnam-pro/800.css';
@@ -11,6 +10,8 @@ import Header from '../components/Header.astro';
 import Footer from '../components/Footer.astro';
 import MobileContactBar from '../components/MobileContactBar.astro';
 import Analytics from '../components/Analytics.astro';
+import { langFromPath, t } from '../config/i18n';
+import type { Lang } from '../config/i18n';
 
 interface Props {
   title: string;
@@ -18,12 +19,12 @@ interface Props {
   image?: string;
   type?: 'website' | 'article';
   noindex?: boolean;
-  lang?: 'vi' | 'en';
-  alternate?: { vi: string; en: string };
+  /** Mặc định suy ra từ đường dẫn: /en/… là tiếng Anh, còn lại tiếng Việt */
+  lang?: Lang;
   publishedTime?: string;
 }
 
-const { lang = 'vi', ...seo } = Astro.props;
+const { lang = langFromPath(Astro.url.pathname), ...seo } = Astro.props;
 ---
 
 <!doctype html>
@@ -42,12 +43,37 @@ const { lang = 'vi', ...seo } = Astro.props;
     <Analytics />
   </head>
   <body>
-    <a class="skip-link" href="#noi-dung">{lang === 'en' ? 'Skip to content' : 'Bỏ qua, tới nội dung chính'}</a>
+    <a class="skip-link" href="#noi-dung">{t(lang).skip}</a>
     <Header lang={lang} />
     <main id="noi-dung">
       <slot />
     </main>
     <Footer lang={lang} />
     <MobileContactBar lang={lang} />
+
+    <script is:inline>
+      // Hiện dần các khối khi cuộn tới. Không JS hoặc giảm chuyển động: mọi thứ hiện ngay.
+      (function () {
+        if (!('IntersectionObserver' in window)) return;
+        if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+        var els = document.querySelectorAll('main .section > .container > *, main [data-reveal]');
+        var io = new IntersectionObserver(
+          function (entries) {
+            entries.forEach(function (e) {
+              if (!e.isIntersecting) return;
+              e.target.classList.add('is-in');
+              io.unobserve(e.target);
+            });
+          },
+          { rootMargin: '0px 0px -8% 0px', threshold: 0.08 },
+        );
+        var vh = window.innerHeight;
+        els.forEach(function (el) {
+          if (el.getBoundingClientRect().top < vh) return; // đã trong màn hình: không ẩn
+          el.setAttribute('data-r', '');
+          io.observe(el);
+        });
+      })();
+    </script>
   </body>
 </html>

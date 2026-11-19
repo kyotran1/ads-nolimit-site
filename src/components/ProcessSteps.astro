@@ -3,7 +3,8 @@
  * 4 bước làm việc: Khảo sát → Thiết kế → Triển khai → Đo và tối ưu.
  * Có thể truyền `steps` riêng cho từng trang.
  */
-import { starterLeadTime } from '../data/pricing';
+import { getStarterLeadTime } from '../data/pricing';
+import type { Lang } from '../config/i18n';
 
 interface Step {
   title: string;
@@ -12,28 +13,52 @@ interface Step {
 
 interface Props {
   steps?: Step[];
+  lang?: Lang;
 }
 
-const defaultSteps: Step[] = [
-  {
-    title: 'Khảo sát',
-    text: 'Anh/chị kể cách đang bán hàng, chăm sóc khách và chạy quảng cáo. ADS-Nolimit chỉ ra việc nào nên giao cho AI, việc nào chưa nên. Bước này miễn phí.',
-  },
-  {
-    title: 'Thiết kế',
-    text: 'Thống nhất kênh, kịch bản trả lời, dữ liệu cần lưu và lúc nào chuyển cho người thật. Anh/chị duyệt trước khi làm.',
-  },
-  {
-    title: 'Triển khai',
-    text: `Cài đặt, nạp tài liệu, chạy thử nội bộ rồi mới mở cho khách. Gói AI Agent Khởi đầu thường mất ${starterLeadTime}.`,
-  },
-  {
-    title: 'Đo và tối ưu',
-    text: 'Theo dõi câu hỏi AI chưa trả lời được, bổ sung tài liệu, chỉnh kịch bản. Quảng cáo được tối ưu hằng ngày và báo cáo định kỳ.',
-  },
-];
+const { lang = 'vi' } = Astro.props;
+const lead = getStarterLeadTime(lang);
 
-const { steps = defaultSteps } = Astro.props;
+const defaults: Record<Lang, Step[]> = {
+  vi: [
+    {
+      title: 'Khảo sát',
+      text: 'Anh/chị kể cách đang bán hàng, chăm sóc khách và chạy quảng cáo. ADS-Nolimit chỉ ra việc nào nên giao cho AI, việc nào chưa nên. Bước này miễn phí.',
+    },
+    {
+      title: 'Thiết kế',
+      text: 'Thống nhất kênh, kịch bản trả lời, dữ liệu cần lưu và lúc nào chuyển cho người thật. Anh/chị duyệt trước khi làm.',
+    },
+    {
+      title: 'Triển khai',
+      text: `Cài đặt, nạp tài liệu, chạy thử nội bộ rồi mới mở cho khách. Gói AI Agent Khởi đầu thường mất ${lead}.`,
+    },
+    {
+      title: 'Đo và tối ưu',
+      text: 'Theo dõi câu hỏi AI chưa trả lời được, bổ sung tài liệu, chỉnh kịch bản. Quảng cáo được tối ưu hằng ngày và báo cáo định kỳ.',
+    },
+  ],
+  en: [
+    {
+      title: 'Assess',
+      text: 'You walk us through how you sell, look after customers and run ads. We point out what is worth handing to AI and what is not. This step is free.',
+    },
+    {
+      title: 'Design',
+      text: 'We agree on channels, reply scripts, the data to keep and when to hand over to a person. You approve everything before we build.',
+    },
+    {
+      title: 'Build',
+      text: `We set up, load your documents and test internally before customers see anything. The AI Agent Starter plan usually takes ${lead}.`,
+    },
+    {
+      title: 'Measure & improve',
+      text: 'We track the questions the AI could not answer, add to the documents and refine the scripts. Ads are optimised daily and reported on regularly.',
+    },
+  ],
+};
+
+const { steps = defaults[lang] } = Astro.props;
 ---
 
 <ol class="steps">
@@ -55,12 +80,11 @@ const { steps = defaultSteps } = Astro.props;
     list-style: none;
     display: grid;
     gap: 0;
-    counter-reset: step;
   }
 
   .step {
     position: relative;
-    padding: 0 0 2rem 3.5rem;
+    padding: 0 0 2.25rem 3.5rem;
   }
   .step:last-child {
     padding-bottom: 0;
@@ -70,10 +94,10 @@ const { steps = defaultSteps } = Astro.props;
   .step::before {
     content: '';
     position: absolute;
-    left: 1.125rem;
-    top: 2.5rem;
-    bottom: 0.25rem;
-    width: 2px;
+    left: 1.1875rem;
+    top: 2.75rem;
+    bottom: 0.5rem;
+    width: 1px;
     background: linear-gradient(var(--line-strong), var(--line));
   }
   .step:last-child::before {
@@ -86,41 +110,43 @@ const { steps = defaultSteps } = Astro.props;
     top: 0;
     display: grid;
     place-items: center;
-    width: 2.25rem;
-    height: 2.25rem;
+    width: 2.375rem;
+    height: 2.375rem;
     border-radius: 50%;
-    border: 2px solid var(--green);
+    border: 1px solid rgb(0 216 120 / 0.55);
     color: var(--green-ink);
-    font-weight: 800;
-    font-size: 1rem;
-    background: var(--bg);
+    font-weight: 700;
+    font-size: 0.9375rem;
+    font-variant-numeric: tabular-nums;
+    background: radial-gradient(circle at 50% 30%, rgb(0 216 120 / 0.16), rgb(7 10 26) 70%);
   }
 
   .step h3 {
     font-size: var(--step-1);
-    line-height: 2.25rem;
+    line-height: 2.375rem;
   }
 
   .step p {
-    margin-top: 0.35rem;
+    margin-top: 0.3rem;
     color: var(--text-2);
+    max-width: 34rem;
   }
 
   @media (min-width: 900px) {
     .steps {
       grid-template-columns: repeat(4, minmax(0, 1fr));
-      gap: 2rem;
+      gap: 2.25rem;
     }
     .step {
-      padding: 3.5rem 0 0;
+      padding: 3.75rem 0 0;
     }
     .step::before {
-      left: 2.75rem;
-      right: -1.25rem;
-      top: 1.125rem;
+      left: 3.25rem;
+      right: -1.5rem;
+      top: 1.1875rem;
       bottom: auto;
       width: auto;
-      height: 2px;
+      height: 1px;
       background: linear-gradient(90deg, var(--line-strong), var(--line));
     }
     .step h3 {

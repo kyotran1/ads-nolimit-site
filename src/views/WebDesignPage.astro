@@ -1,0 +1,220 @@
+---
+/** Trang Thiết kế website & phần mềm bán hàng (/thiet-ke-website/ và /en/web-design/). */
+import BaseLayout from '../layouts/BaseLayout.astro';
+import PageHero from '../components/PageHero.astro';
+import ProcessSteps from '../components/ProcessSteps.astro';
+import PlanCard from '../components/PlanCard.astro';
+import CtaBand from '../components/CtaBand.astro';
+import Icon from '../components/Icon.astro';
+import type { IconName } from '../components/Icon.astro';
+import { primaryChannel } from '../config/site';
+import type { Lang } from '../config/i18n';
+import { getPlan, getPriceNote } from '../data/pricing';
+
+interface Props {
+  lang: Lang;
+}
+const { lang } = Astro.props;
+
+const web = getPlan('web', lang);
+const primary = primaryChannel[lang];
+
+const copy = {
+  vi: {
+    title: 'Thiết kế website, landing page & phần mềm bán hàng online | ADS-Nolimit',
+    description:
+      'ADS-Nolimit thiết kế, lập trình website, landing page cho quảng cáo và phần mềm hỗ trợ bán hàng online trên mạng xã hội. Nhanh trên điện thoại, sẵn sàng gắn AI Agent. Liên hệ báo giá.',
+    h1: 'Website, landing page và phần mềm hỗ trợ bán hàng online',
+    lead: 'Lập trình và thiết kế website là việc ADS-Nolimit làm song song với quảng cáo. Một trang web tốt giúp quảng cáo hiệu quả hơn: khách bấm vào thấy đúng điều họ cần, liên hệ được ngay.',
+    primary: 'Nhận báo giá qua Zalo',
+    offersTitle: 'ADS-Nolimit làm gì',
+    offers: [
+      {
+        icon: 'code',
+        title: 'Website doanh nghiệp',
+        text: 'Giới thiệu cửa hàng, dịch vụ, bảng giá, cách liên hệ. Gọn, rõ, dễ tự cập nhật nội dung.',
+      },
+      {
+        icon: 'chart',
+        title: 'Landing page cho quảng cáo',
+        text: 'Một trang cho một chiến dịch: nói đúng điều khách vừa thấy trên quảng cáo, nút liên hệ rõ ràng, đo được hiệu quả.',
+      },
+      {
+        icon: 'chat',
+        title: 'Phần mềm hỗ trợ bán hàng online',
+        text: 'Phần mềm hỗ trợ anh/chị bán hàng online trên mạng xã hội, kết nối được với AI Agent.',
+      },
+    ] as { icon: IconName; title: string; text: string }[],
+    standardsTitle: 'Mọi website đều có',
+    standardsLead: 'Những thứ cơ bản nhưng hay bị bỏ qua, ảnh hưởng trực tiếp đến số khách liên hệ.',
+    standards: [
+      'Tải nhanh trên điện thoại, nơi phần lớn khách đọc',
+      'Tiêu đề, mô tả, sitemap chuẩn để Google hiểu từng trang',
+      'Nút Zalo, gọi điện, Messenger luôn trong tầm tay',
+      'Gắn công cụ đo lường (Google Analytics, Meta Pixel) khi anh/chị cần, kèm cập nhật chính sách bảo mật',
+      'Sẵn chỗ gắn khung chat AI Agent về sau',
+    ],
+    stepsTitle: 'Quy trình làm website',
+    steps: [
+      { title: 'Khảo sát', text: 'Website để làm gì: bán hàng, nhận lịch hẹn, hay chạy quảng cáo? Ai sẽ đọc, đọc trên thiết bị nào.' },
+      { title: 'Thiết kế', text: 'Sơ đồ trang, nội dung chính và bản thiết kế giao diện. Anh/chị duyệt trước khi lập trình.' },
+      { title: 'Triển khai', text: 'Lập trình, đưa nội dung lên, kiểm tra trên điện thoại và máy tính, gắn tên miền.' },
+      { title: 'Đo và tối ưu', text: 'Theo dõi khách vào từ đâu, bấm nút nào; chỉnh nội dung và giao diện theo số liệu thật.' },
+    ],
+    priceTitle: 'Giá',
+    priceLead: 'Mỗi website khác nhau về số trang, tính năng và nội dung, nên ADS-Nolimit báo giá sau khi trao đổi nhu cầu.',
+    planCta: 'Nhận báo giá qua Zalo',
+    ctaTitle: 'Cần website mới hoặc làm lại website cũ?',
+    ctaText:
+      'Gửi ADS-Nolimit đường dẫn website hiện tại (nếu có) và điều anh/chị muốn khách làm khi vào trang. Chúng tôi tư vấn miễn phí.',
+  },
+  en: {
+    title: 'Website design, landing pages & online sales software | ADS-Nolimit',
+    description:
+      'ADS-Nolimit designs and builds websites, landing pages for ad campaigns and software that helps you sell on social media. Fast on mobile and ready for an AI agent. Quote on request.',
+    h1: 'Websites, landing pages and online sales software',
+    lead: 'Building websites has always run alongside our advertising work. A good website makes your ads work harder: people who click find exactly what they came for and can get in touch straight away.',
+    primary: 'Get a quote on Telegram',
+    offersTitle: 'What ADS-Nolimit builds',
+    offers: [
+      {
+        icon: 'code',
+        title: 'Business websites',
+        text: 'Present your shop, services, prices and how to reach you. Clean, clear and easy to update yourself.',
+      },
+      {
+        icon: 'chart',
+        title: 'Landing pages for ads',
+        text: 'One page per campaign: it says exactly what people just saw in the ad, has a clear contact button and is easy to measure.',
+      },
+      {
+        icon: 'chat',
+        title: 'Online sales software',
+        text: 'Software that helps you sell online on social media, and can connect to an AI agent.',
+      },
+    ] as { icon: IconName; title: string; text: string }[],
+    standardsTitle: 'Every website includes',
+    standardsLead: 'The basics that often get skipped, and that directly affect how many people get in touch.',
+    standards: [
+      'Fast loading on mobile, where most of your visitors are',
+      'Proper titles, descriptions and a sitemap so Google understands every page',
+      'Zalo, call and Messenger buttons always within reach',
+      'Analytics (Google Analytics, Meta Pixel) when you need it, with an updated privacy policy',
+      'Room to add an AI agent chat later',
+    ],
+    stepsTitle: 'How we build a website',
+    steps: [
+      {
+        title: 'Assess',
+        text: 'What is the website for: selling, taking bookings or running ads? Who will read it, and on which devices?',
+      },
+      { title: 'Design', text: 'Site map, key content and the visual design. You approve them before we start coding.' },
+      { title: 'Build', text: 'Coding, adding content, testing on phones and computers, and connecting your domain.' },
+      {
+        title: 'Measure & improve',
+        text: 'Track where visitors come from and which buttons they press, then refine content and design based on real data.',
+      },
+    ],
+    priceTitle: 'Pricing',
+    priceLead:
+      'Every website differs in the number of pages, features and content, so ADS-Nolimit sends a quote after discussing your needs.',
+    planCta: 'Get a quote on Telegram',
+    ctaTitle: 'Need a new website, or a better version of the one you have?',
+    ctaText:
+      'Send us the link to your current website (if you have one) and what you want visitors to do on it. The consultation is free.',
+  },
+}[lang];
+
+const tones = ['tone-violet', 'tone-blue', 'tone-green'];
+---
+
+<BaseLayout title={copy.title} description={copy.description} lang={lang}>
+  <PageHero title={copy.h1} lead={copy.lead}>
+    <a class="btn btn-primary" href={primary.href} rel="noopener"><Icon name={primary.icon} /> {copy.primary}</a>
+  </PageHero>
+
+  <section class="section" aria-labelledby="offers-title">
+    <div class="container">
+      <div class="section-head">
+        <h2 id="offers-title">{copy.offersTitle}</h2>
+      </div>
+      <ul class="offers">
+        {
+          copy.offers.map((o, i) => (
+            <li class:list={['card', tones[i]]}>
+              <span class="icon-tile">
+                <Icon name={o.icon} />
+              </span>
+              <h3>{o.title}</h3>
+              <p>{o.text}</p>
+            </li>
+          ))
+        }
+      </ul>
+    </div>
+  </section>
+
+  <section class="section section--raise" aria-labelledby="standards-title">
+    <div class="container split">
+      <div>
+        <h2 id="standards-title">{copy.standardsTitle}</h2>
+        <p class="lead standards-lead">{copy.standardsLead}</p>
+      </div>
+      <ul class="checklist standards panel">{copy.standards.map((s) => <li>{s}</li>)}</ul>
+    </div>
+  </section>
+
+  <section class="section" aria-labelledby="steps-title">
+    <div class="container">
+      <div class="section-head">
+        <h2 id="steps-title">{copy.stepsTitle}</h2>
+      </div>
+      <ProcessSteps lang={lang} steps={copy.steps} />
+    </div>
+  </section>
+
+  <section class="section section--raise" aria-labelledby="price-title">
+    <div class="container split">
+      <div>
+        <h2 id="price-title">{copy.priceTitle}</h2>
+        <p class="lead standards-lead">{copy.priceLead}</p>
+        <p class="note">{getPriceNote(lang)}</p>
+      </div>
+      <PlanCard lang={lang} plan={web} showLink={false} cta={{ href: primary.href, label: copy.planCta, external: true }} />
+    </div>
+  </section>
+
+  <CtaBand lang={lang} title={copy.ctaTitle} text={copy.ctaText} />
+</BaseLayout>
+
+<style>
+  .offers {
+    list-style: none;
+    display: grid;
+    gap: 1rem;
+  }
+  @media (min-width: 900px) {
+    .offers {
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 1.25rem;
+    }
+  }
+  .offers .icon-tile {
+    margin-bottom: 1.1rem;
+  }
+  .offers h3 {
+    font-size: var(--step-1);
+  }
+  .offers p {
+    margin-top: 0.5rem;
+    color: var(--text-2);
+  }
+
+  .standards-lead {
+    margin: 1.25rem 0 1rem;
+  }
+  .standards {
+    font-size: var(--step-1);
+    gap: 1rem;
+  }
+</style>

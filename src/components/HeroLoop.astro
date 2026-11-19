@@ -4,32 +4,36 @@
  * = công việc chạy 24/7. Vẽ bằng SVG, không dùng ảnh.
  * Các mốc giờ chỉ là minh họa, không phải số liệu thật.
  */
-const events = [
-  {
-    time: '07:00',
-    text: 'Số liệu quảng cáo hôm qua đã nằm sẵn trong bảng tính.',
-    service: 'Tự động hóa',
-    tone: 'teal',
+import type { Lang } from '../config/i18n';
+
+interface Props {
+  lang?: Lang;
+}
+const { lang = 'vi' } = Astro.props;
+
+const copy = {
+  vi: {
+    caption: 'Minh họa: một ngày của cửa hàng khi có ADS-Nolimit',
+    svgTitle: 'Vòng vô cực tượng trưng cho công việc chạy liên tục 24/7',
+    events: [
+      { time: '07:00', text: 'Số liệu quảng cáo hôm qua đã nằm sẵn trong bảng tính.', service: 'Tự động hóa', tone: 'teal' },
+      { time: '09:15', text: 'Khách hỏi kỹ về liệu trình, AI chuyển cho nhân viên tư vấn.', service: 'AI Agent', tone: 'violet' },
+      { time: '14:30', text: 'Nhóm quảng cáo kém được tắt, ngân sách dồn sang nhóm tốt hơn.', service: 'Quảng cáo', tone: 'green' },
+      { time: '23:47', text: 'Khách hỏi giá lúc gần nửa đêm, AI trả lời và xin số điện thoại.', service: 'AI Agent', tone: 'violet' },
+    ],
   },
-  {
-    time: '09:15',
-    text: 'Khách hỏi kỹ về liệu trình, AI chuyển cho nhân viên tư vấn.',
-    service: 'AI Agent',
-    tone: 'violet',
+  en: {
+    caption: 'Illustration: a day at a shop working with ADS-Nolimit',
+    svgTitle: 'An infinity loop standing for work that runs around the clock',
+    events: [
+      { time: '07:00', text: 'Yesterday’s ad numbers are already in the spreadsheet.', service: 'Automation', tone: 'teal' },
+      { time: '09:15', text: 'A customer asks detailed treatment questions; the AI hands over to a consultant.', service: 'AI agent', tone: 'violet' },
+      { time: '14:30', text: 'A weak ad set is paused and its budget moves to a stronger one.', service: 'Advertising', tone: 'green' },
+      { time: '23:47', text: 'A price question just before midnight: the AI answers and asks for a phone number.', service: 'AI agent', tone: 'violet' },
+    ],
   },
-  {
-    time: '14:30',
-    text: 'Nhóm quảng cáo kém được tắt, ngân sách dồn sang nhóm tốt hơn.',
-    service: 'Quảng cáo',
-    tone: 'green',
-  },
-  {
-    time: '23:47',
-    text: 'Khách hỏi giá lúc gần nửa đêm, AI trả lời và xin số điện thoại.',
-    service: 'AI Agent',
-    tone: 'violet',
-  },
-];
+}[lang];
+const events = copy.events;
 
 // Vị trí 4 mốc trên đường vô cực (tính từ các đường cong Bézier bên dưới)
 const markers = [
@@ -44,11 +48,11 @@ const loopPath =
 ---
 
 <figure class="loop-card">
-  <figcaption class="loop-caption">Minh họa: một ngày của cửa hàng khi có ADS-Nolimit</figcaption>
+  <figcaption class="loop-caption">{copy.caption}</figcaption>
 
   <div class="loop-art">
     <svg viewBox="-10 -14 420 230" role="img" aria-labelledby="loop-title">
-      <title id="loop-title">Vòng vô cực tượng trưng cho công việc chạy liên tục 24/7</title>
+      <title id="loop-title">{copy.svgTitle}</title>
       <defs>
         <linearGradient id="loop-grad" x1="0" y1="0" x2="1" y2="0">
           <stop offset="0" stop-color="#1800f0"></stop>
@@ -187,16 +191,6 @@ const loopPath =
     border-left: 3px solid var(--tone);
     font-size: 0.9375rem;
     line-height: 1.5;
-  }
-
-  .tone-teal {
-    --tone: var(--teal-ink);
-  }
-  .tone-violet {
-    --tone: var(--violet-ink);
-  }
-  .tone-green {
-    --tone: var(--green);
   }
 
   .ev-time {

@@ -1,0 +1,761 @@
+---
+/**
+ * Trang chủ (dùng chung cho / và /en/). Chữ của từng ngôn ngữ nằm trong `copy` bên dưới;
+ * giá lấy từ src/data/pricing.ts, liên hệ từ src/config/site.ts.
+ */
+import BaseLayout from '../layouts/BaseLayout.astro';
+import HeroLoop from '../components/HeroLoop.astro';
+import ChatDemo from '../components/ChatDemo.astro';
+import type { ChatMessage } from '../components/ChatDemo.astro';
+import ProcessSteps from '../components/ProcessSteps.astro';
+import ReportBotCase from '../components/ReportBotCase.astro';
+import AiOfficeTeaser from '../components/AiOfficeTeaser.astro';
+import PricingSummary from '../components/PricingSummary.astro';
+import Faq from '../components/Faq.astro';
+import CtaBand from '../components/CtaBand.astro';
+import PartnerStrip from '../components/PartnerStrip.astro';
+import Icon from '../components/Icon.astro';
+import type { IconName } from '../components/Icon.astro';
+import { site, links } from '../config/site';
+import { localize } from '../config/i18n';
+import type { Lang } from '../config/i18n';
+import { getPlan, priceInline } from '../data/pricing';
+import { getFaq } from '../data/faq';
+
+interface Props {
+  lang: Lang;
+}
+const { lang } = Astro.props;
+const L = (href: string) => localize(href, lang);
+
+const ads = getPlan('ads', lang);
+const starter = getPlan('ai-starter', lang);
+const automation = getPlan('automation', lang);
+const training = getPlan('training', lang);
+const web = getPlan('web', lang);
+
+interface Solution {
+  tone: string;
+  icon: IconName;
+  title: string;
+  text: string;
+  points: string[];
+  price: string;
+  href: string;
+}
+
+const copy = {
+  vi: {
+    title: 'ADS-Nolimit | Quảng cáo & AI Agent cho doanh nghiệp',
+    description: site.defaultDescription,
+    h1: 'Nhân viên AI làm việc 24/7. Quảng cáo được tối ưu mỗi ngày.',
+    lead: 'ADS-Nolimit dựng AI Agent trả lời khách, tự động hóa việc lặp lại và chạy quảng cáo Facebook, Google, TikTok, để shop và doanh nghiệp nhỏ làm được nhiều việc hơn với ít người hơn.',
+    primary: { label: 'Tư vấn miễn phí qua Zalo', href: links.zalo, icon: 'zalo' as IconName },
+    secondary: 'Xem giải pháp AI Agent',
+    stats: [
+      { value: 'Từ 2016', label: '10 năm làm quảng cáo' },
+      { value: '800+', label: 'khách hàng đã phục vụ' },
+      { value: 'Facebook · Google · TikTok', label: 'quảng cáo đa kênh', wide: true },
+    ],
+    trustLabel: 'Kinh nghiệm và đối tác',
+    painsTitle: 'Ba chỗ đang làm shop mất khách và mất thời gian',
+    pains: [
+      {
+        cue: '22:30',
+        tone: 'violet',
+        title: 'Khách nhắn hỏi giá, sáng hôm sau mới có người trả lời',
+        text: 'Ban đêm, cuối tuần, giờ cao điểm: tin nhắn chờ lâu thì khách đi hỏi shop khác.',
+      },
+      {
+        cue: 'Mỗi sáng',
+        tone: 'teal',
+        title: 'Một người ngồi chép số liệu sang bảng tính',
+        text: 'Báo cáo quảng cáo, đơn hàng, lịch hẹn làm bằng tay: mất thời gian, dễ sai, và chẳng còn sức để đọc số.',
+      },
+      {
+        cue: 'Cuối tháng',
+        tone: 'green',
+        title: 'Chi phí quảng cáo tăng mà không biết cắt ở đâu',
+        text: 'Ngân sách rải cho nhiều chiến dịch, không rõ nhóm nào mang khách về, nhóm nào chỉ tốn tiền.',
+      },
+    ],
+    solutionsTitle: 'ADS-Nolimit làm gì cho anh/chị',
+    solutionsLead: 'Ba mảng chính, có thể làm riêng hoặc ghép lại. Thêm hai dịch vụ hỗ trợ cho shop muốn tự chủ hơn.',
+    solutions: [
+      {
+        tone: 'violet',
+        icon: 'chat',
+        title: 'AI Agent bán hàng & chăm sóc khách',
+        text: 'Trả lời tin nhắn trên Messenger, Zalo OA hoặc website theo tài liệu của chính anh/chị, kể cả lúc nửa đêm.',
+        points: ['Trả lời câu hỏi thường gặp', 'Xin số điện thoại, lưu khách vào Google Sheet', 'Báo khách mới qua Telegram/Zalo'],
+        price: `${starter.name}: ${priceInline(starter, lang)}`,
+        href: L('/giai-phap-ai-agent/'),
+      },
+      {
+        tone: 'blue',
+        icon: 'chart',
+        title: 'Quảng cáo hiệu suất',
+        text: 'Chạy và tối ưu Facebook Ads, Google Ads, TikTok Ads mỗi ngày, báo cáo rõ tiền đã chi vào đâu.',
+        points: ['Tối ưu hằng ngày', 'Báo cáo minh bạch', 'Tài khoản quảng cáo Agency doanh nghiệp (BM2500)'],
+        price: priceInline(ads, lang),
+        href: L('/quang-cao/'),
+      },
+      {
+        tone: 'green',
+        icon: 'bolt',
+        title: 'Tự động hóa quy trình',
+        text: 'Biến việc lặp lại hằng ngày thành quy trình tự chạy, kết nối các phần mềm anh/chị đang dùng.',
+        points: ['Báo cáo quảng cáo tự động mỗi sáng', 'Đồng bộ đơn hàng', 'Soạn nội dung hàng loạt, nhắc lịch khách'],
+        price: priceInline(automation, lang),
+        href: L('/tu-dong-hoa/'),
+      },
+    ] as Solution[],
+    small: [
+      {
+        icon: 'code' as IconName,
+        title: 'Website & phần mềm bán hàng',
+        text: `Website, landing page, phần mềm hỗ trợ bán hàng trên mạng xã hội. ${web.prices[0].value}.`,
+        href: L('/thiet-ke-website/'),
+      },
+      {
+        icon: 'school' as IconName,
+        title: training.name,
+        text: `Workshop 1 buổi kèm bộ mẫu câu lệnh. ${priceInline(training, lang)}.`,
+        href: L('/bang-gia/#training'),
+      },
+    ],
+    details: 'Xem chi tiết',
+    demoTitle: 'Một tin nhắn lúc 22:41 được xử lý thế nào',
+    demoLead:
+      'Cuộc trò chuyện mẫu cho một spa. AI Agent trả lời theo bảng giá spa cung cấp, xin số điện thoại, lưu khách và báo lễ tân. Việc cần người thật, như xác nhận lịch, vẫn do người thật làm.',
+    demoPoints: [
+      'Trả lời đúng giá, đúng giọng của cửa hàng',
+      'Khách được lưu vào Google Sheet, không thất lạc trong hộp thư',
+      'Lễ tân nhận thông báo qua Zalo, sáng mai gọi lại',
+    ],
+    demoCta: 'Xem AI Agent làm được gì',
+    agentName: 'Trợ lý AI của Spa Mẫu',
+    chat: [
+      { from: 'customer', text: 'Gói chăm sóc da cơ bản bên mình giá bao nhiêu vậy shop?', time: '22:41' },
+      {
+        from: 'ai',
+        text: 'Dạ chào chị! Gói chăm sóc da cơ bản bên em là 350.000đ/buổi, khoảng 60 phút ạ. Chị muốn đặt lịch hôm nào để em báo lễ tân giữ chỗ ạ?',
+      },
+      { from: 'customer', text: 'Tối thứ 7 được không em?' },
+      {
+        from: 'ai',
+        text: 'Dạ, để lễ tân kiểm tra lịch tối thứ 7 rồi gọi xác nhận cho chị. Chị cho em xin tên và số điện thoại nhé?',
+      },
+      { from: 'customer', text: 'Chị Lan, 09xx xxx 123' },
+      { from: 'event', text: 'Đã lưu khách vào Google Sheet', icon: 'sheet' },
+      { from: 'event', text: 'Đã báo lễ tân qua Zalo', icon: 'bell' },
+      {
+        from: 'ai',
+        text: 'Em ghi nhận rồi ạ. Sáng mai lễ tân sẽ gọi chị trong giờ làm việc. Chị cần em gửi thêm bảng giá các gói khác không ạ?',
+      },
+    ] as ChatMessage[],
+    processTitle: 'Cách ADS-Nolimit làm việc',
+    processLead: 'Bốn bước, anh/chị duyệt ở từng bước trước khi đi tiếp.',
+    caseLabel: 'Case study nội bộ',
+    caseMore: 'Xem dự án và case study',
+    pricingTitle: 'Bảng giá rút gọn',
+    pricingLead: 'Giá công khai để anh/chị ước lượng trước khi trao đổi.',
+    faqTitle: 'Câu hỏi thường gặp',
+  },
+  en: {
+    title: 'ADS-Nolimit | Advertising & AI agents for businesses in Vietnam',
+    description: site.defaultDescriptionEn,
+    h1: 'AI staff that work 24/7. Ads optimised every day.',
+    lead: 'ADS-Nolimit builds AI agents that answer your customers, automates repetitive work and runs your Facebook, Google and TikTok ads, so shops and small businesses can do more with fewer people.',
+    primary: { label: 'Message us on Telegram', href: links.telegram, icon: 'telegram' as IconName },
+    secondary: 'See AI agent solutions',
+    stats: [
+      { value: 'Since 2016', label: '10 years in advertising' },
+      { value: '800+', label: 'clients served' },
+      { value: 'Facebook · Google · TikTok', label: 'multi-channel advertising', wide: true },
+    ],
+    trustLabel: 'Experience and partners',
+    painsTitle: 'Three things that cost shops customers and time',
+    pains: [
+      {
+        cue: '22:30',
+        tone: 'violet',
+        title: 'A customer asks for a price at night and hears back the next morning',
+        text: 'Nights, weekends, rush hours: when messages wait, customers ask another shop.',
+      },
+      {
+        cue: 'Every morning',
+        tone: 'teal',
+        title: 'Someone spends the morning copying numbers into a spreadsheet',
+        text: 'Ad reports, orders and bookings done by hand: slow, easy to get wrong, and no energy left to read the numbers.',
+      },
+      {
+        cue: 'Month end',
+        tone: 'green',
+        title: 'Ad costs keep rising and nobody knows where to cut',
+        text: 'Budget spread over many campaigns, with no clear view of which ones bring customers and which just burn money.',
+      },
+    ],
+    solutionsTitle: 'What ADS-Nolimit does for you',
+    solutionsLead:
+      'Three core services you can use on their own or together, plus two supporting services for shops that want to do more themselves.',
+    solutions: [
+      {
+        tone: 'violet',
+        icon: 'chat',
+        title: 'AI agents for sales & customer care',
+        text: 'Answers messages on Messenger, Zalo OA or your website using your own documents, even at midnight.',
+        points: ['Answers common questions', 'Collects phone numbers into Google Sheets', 'New-lead alerts via Telegram or Zalo'],
+        price: `${starter.name}: ${priceInline(starter, lang)}`,
+        href: L('/giai-phap-ai-agent/'),
+      },
+      {
+        tone: 'blue',
+        icon: 'chart',
+        title: 'Performance advertising',
+        text: 'Facebook, Google and TikTok ads, run and optimised every day, with clear reports on where the money went.',
+        points: ['Daily optimisation', 'Transparent reporting', 'Agency business ad accounts (BM2500)'],
+        price: priceInline(ads, lang),
+        href: L('/quang-cao/'),
+      },
+      {
+        tone: 'green',
+        icon: 'bolt',
+        title: 'Workflow automation',
+        text: 'Turns repetitive daily work into workflows that run on their own, connecting the software you already use.',
+        points: ['Automatic ad report every morning', 'Order syncing', 'Bulk content drafts and appointment reminders'],
+        price: priceInline(automation, lang),
+        href: L('/tu-dong-hoa/'),
+      },
+    ] as Solution[],
+    small: [
+      {
+        icon: 'code' as IconName,
+        title: 'Websites & sales software',
+        text: `Websites, landing pages and software that helps you sell on social media. ${web.prices[0].value}.`,
+        href: L('/thiet-ke-website/'),
+      },
+      {
+        icon: 'school' as IconName,
+        title: training.name,
+        text: `A one-session workshop with a set of prompt templates. ${priceInline(training, lang)}.`,
+        href: L('/bang-gia/#training'),
+      },
+    ],
+    details: 'Learn more',
+    demoTitle: 'What happens to a message sent at 22:41',
+    demoLead:
+      'A sample conversation for a spa. The AI agent answers from the spa’s own price list, asks for a phone number, saves the lead and alerts reception. Anything that needs a person, like confirming the booking, is still done by a person.',
+    demoPoints: [
+      'Correct prices, in the shop’s own tone of voice',
+      'Leads saved to Google Sheets instead of getting lost in the inbox',
+      'Reception gets a Zalo alert and calls back in the morning',
+    ],
+    demoCta: 'See what an AI agent can do',
+    agentName: 'Sample Spa AI assistant',
+    chat: [
+      { from: 'customer', text: 'Hi, how much is your basic facial package?', time: '22:41' },
+      {
+        from: 'ai',
+        text: 'Hello! Our basic facial is 350,000 VND per session and takes about 60 minutes. Which day would you like? I’ll ask reception to hold a slot for you.',
+      },
+      { from: 'customer', text: 'Would Saturday evening work?' },
+      {
+        from: 'ai',
+        text: 'Reception will check Saturday evening and call you to confirm. Could I have your name and phone number, please?',
+      },
+      { from: 'customer', text: 'Lan, 09xx xxx 123' },
+      { from: 'event', text: 'Lead saved to Google Sheets', icon: 'sheet' },
+      { from: 'event', text: 'Reception notified on Zalo', icon: 'bell' },
+      {
+        from: 'ai',
+        text: 'Thank you, that’s noted. Reception will call you tomorrow morning during opening hours. Would you like our prices for the other packages too?',
+      },
+    ] as ChatMessage[],
+    processTitle: 'How ADS-Nolimit works',
+    processLead: 'Four steps. You sign off on each one before we move on.',
+    caseLabel: 'Internal case study',
+    caseMore: 'See projects and case studies',
+    pricingTitle: 'Pricing at a glance',
+    pricingLead: 'Public prices, so you can estimate the cost before we talk.',
+    faqTitle: 'Frequently asked questions',
+  },
+}[lang];
+
+const faq = getFaq(lang);
+---
+
+<BaseLayout title={copy.title} description={copy.description} lang={lang}>
+  <!-- 1. Hero -->
+  <section class="hero">
+    <div class="container hero-grid">
+      <div class="hero-copy">
+        <h1>{copy.h1}</h1>
+        <p class="lead hero-lead">{copy.lead}</p>
+        <div class="btn-row btn-row--stack-mobile">
+          <a class="btn btn-primary" href={copy.primary.href} rel="noopener">
+            <Icon name={copy.primary.icon} />
+            {copy.primary.label}
+          </a>
+          <a class="btn btn-secondary" href={L('/giai-phap-ai-agent/')}>{copy.secondary}</a>
+        </div>
+      </div>
+
+      <div class="hero-art">
+        <HeroLoop lang={lang} />
+      </div>
+
+      <div class="trust" role="group" aria-label={copy.trustLabel}>
+        <dl class="stats">
+          {
+            copy.stats.map((st) => (
+              <div class:list={['stat', { 'stat--wide': st.wide }]}>
+                <dt>{st.label}</dt>
+                <dd>{st.value}</dd>
+              </div>
+            ))
+          }
+        </dl>
+        <PartnerStrip lang={lang} />
+      </div>
+    </div>
+  </section>
+
+  <!-- 2. Ba nỗi đau -->
+  <section class="section" aria-labelledby="pains-title">
+    <div class="container">
+      <div class="section-head">
+        <h2 id="pains-title">{copy.painsTitle}</h2>
+      </div>
+      <ul class="pains">
+        {
+          copy.pains.map((p) => (
+            <li class={`pain tone-${p.tone}`}>
+              <span class="pain-cue">{p.cue}</span>
+              <h3>{p.title}</h3>
+              <p>{p.text}</p>
+            </li>
+          ))
+        }
+      </ul>
+    </div>
+  </section>
+
+  <!-- 3. Giải pháp -->
+  <section class="section section--raise" aria-labelledby="solutions-title">
+    <div class="container">
+      <div class="section-head">
+        <h2 id="solutions-title">{copy.solutionsTitle}</h2>
+        <p>{copy.solutionsLead}</p>
+      </div>
+
+      <div class="solutions-big">
+        {
+          copy.solutions.map((s) => (
+            <article class={`sol card tone-${s.tone}`}>
+              <span class="icon-tile icon-tile--lg">
+                <Icon name={s.icon} />
+              </span>
+              <h3>{s.title}</h3>
+              <p class="sol-text">{s.text}</p>
+              <ul class="checklist sol-points">
+                {s.points.map((pt) => (
+                  <li>{pt}</li>
+                ))}
+              </ul>
+              <p class="sol-price">{s.price}</p>
+              <a class="text-link sol-link" href={s.href}>
+                {copy.details}
+                <span class="visually-hidden"> {s.title}</span>
+                <Icon name="arrow" />
+              </a>
+            </article>
+          ))
+        }
+      </div>
+
+      <div class="solutions-small">
+        {
+          copy.small.map((s) => (
+            <a class="sol-small card tone-sun" href={s.href}>
+              <span class="icon-tile">
+                <Icon name={s.icon} />
+              </span>
+              <span class="sol-small-body">
+                <strong>{s.title}</strong>
+                <span>{s.text}</span>
+              </span>
+              <Icon name="arrow" class="sol-small-arrow" />
+            </a>
+          ))
+        }
+      </div>
+    </div>
+  </section>
+
+  <!-- 4. Hội thoại minh họa -->
+  <section class="section" aria-labelledby="demo-title">
+    <div class="container split demo">
+      <div class="demo-copy">
+        <h2 id="demo-title">{copy.demoTitle}</h2>
+        <p class="lead demo-lead">{copy.demoLead}</p>
+        <ul class="checklist demo-points">
+          {copy.demoPoints.map((pt) => <li>{pt}</li>)}
+        </ul>
+        <a class="btn btn-secondary" href={L('/giai-phap-ai-agent/')}>{copy.demoCta}</a>
+      </div>
+      <div class="demo-chat">
+        <ChatDemo lang={lang} agentName={copy.agentName} channel="Messenger" messages={copy.chat} clock="22:41" />
+      </div>
+    </div>
+  </section>
+
+  <!-- 5. Cách làm việc -->
+  <section class="section section--raise" aria-labelledby="process-title">
+    <div class="container">
+      <div class="section-head">
+        <h2 id="process-title">{copy.processTitle}</h2>
+        <p>{copy.processLead}</p>
+      </div>
+      <ProcessSteps lang={lang} />
+    </div>
+  </section>
+
+  <!-- 6. Case study nội bộ -->
+  <section class="section" aria-label={copy.caseLabel}>
+    <div class="container">
+      <ReportBotCase lang={lang} moreLink={{ href: L('/du-an/'), label: copy.caseMore }} />
+    </div>
+  </section>
+
+  <!-- 7. AI Office -->
+  <section class="section section--tight" aria-label="ADS-NOLIMIT AI Office">
+    <div class="container">
+      <AiOfficeTeaser lang={lang} />
+    </div>
+  </section>
+
+  <!-- 8. Bảng giá rút gọn -->
+  <section class="section" aria-labelledby="pricing-title">
+    <div class="container">
+      <div class="section-head">
+        <h2 id="pricing-title">{copy.pricingTitle}</h2>
+        <p>{copy.pricingLead}</p>
+      </div>
+      <PricingSummary lang={lang} />
+    </div>
+  </section>
+
+  <!-- 9. FAQ -->
+  <section class="section section--raise" aria-labelledby="faq-title">
+    <div class="container faq-layout">
+      <div class="section-head">
+        <h2 id="faq-title">{copy.faqTitle}</h2>
+      </div>
+      <Faq items={faq.home} />
+    </div>
+  </section>
+
+  <!-- 10. CTA cuối -->
+  <CtaBand lang={lang} />
+</BaseLayout>
+
+<style>
+  /* ---------- Hero ---------- */
+  .hero {
+    position: relative;
+    padding-block: clamp(2.5rem, 1.5rem + 4.5vw, 6rem) clamp(2.75rem, 2rem + 3vw, 4.5rem);
+    background:
+      radial-gradient(55% 65% at 92% 8%, rgb(72 0 168 / 0.45), transparent 65%),
+      radial-gradient(35% 45% at 70% 0%, rgb(24 0 240 / 0.18), transparent 70%),
+      radial-gradient(45% 55% at 0% 100%, rgb(24 144 144 / 0.14), transparent 70%);
+    overflow: hidden;
+    border-bottom: 1px solid var(--line);
+  }
+
+  .hero-grid {
+    display: grid;
+    grid-template-areas: 'copy' 'trust' 'art';
+    gap: 2.5rem;
+    align-items: center;
+  }
+  .hero-copy {
+    grid-area: copy;
+  }
+  .hero-art {
+    grid-area: art;
+  }
+
+  @media (min-width: 1024px) {
+    .hero-grid {
+      grid-template-columns: minmax(0, 1.22fr) minmax(0, 0.78fr);
+      grid-template-areas: 'copy art' 'trust trust';
+      column-gap: clamp(3rem, 1rem + 4vw, 5rem);
+      row-gap: clamp(3rem, 2rem + 3vw, 4.5rem);
+    }
+  }
+
+  .hero h1 {
+    max-width: 13em;
+  }
+
+  .hero-lead {
+    margin: 1.5rem 0 2rem;
+    max-width: 36rem;
+  }
+
+  /* ---------- Trust row: số liệu + đối tác ---------- */
+  .trust {
+    grid-area: trust;
+    display: grid;
+    gap: 1.75rem;
+    padding-top: 1.75rem;
+    border-top: 1px solid var(--line);
+  }
+
+  @media (min-width: 1180px) {
+    .trust {
+      grid-template-columns: auto minmax(0, 1fr);
+      gap: clamp(2.5rem, 1rem + 3vw, 4rem);
+      align-items: end;
+      padding-top: 2rem;
+    }
+  }
+
+  .stats {
+    margin: 0;
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 1.25rem 1.5rem;
+  }
+
+  @media (min-width: 640px) {
+    .stats {
+      grid-template-columns: auto auto minmax(0, 1fr);
+      gap: 0;
+    }
+    .stat + .stat {
+      padding-left: clamp(1.25rem, 0.5rem + 1.5vw, 1.75rem);
+      margin-left: clamp(1.25rem, 0.5rem + 1.5vw, 1.75rem);
+      border-left: 1px solid var(--line);
+    }
+  }
+
+  .stat {
+    display: flex;
+    flex-direction: column;
+    gap: 0.2rem;
+    min-width: 0;
+  }
+  .stat--wide {
+    grid-column: 1 / -1;
+  }
+  @media (min-width: 640px) {
+    .stat--wide {
+      grid-column: auto;
+    }
+  }
+
+  .stat dd {
+    order: -1;
+    margin: 0;
+    font-size: clamp(1.5rem, 1.2rem + 1.2vw, 2rem);
+    font-weight: 800;
+    letter-spacing: -0.03em;
+    line-height: 1.15;
+    font-variant-numeric: tabular-nums;
+  }
+  .stat--wide dd {
+    font-size: clamp(1rem, 0.95rem + 0.25vw, 1.125rem);
+    letter-spacing: -0.01em;
+    line-height: 1.35;
+    padding-top: 0.4rem;
+  }
+  @media (min-width: 640px) {
+    .stat--wide dd {
+      white-space: nowrap;
+      min-height: calc(clamp(1.5rem, 1.2rem + 1.2vw, 2rem) * 1.15);
+    }
+  }
+  .stat dt {
+    color: var(--text-3);
+    font-size: 0.875rem;
+  }
+
+  /* ---------- Pains ---------- */
+  .pains {
+    list-style: none;
+    display: grid;
+    gap: 2rem;
+  }
+
+  @media (min-width: 900px) {
+    .pains {
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: clamp(2rem, 1rem + 2vw, 3rem);
+    }
+  }
+
+  .pain {
+    padding-top: 1.25rem;
+    border-top: 1px solid var(--line-strong);
+    position: relative;
+  }
+  .pain::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: -1px;
+    width: 3rem;
+    height: 2px;
+    background: var(--tone);
+  }
+
+  .pain-cue {
+    display: block;
+    margin-bottom: 0.85rem;
+    font-size: clamp(1.6rem, 1.3rem + 1.2vw, 2.125rem);
+    font-weight: 800;
+    letter-spacing: -0.03em;
+    line-height: 1.15;
+    color: var(--tone);
+    font-variant-numeric: tabular-nums;
+  }
+
+  .pain h3 {
+    font-size: var(--step-1);
+    line-height: 1.4;
+  }
+  .pain p {
+    margin-top: 0.6rem;
+    color: var(--text-2);
+  }
+
+  /* ---------- Solutions ---------- */
+  .solutions-big {
+    display: grid;
+    gap: 1rem;
+  }
+
+  @media (min-width: 960px) {
+    .solutions-big {
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 1.25rem;
+    }
+  }
+
+  .sol {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    padding: clamp(1.5rem, 1.2rem + 1vw, 2rem);
+    overflow: hidden;
+  }
+
+  /* dải màu mảnh phía trên mỗi thẻ */
+  .sol::before {
+    content: '';
+    position: absolute;
+    inset: 0 0 auto;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, var(--tone-fill), transparent);
+  }
+  .sol::after {
+    content: '';
+    position: absolute;
+    inset: 0 0 auto;
+    height: 9rem;
+    background: radial-gradient(70% 100% at 50% 0%, color-mix(in srgb, var(--tone-fill) 14%, transparent), transparent);
+    pointer-events: none;
+  }
+
+  .sol h3 {
+    font-size: var(--step-2);
+    margin-top: 0.25rem;
+  }
+
+  .sol-text {
+    color: var(--text-2);
+  }
+
+  .sol-points {
+    font-size: 0.9375rem;
+  }
+
+  .sol-price {
+    margin-top: auto;
+    padding-top: 1rem;
+    border-top: 1px solid var(--line);
+    font-weight: 600;
+    font-size: 0.9375rem;
+    color: var(--text);
+  }
+
+  .sol-link :global(svg) {
+    width: 1rem;
+    height: 1rem;
+  }
+
+  .solutions-small {
+    display: grid;
+    gap: 1rem;
+    margin-top: 1rem;
+  }
+
+  @media (min-width: 768px) {
+    .solutions-small {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 1.25rem;
+      margin-top: 1.25rem;
+    }
+  }
+
+  .sol-small {
+    display: flex;
+    gap: 1rem;
+    align-items: center;
+    padding: 1.15rem 1.25rem;
+  }
+  .sol-small-body {
+    display: grid;
+    gap: 0.15rem;
+    margin-right: auto;
+  }
+  .sol-small-body span {
+    color: var(--text-2);
+    font-size: 0.9375rem;
+  }
+  .sol-small :global(.sol-small-arrow) {
+    flex: none;
+    width: 1.1rem;
+    height: 1.1rem;
+    color: var(--text-3);
+    transition:
+      transform 0.2s ease,
+      color 0.2s ease;
+  }
+  .sol-small:hover :global(.sol-small-arrow) {
+    color: var(--green-ink);
+    transform: translateX(3px);
+  }
+
+  /* ---------- Demo ---------- */
+  .demo {
+    align-items: center;
+  }
+  .demo-lead {
+    margin: 1.25rem 0 1.5rem;
+  }
+  .demo-points {
+    margin-bottom: 2rem;
+  }
+  .demo-chat {
+    display: flex;
+    justify-content: center;
+  }
+  @media (min-width: 960px) {
+    .demo-chat {
+      justify-content: flex-end;
+    }
+  }
+</style>

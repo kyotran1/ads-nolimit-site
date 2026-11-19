@@ -1,184 +1,334 @@
 /**
- * BẢNG GIÁ — sửa giá DUY NHẤT ở file này.
+ * BẢNG GIÁ — sửa giá DUY NHẤT ở file này (dùng cho cả tiếng Việt và tiếng Anh).
  *
- * Trang chủ (bảng giá rút gọn), /bang-gia/ và các trang dịch vụ đều đọc từ đây.
+ * Trang chủ (bảng giá rút gọn), /bang-gia/, /en/pricing/ và các trang dịch vụ đều đọc từ đây.
  * Số tiền viết dạng số nguyên (dùng dấu _ cho dễ đọc, ví dụ 4_900_000);
- * hàm `vnd()` tự định dạng thành "4.900.000đ".
+ * tiếng Việt hiển thị "4.900.000đ", tiếng Anh hiển thị "4,900,000 VND" (cùng một con số).
+ *
+ * Mỗi chữ có hai bản: { vi: '…', en: '…' }. Sửa giá chỉ cần sửa số `amount`.
  *
  * Lưu ý: đây là giá ĐỀ XUẤT theo brief ngày 19/11/2026 — chủ doanh nghiệp duyệt trước khi công bố.
  */
+import type { Lang } from '../config/i18n';
+import { localize } from '../config/i18n';
 
-/** Định dạng số tiền VNĐ: 4900000 -> "4.900.000đ" */
-export const vnd = (amount: number) => `${new Intl.NumberFormat('vi-VN').format(amount)}đ`;
+type Text = Record<Lang, string>;
 
-export interface PriceLine {
+/** Định dạng số tiền VNĐ: 4900000 -> "4.900.000đ" (vi) / "4,900,000 VND" (en) */
+export const vnd = (amount: number, lang: Lang = 'vi') =>
+  lang === 'en'
+    ? `${new Intl.NumberFormat('en-US').format(amount)} VND`
+    : `${new Intl.NumberFormat('vi-VN').format(amount)}đ`;
+
+interface PriceSpec {
   /** Nhãn ngắn, ví dụ "Cài đặt", "Duy trì" */
-  label: string;
-  /** Giá đã định dạng, ví dụ "4.900.000đ" hoặc "Liên hệ báo giá" */
-  value: string;
+  label: Text;
+  /** Số tiền VNĐ (bỏ trống khi giá là chữ, ví dụ "Liên hệ báo giá") */
+  amount?: number;
+  /** Hiện chữ "từ"/"from" trước số tiền */
+  from?: boolean;
+  /** Giá dạng chữ khi không có `amount` */
+  text?: Text;
   /** Đơn vị/ghi chú ngay sau giá, ví dụ "/tháng" */
-  unit?: string;
+  unit?: Text;
+  /** Giá chỉ là một chữ ("Liên hệ báo giá"): khi viết gọn trên một dòng thì bỏ nhãn */
+  bare?: boolean;
 }
 
-export interface Plan {
+interface PlanSpec {
   id: string;
-  /** Tên gói */
-  name: string;
+  name: Text;
   /** Nhóm dịch vụ (để gom trên trang bảng giá) */
-  group: string;
-  /** Một câu mô tả gói */
-  summary: string;
-  prices: PriceLine[];
-  /** Giới hạn/điều kiện ngắn, ví dụ "Tới 1.000 hội thoại/tháng" */
-  limit?: string;
-  features: string[];
-  /** Trang chi tiết dịch vụ */
+  group: Text;
+  summary: Text;
+  prices: PriceSpec[];
+  /** Giới hạn/điều kiện ngắn */
+  limit?: Text;
+  features: Text[];
+  /** Trang chi tiết dịch vụ (đường dẫn tiếng Việt, bản tiếng Anh tự đổi) */
   href: string;
   /** Hiện trong bảng giá rút gọn ở trang chủ */
   showOnHome: boolean;
+  /** Gói được ưu đãi thí điểm (khi `pilotOffer.active`) */
+  pilot?: boolean;
 }
 
-export const plans: Plan[] = [
+const specs: PlanSpec[] = [
   {
     id: 'ai-starter',
-    name: 'AI Agent Khởi đầu',
-    group: 'AI Agent bán hàng & chăm sóc khách',
-    summary: 'Một kênh chat, trả lời câu hỏi thường gặp và giữ lại thông tin khách.',
+    name: { vi: 'AI Agent Khởi đầu', en: 'AI Agent Starter' },
+    group: { vi: 'AI Agent bán hàng & chăm sóc khách', en: 'AI agents for sales & customer care' },
+    summary: {
+      vi: 'Một kênh chat, trả lời câu hỏi thường gặp và giữ lại thông tin khách.',
+      en: 'One chat channel. Answers common questions and keeps every lead.',
+    },
     prices: [
-      { label: 'Cài đặt', value: vnd(4_900_000) },
-      { label: 'Duy trì', value: vnd(990_000), unit: '/tháng' },
+      { label: { vi: 'Cài đặt', en: 'Setup' }, amount: 4_900_000 },
+      { label: { vi: 'Duy trì', en: 'Monthly' }, amount: 990_000, unit: { vi: '/tháng', en: '/month' } },
     ],
-    limit: 'Tới 1.000 hội thoại/tháng',
+    limit: { vi: 'Tới 1.000 hội thoại/tháng', en: 'Up to 1,000 conversations a month' },
     features: [
-      '1 kênh: Messenger hoặc Zalo OA hoặc chat trên website',
-      'Trả lời câu hỏi thường gặp dựa trên tài liệu của doanh nghiệp',
-      'Xin số điện thoại, lưu khách vào Google Sheet',
-      'Báo khách mới qua Telegram hoặc Zalo',
+      {
+        vi: '1 kênh: Messenger hoặc Zalo OA hoặc chat trên website',
+        en: '1 channel: Messenger, Zalo OA or your website chat',
+      },
+      {
+        vi: 'Trả lời câu hỏi thường gặp dựa trên tài liệu của doanh nghiệp',
+        en: 'Answers common questions from your own business documents',
+      },
+      { vi: 'Xin số điện thoại, lưu khách vào Google Sheet', en: 'Asks for phone numbers and saves leads to Google Sheets' },
+      { vi: 'Báo khách mới qua Telegram hoặc Zalo', en: 'Alerts you to new leads via Telegram or Zalo' },
     ],
     href: '/giai-phap-ai-agent/',
     showOnHome: true,
+    pilot: true,
   },
   {
     id: 'ai-sales',
-    name: 'AI Agent Bán hàng',
-    group: 'AI Agent bán hàng & chăm sóc khách',
-    summary: 'Nhiều kênh, tra giá và tồn kho, lên đơn nháp, biết lúc nào cần người thật.',
+    name: { vi: 'AI Agent Bán hàng', en: 'AI Agent Sales' },
+    group: { vi: 'AI Agent bán hàng & chăm sóc khách', en: 'AI agents for sales & customer care' },
+    summary: {
+      vi: 'Nhiều kênh, tra giá và tồn kho, lên đơn nháp, biết lúc nào cần người thật.',
+      en: 'Several channels. Checks prices and stock, drafts orders, and knows when to hand over to a person.',
+    },
     prices: [
-      { label: 'Cài đặt', value: vnd(12_900_000) },
-      { label: 'Duy trì', value: vnd(2_490_000), unit: '/tháng' },
+      { label: { vi: 'Cài đặt', en: 'Setup' }, amount: 12_900_000 },
+      { label: { vi: 'Duy trì', en: 'Monthly' }, amount: 2_490_000, unit: { vi: '/tháng', en: '/month' } },
     ],
-    limit: 'Tới 5.000 hội thoại/tháng',
+    limit: { vi: 'Tới 5.000 hội thoại/tháng', en: 'Up to 5,000 conversations a month' },
     features: [
-      'Tới 3 kênh chat',
-      'Tra bảng giá, tồn kho',
-      'Tạo đơn nháp để nhân viên xác nhận',
-      'Chuyển cuộc trò chuyện cho nhân viên khi cần',
-      'Báo cáo hằng tuần',
+      { vi: 'Tới 3 kênh chat', en: 'Up to 3 chat channels' },
+      { vi: 'Tra bảng giá, tồn kho', en: 'Looks up your price list and stock' },
+      { vi: 'Tạo đơn nháp để nhân viên xác nhận', en: 'Creates draft orders for your staff to confirm' },
+      { vi: 'Chuyển cuộc trò chuyện cho nhân viên khi cần', en: 'Hands the conversation to a staff member when needed' },
+      { vi: 'Báo cáo hằng tuần', en: 'Weekly report' },
     ],
     href: '/giai-phap-ai-agent/',
     showOnHome: true,
+    pilot: true,
   },
   {
     id: 'ads',
-    name: 'Quảng cáo hiệu suất',
-    group: 'Quảng cáo',
-    summary: 'Quản lý và tối ưu quảng cáo Facebook, Google, TikTok mỗi ngày.',
+    name: { vi: 'Quảng cáo hiệu suất', en: 'Performance advertising' },
+    group: { vi: 'Quảng cáo', en: 'Advertising' },
+    summary: {
+      vi: 'Quản lý và tối ưu quảng cáo Facebook, Google, TikTok mỗi ngày.',
+      en: 'Facebook, Google and TikTok ads, managed and optimised every day.',
+    },
     prices: [
-      { label: 'Phí quản lý', value: '10–15%', unit: ' ngân sách quảng cáo' },
-      { label: 'Dùng thử', value: '7 ngày' },
+      {
+        label: { vi: 'Phí quản lý', en: 'Management fee' },
+        text: { vi: '10–15%', en: '10–15%' },
+        unit: { vi: ' ngân sách quảng cáo', en: ' of ad spend' },
+      },
+      { label: { vi: 'Dùng thử', en: 'Trial' }, text: { vi: '7 ngày', en: '7 days' } },
     ],
     features: [
-      'Lên kế hoạch, dựng chiến dịch, theo dõi và tối ưu hằng ngày',
-      'Báo cáo định kỳ, giải thích rõ tiền đã chi vào đâu',
-      'Facebook Ads, Google Ads, TikTok Ads',
+      {
+        vi: 'Lên kế hoạch, dựng chiến dịch, theo dõi và tối ưu hằng ngày',
+        en: 'Planning, campaign setup, daily monitoring and optimisation',
+      },
+      { vi: 'Báo cáo định kỳ, giải thích rõ tiền đã chi vào đâu', en: 'Regular reports that show exactly where the money went' },
+      { vi: 'Facebook Ads, Google Ads, TikTok Ads', en: 'Facebook Ads, Google Ads, TikTok Ads' },
     ],
     href: '/quang-cao/',
     showOnHome: true,
   },
   {
     id: 'agency-account',
-    name: 'Tài khoản quảng cáo Agency doanh nghiệp (BM2500)',
-    group: 'Quảng cáo',
-    summary: 'Tài khoản doanh nghiệp, chạy đúng chính sách quảng cáo của nền tảng.',
-    prices: [{ label: 'Giá', value: 'Liên hệ báo giá' }],
+    name: {
+      vi: 'Tài khoản quảng cáo Agency doanh nghiệp (BM2500)',
+      en: 'Agency business ad account (BM2500)',
+    },
+    group: { vi: 'Quảng cáo', en: 'Advertising' },
+    summary: {
+      vi: 'Tài khoản doanh nghiệp, chạy đúng chính sách quảng cáo của nền tảng.',
+      en: 'A business account that runs in line with each platform’s advertising policies.',
+    },
+    prices: [{ label: { vi: 'Giá', en: 'Price' }, text: { vi: 'Liên hệ báo giá', en: 'Quote on request' }, bare: true }],
     features: [
-      'Dành cho doanh nghiệp có nhu cầu chạy quảng cáo ổn định',
-      'Sản phẩm, nội dung và trang đích tuân thủ chính sách của nền tảng',
+      {
+        vi: 'Dành cho doanh nghiệp có nhu cầu chạy quảng cáo ổn định',
+        en: 'For businesses that advertise steadily',
+      },
+      {
+        vi: 'Sản phẩm, nội dung và trang đích tuân thủ chính sách của nền tảng',
+        en: 'Products, ad content and landing pages must follow platform policies',
+      },
     ],
     href: '/quang-cao/#tai-khoan-agency',
     showOnHome: false,
   },
   {
     id: 'automation',
-    name: 'Tự động hóa quy trình theo yêu cầu',
-    group: 'Tự động hóa',
-    summary: 'Biến một việc lặp lại hằng ngày thành quy trình tự chạy.',
+    name: { vi: 'Tự động hóa quy trình theo yêu cầu', en: 'Custom workflow automation' },
+    group: { vi: 'Tự động hóa', en: 'Automation' },
+    summary: {
+      vi: 'Biến một việc lặp lại hằng ngày thành quy trình tự chạy.',
+      en: 'Turn one repetitive daily task into a workflow that runs on its own.',
+    },
     prices: [
-      { label: 'Khảo sát', value: 'Miễn phí' },
-      { label: 'Triển khai', value: `từ ${vnd(15_000_000)}`, unit: '/quy trình' },
-      { label: 'Bảo trì', value: `từ ${vnd(1_500_000)}`, unit: '/tháng' },
+      { label: { vi: 'Khảo sát', en: 'Assessment' }, text: { vi: 'Miễn phí', en: 'Free' } },
+      {
+        label: { vi: 'Triển khai', en: 'Build' },
+        amount: 15_000_000,
+        from: true,
+        unit: { vi: '/quy trình', en: '/workflow' },
+      },
+      { label: { vi: 'Bảo trì', en: 'Maintenance' }, amount: 1_500_000, from: true, unit: { vi: '/tháng', en: '/month' } },
     ],
     features: [
-      'Báo cáo quảng cáo tự động mỗi sáng',
-      'Đồng bộ đơn hàng giữa các kênh',
-      'Soạn nội dung hàng loạt',
-      'Nhắc lịch khách',
+      { vi: 'Báo cáo quảng cáo tự động mỗi sáng', en: 'Automatic ad report every morning' },
+      { vi: 'Đồng bộ đơn hàng giữa các kênh', en: 'Order syncing across channels' },
+      { vi: 'Soạn nội dung hàng loạt', en: 'Bulk content drafting' },
+      { vi: 'Nhắc lịch khách', en: 'Appointment reminders' },
     ],
     href: '/tu-dong-hoa/',
     showOnHome: true,
   },
   {
     id: 'web',
-    name: 'Thiết kế website & phần mềm bán hàng online',
-    group: 'Website & phần mềm',
-    summary: 'Website, landing page và phần mềm hỗ trợ bán hàng trên mạng xã hội.',
-    prices: [{ label: 'Giá', value: 'Liên hệ báo giá' }],
+    name: { vi: 'Thiết kế website & phần mềm bán hàng online', en: 'Websites & online sales software' },
+    group: { vi: 'Website & phần mềm', en: 'Websites & software' },
+    summary: {
+      vi: 'Website, landing page và phần mềm hỗ trợ bán hàng trên mạng xã hội.',
+      en: 'Websites, landing pages and software that helps you sell on social media.',
+    },
+    prices: [{ label: { vi: 'Giá', en: 'Price' }, text: { vi: 'Liên hệ báo giá', en: 'Quote on request' }, bare: true }],
     features: [
-      'Website giới thiệu, landing page cho chiến dịch quảng cáo',
-      'Phần mềm hỗ trợ bán hàng online trên mạng xã hội',
+      {
+        vi: 'Website giới thiệu, landing page cho chiến dịch quảng cáo',
+        en: 'Company websites and landing pages for ad campaigns',
+      },
+      {
+        vi: 'Phần mềm hỗ trợ bán hàng online trên mạng xã hội',
+        en: 'Software that supports selling online on social media',
+      },
     ],
     href: '/thiet-ke-website/',
     showOnHome: true,
   },
   {
     id: 'training',
-    name: 'Đào tạo AI cho chủ shop',
-    group: 'Đào tạo',
-    summary: 'Workshop 1 buổi, mang về bộ mẫu câu lệnh dùng được ngay.',
-    prices: [{ label: 'Học phí', value: vnd(990_000), unit: '/người' }],
-    features: ['Workshop 1 buổi', 'Kèm bộ mẫu câu lệnh'],
+    name: { vi: 'Đào tạo AI cho chủ shop', en: 'AI training for shop owners' },
+    group: { vi: 'Đào tạo', en: 'Training' },
+    summary: {
+      vi: 'Workshop 1 buổi, mang về bộ mẫu câu lệnh dùng được ngay.',
+      en: 'A one-session workshop. You leave with prompt templates you can use right away.',
+    },
+    prices: [{ label: { vi: 'Học phí', en: 'Fee' }, amount: 990_000, unit: { vi: '/người', en: '/person' } }],
+    features: [
+      { vi: 'Workshop 1 buổi', en: 'One-session workshop' },
+      { vi: 'Kèm bộ mẫu câu lệnh', en: 'Set of prompt templates included' },
+    ],
     href: '/bang-gia/#training',
     showOnHome: true,
   },
 ];
 
-/** Ưu đãi thí điểm. Đặt `active: false` khi đã đủ 3 khách. */
-export const pilotOffer = {
-  active: true,
-  title: 'Ưu đãi thí điểm',
-  text: '3 khách AI Agent đầu tiên được giảm 50% phí cài đặt, đổi lại cho phép ADS-Nolimit làm case study.',
+/* ---------- Dữ liệu đã chuyển ngữ (các component dùng phần này) ---------- */
+
+export interface PriceLine {
+  label: string;
+  /** Giá đã định dạng, ví dụ "4.900.000đ", "từ 15.000.000đ" hoặc "Liên hệ báo giá" */
+  value: string;
+  unit?: string;
+  bare?: boolean;
+}
+
+export interface Plan {
+  id: string;
+  name: string;
+  group: string;
+  summary: string;
+  prices: PriceLine[];
+  limit?: string;
+  features: string[];
+  /** Link trang dịch vụ, đã đổi sang đúng ngôn ngữ */
+  href: string;
+  showOnHome: boolean;
+  pilot: boolean;
+}
+
+const fromWord: Text = { vi: 'từ', en: 'from' };
+
+const toPlan = (spec: PlanSpec, lang: Lang): Plan => ({
+  id: spec.id,
+  name: spec.name[lang],
+  group: spec.group[lang],
+  summary: spec.summary[lang],
+  prices: spec.prices.map((p) => ({
+    label: p.label[lang],
+    value:
+      p.amount !== undefined
+        ? `${p.from ? `${fromWord[lang]} ` : ''}${vnd(p.amount, lang)}`
+        : (p.text?.[lang] ?? ''),
+    unit: p.unit?.[lang],
+    bare: p.bare,
+  })),
+  limit: spec.limit?.[lang],
+  features: spec.features.map((f) => f[lang]),
+  href: localize(spec.href, lang),
+  showOnHome: spec.showOnHome,
+  pilot: Boolean(spec.pilot),
+});
+
+export const getPlans = (lang: Lang = 'vi'): Plan[] => specs.map((s) => toPlan(s, lang));
+
+export const getPlan = (id: string, lang: Lang = 'vi'): Plan => {
+  const spec = specs.find((p) => p.id === id);
+  if (!spec) throw new Error(`Không tìm thấy gói giá "${id}" trong src/data/pricing.ts`);
+  return toPlan(spec, lang);
 };
+
+/** Ưu đãi thí điểm. Đặt `active: false` khi đã đủ 3 khách (ẩn ở mọi nơi, cả tiếng Anh). */
+const pilot = {
+  active: true,
+  title: { vi: 'Ưu đãi thí điểm', en: 'Pilot offer' },
+  short: { vi: 'giảm 50% phí cài đặt', en: '50% off setup' },
+  text: {
+    vi: '3 khách AI Agent đầu tiên được giảm 50% phí cài đặt, đổi lại cho phép ADS-Nolimit làm case study.',
+    en: 'The first 3 AI agent clients get 50% off the setup fee, in exchange for letting ADS-Nolimit publish a case study.',
+  },
+};
+
+export const getPilotOffer = (lang: Lang = 'vi') => ({
+  active: pilot.active,
+  title: pilot.title[lang],
+  short: pilot.short[lang],
+  text: pilot.text[lang],
+});
 
 /** Ghi chú bắt buộc dưới mọi bảng giá. */
-export const priceNote = 'Chi phí quảng cáo trả cho nền tảng tính riêng.';
-
-/** Thời gian triển khai gói AI Agent Khởi đầu (dùng trong FAQ). */
-export const starterLeadTime = '7–14 ngày';
-
-export const getPlan = (id: string): Plan => {
-  const plan = plans.find((p) => p.id === id);
-  if (!plan) throw new Error(`Không tìm thấy gói giá "${id}" trong src/data/pricing.ts`);
-  return plan;
+const priceNoteText: Text = {
+  vi: 'Chi phí quảng cáo trả cho nền tảng tính riêng.',
+  en: 'Ad spend paid to the platforms is billed separately.',
 };
+export const getPriceNote = (lang: Lang = 'vi') => priceNoteText[lang];
+
+/** Ghi chú đơn vị tiền cho trang tiếng Anh. */
+export const currencyNote = 'All prices are in Vietnamese dong (VND).';
+
+/** Thời gian triển khai gói AI Agent Khởi đầu (dùng trong FAQ, các bước triển khai). */
+const leadTime: Text = { vi: '7–14 ngày', en: '7–14 days' };
+export const getStarterLeadTime = (lang: Lang = 'vi') => leadTime[lang];
 
 const lowerFirst = (s: string) => s.charAt(0).toLowerCase() + s.slice(1);
 
-/** Chuỗi giá gọn trên một dòng, ví dụ "Cài đặt 4.900.000đ, duy trì 990.000đ/tháng" */
-export const priceInline = (plan: Plan) =>
+/**
+ * Chuỗi giá gọn trên một dòng.
+ * vi: "Cài đặt 4.900.000đ, duy trì 990.000đ/tháng"
+ * en: "Setup 4,900,000 VND, monthly 990,000 VND/month"
+ */
+export const priceInline = (plan: Plan, lang: Lang = 'vi') =>
   plan.prices
     .map((p, i) => {
-      const value = /^[0-9]/.test(p.value) || p.value.startsWith('từ') ? p.value : lowerFirst(p.value);
-      const text = p.label === 'Giá' ? p.value : `${p.label} ${value}${p.unit ?? ''}`;
+      const startsWithNumber = /^[0-9]/.test(p.value) || p.value.startsWith(fromWord[lang]);
+      const value = startsWithNumber ? p.value : lowerFirst(p.value);
+      let text = p.bare ? p.value : `${p.label} ${value}${p.unit ?? ''}`;
+      // Tiếng Anh tự nhiên hơn: "Free assessment", "7-day trial"
+      if (lang === 'en' && p.value === 'Free') text = `Free ${p.label.toLowerCase()}`;
+      if (lang === 'en' && /^\d+ days$/.test(p.value)) text = `${p.value.replace(' days', '-day')} ${p.label.toLowerCase()}`;
       return i === 0 ? text : lowerFirst(text);
     })
     .join(', ');

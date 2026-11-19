@@ -1,0 +1,123 @@
+---
+/** Danh sách bài blog (/blog/ và /en/blog/). */
+import { getCollection } from 'astro:content';
+import BaseLayout from '../layouts/BaseLayout.astro';
+import PageHero from '../components/PageHero.astro';
+import Icon from '../components/Icon.astro';
+import { formatDate } from '../lib/format';
+import type { Lang } from '../config/i18n';
+
+interface Props {
+  lang: Lang;
+}
+const { lang } = Astro.props;
+
+const posts = (await getCollection(lang === 'en' ? 'blogEn' : 'blog')).sort(
+  (a, b) => b.data.pubDate.valueOf() - a.data.pubDate.valueOf(),
+);
+const base = lang === 'en' ? '/en/blog/' : '/blog/';
+
+const copy = {
+  vi: {
+    title: 'Blog: AI Agent, tự động hóa và quảng cáo cho chủ shop | ADS-Nolimit',
+    description:
+      'Bài viết dễ hiểu về AI Agent, tự động hóa, quảng cáo và các quy định mới cho chủ shop, doanh nghiệp nhỏ Việt Nam.',
+    h1: 'Blog',
+    lead: 'Viết ngắn, dễ hiểu, cho chủ shop và doanh nghiệp nhỏ muốn dùng AI vào việc thật.',
+    read: 'Đọc bài',
+  },
+  en: {
+    title: 'Blog: AI agents, automation and advertising for shop owners | ADS-Nolimit',
+    description:
+      'Plain-language articles on AI agents, automation, advertising and new regulations for shop owners and small businesses in Vietnam.',
+    h1: 'Blog',
+    lead: 'Short, plain-language articles for shop owners and small businesses who want to put AI to real work.',
+    read: 'Read article',
+  },
+}[lang];
+---
+
+<BaseLayout title={copy.title} description={copy.description} lang={lang}>
+  <PageHero title={copy.h1} lead={copy.lead} />
+
+  <section class="section">
+    <div class="container">
+      <ul class="posts">
+        {
+          posts.map((post) => (
+            <li>
+              <article class="post-card card card--link">
+                <time datetime={post.data.pubDate.toISOString()}>{formatDate(post.data.pubDate, lang)}</time>
+                <h2>
+                  <a href={`${base}${post.id}/`}>{post.data.title}</a>
+                </h2>
+                <p>{post.data.description}</p>
+                <span class="post-more" aria-hidden="true">
+                  {copy.read} <Icon name="arrow" />
+                </span>
+              </article>
+            </li>
+          ))
+        }
+      </ul>
+    </div>
+  </section>
+</BaseLayout>
+
+<style>
+  .posts {
+    list-style: none;
+    display: grid;
+    gap: 1rem;
+    max-width: 52rem;
+  }
+
+  .post-card {
+    padding: clamp(1.35rem, 1rem + 1.2vw, 2rem);
+  }
+
+  .post-card time {
+    font-size: 0.875rem;
+    color: var(--text-3);
+  }
+
+  .post-card h2 {
+    margin-top: 0.4rem;
+    font-size: var(--step-2);
+    line-height: 1.3;
+  }
+
+  .post-card h2 a {
+    color: var(--text);
+    text-decoration: none;
+  }
+  /* Cả thẻ bấm được */
+  .post-card h2 a::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+  }
+  .post-card:hover h2 a {
+    text-decoration: underline;
+    text-decoration-color: var(--green);
+  }
+
+  .post-card p {
+    margin-top: 0.6rem;
+    color: var(--text-2);
+  }
+
+  .post-more {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    margin-top: 1rem;
+    font-weight: 600;
+    color: var(--green-ink);
+  }
+  .post-more :global(svg) {
+    width: 1rem;
+    height: 1rem;
+  }
+</style>
