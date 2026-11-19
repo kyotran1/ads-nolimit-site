@@ -105,6 +105,12 @@ const aliases: Record<string, string> = {
   timeout: 'network-request-failed',
 };
 
+/** Không tải được phần đăng nhập Google (thường do tiện ích chặn quảng cáo hoặc mạng chặn Google). */
+const googleUnavailable: Text = {
+  vi: 'Chưa mở được đăng nhập Google. Trình duyệt hoặc tiện ích chặn quảng cáo có thể đang chặn Google; bạn thử tắt chặn cho trang này rồi bấm lại.',
+  en: 'Google sign-in could not start. Your browser or an ad blocker may be blocking Google; allow it for this site and try again.',
+};
+
 /** Lỗi khi xác nhận lại mật khẩu (đổi mật khẩu, xóa tài khoản): nói rõ là "mật khẩu hiện tại". */
 const reauthErrors: Record<string, Text> = {
   'invalid-credential': {
@@ -119,10 +125,11 @@ export const errorCode = (err: unknown): string => {
 };
 
 /** Thông báo dễ hiểu cho một lỗi Firebase Authentication. */
-export const authErrorMessage = (err: unknown, context: 'default' | 'reauth' = 'default'): string => {
+export const authErrorMessage = (err: unknown, context: 'default' | 'reauth' | 'google' = 'default'): string => {
   const raw = errorCode(err);
   const code = aliases[raw] ?? raw;
   if (context === 'reauth' && reauthErrors[code]) return pick(reauthErrors[code]);
+  if (context === 'google' && (!authErrors[code] || code === 'network-request-failed')) return pick(googleUnavailable);
   return pick(authErrors[code] ?? authErrors.generic);
 };
 
@@ -287,13 +294,16 @@ const statusText: Record<RequestStatus, Text> = {
 export const statusLabel = (status: string): string =>
   (requestStatuses as readonly string[]).includes(status) ? pick(statusText[status as RequestStatus]) : status;
 
-/** Ngày giờ theo giờ Việt Nam: 19/11/2026 16:20 (vi) hoặc 19 Nov 2026, 16:20 (en). */
-export const formatDateTime = (date: Date): string =>
-  new Intl.DateTimeFormat(pageLang() === 'en' ? 'en-GB' : 'vi-VN', {
-    day: pageLang() === 'en' ? 'numeric' : '2-digit',
-    month: pageLang() === 'en' ? 'short' : '2-digit',
+/** Ngày giờ theo giờ Việt Nam: "19/11/2026, 16:20" (vi) hoặc "19 Nov 2026, 16:20" (en). */
+export const formatDateTime = (date: Date): string => {
+  const en = pageLang() === 'en';
+  const tz = 'Asia/Ho_Chi_Minh';
+  const day = new Intl.DateTimeFormat(en ? 'en-GB' : 'vi-VN', {
+    day: en ? 'numeric' : '2-digit',
+    month: en ? 'short' : '2-digit',
     year: 'numeric',
-    hour: '2-digit',
-    minute: '2-digit',
-    timeZone: 'Asia/Ho_Chi_Minh',
+    timeZone: tz,
   }).format(date);
+  const time = new Intl.DateTimeFormat('en-GB', { hour: '2-digit', minute: '2-digit', hour12: false, timeZone: tz }).format(date);
+  return `${day}, ${time}`;
+};

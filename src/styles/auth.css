@@ -11,6 +11,12 @@
   --auth-danger-bg: rgb(255 107 107 / 0.08);
 }
 
+/* Thuộc tính hidden luôn thắng các khối có display riêng (flex/grid) */
+.auth-section [hidden],
+.account [hidden] {
+  display: none !important;
+}
+
 /* ---------- Khung trang đăng nhập / đăng ký ---------- */
 
 .auth-section {

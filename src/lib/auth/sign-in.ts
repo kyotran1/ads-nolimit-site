@@ -49,11 +49,11 @@ if (form) {
     }
   });
 
-  const finish = (busyButton: HTMLButtonElement | null, err: unknown) => {
+  const finish = (busyButton: HTMLButtonElement | null, err: unknown, context: 'default' | 'google' = 'default') => {
     working = false;
     setBusy(busyButton, false);
     lockButtons([submit, google], false);
-    say(alert, authErrorMessage(err));
+    say(alert, authErrorMessage(err, context));
     if (errorCode(err) === 'invalid-credential') password.select();
   };
 
@@ -90,6 +90,6 @@ if (form) {
         const isNew = getAdditionalUserInfo(result)?.isNewUser;
         location.assign(isNew ? welcomeTarget('google') : safeNext(nextParam(), config.paths.account));
       })
-      .catch((err) => finish(google, err));
+      .catch((err) => finish(google, err, 'google'));
   });
 }

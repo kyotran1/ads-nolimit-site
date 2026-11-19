@@ -66,11 +66,11 @@ if (form) {
     return consent.checked;
   };
 
-  const finish = (busyButton: HTMLButtonElement | null, err: unknown) => {
+  const finish = (busyButton: HTMLButtonElement | null, err: unknown, context: 'default' | 'google' = 'default') => {
     working = false;
     setBusy(busyButton, false);
     lockButtons([submit, google], false);
-    say(alert, authErrorMessage(err));
+    say(alert, authErrorMessage(err, context));
   };
 
   form.addEventListener('submit', async (event) => {
@@ -130,6 +130,6 @@ if (form) {
         const isNew = getAdditionalUserInfo(result)?.isNewUser;
         location.assign(isNew ? welcomeTarget('google') : safeNext(nextParam()));
       })
-      .catch((err) => finish(google, err));
+      .catch((err) => finish(google, err, 'google'));
   });
 }

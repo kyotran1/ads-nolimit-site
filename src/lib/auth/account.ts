@@ -224,9 +224,18 @@ const rContact = byId<HTMLInputElement>('r-contact');
 const str = (data: DocumentData, key: string) => (typeof data[key] === 'string' ? (data[key] as string) : '');
 const clean = (value: string) => value.trim().replace(/\s+/g, ' ');
 
+/** Khóa form trong lúc tải hồ sơ, để dữ liệu tải về không ghi đè lên chữ khách đang gõ. */
+const lockForm = (form: HTMLFormElement, locked: boolean) => {
+  form.setAttribute('aria-busy', String(locked));
+  Array.from(form.elements).forEach((field) => {
+    if (field instanceof HTMLInputElement || field instanceof HTMLButtonElement) field.disabled = locked;
+  });
+};
+
 const loadProfile = async (user: User) => {
   say(profileAlert, '');
   pName.value ||= user.displayName ?? '';
+  lockForm(profileForm, true);
   try {
     const snap = await getDoc(doc(db, 'users', user.uid));
     profileExists = snap.exists();
@@ -241,6 +250,8 @@ const loadProfile = async (user: User) => {
     say(profileAlert, `${m('loadFailed')} ${dataErrorMessage(err)}`, {
       action: { label: m('retry'), run: () => void loadProfile(user) },
     });
+  } finally {
+    lockForm(profileForm, false);
   }
   // Gợi ý cách liên hệ cho form yêu cầu: số điện thoại trong hồ sơ, nếu không có thì email.
   if (!rContact.value) rContact.value = pPhone.value ? pPhone.value : (user.email ?? '');
@@ -620,7 +631,7 @@ deleteForm.addEventListener('submit', (event) => {
       setBusy(submit, false);
       const message =
         stage === 'reauth'
-          ? authErrorMessage(err, 'reauth')
+          ? authErrorMessage(err, withPassword ? 'reauth' : 'google')
           : stage === 'data'
             ? dataErrorMessage(err)
             : authErrorMessage(err);
