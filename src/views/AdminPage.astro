@@ -13,6 +13,7 @@ import '../styles/global.css';
 import '../styles/fx.css';
 import '../styles/auth.css';
 import '../styles/dashboard.css';
+import '../styles/ad-reports.css';
 import { Image } from 'astro:assets';
 import logoMark from '../assets/brand/logo-mark.png';
 import AuthConfig from '../components/auth/AuthConfig.astro';
@@ -28,6 +29,7 @@ const nav: { id: string; label: string; icon: IconName }[] = [
   { id: 'don-hang', label: 'Đơn hàng', icon: 'bag' },
   { id: 'yeu-cau', label: 'Yêu cầu dịch vụ', icon: 'inbox' },
   { id: 'khach-hang', label: 'Khách hàng', icon: 'users' },
+  { id: 'tai-khoan-quang-cao', label: 'Tài khoản quảng cáo', icon: 'chart' },
   { id: 'key-may', label: 'Key & máy', icon: 'key' },
   { id: 'noi-dung', label: 'Khóa học & Hướng dẫn', icon: 'book' },
   { id: 'cai-dat', label: 'Cài đặt thanh toán', icon: 'settings' },
@@ -42,6 +44,8 @@ const config = {
   banks,
   planNames,
   accountPath: localize('/tai-khoan/', 'vi'),
+  // Ứng dụng web Apps Script trong trang tính "BC ADS - META API (BOT 3)": ?dongbo=1 đẩy số liệu lên Firestore.
+  adsSyncUrl: 'https://script.google.com/macros/s/AKfycbyXI8tuCpfRY3VYipik0SCrwMCwLLLZ6yNiR0LVKeY1VaAnxxZhvKGjB3Mu13w--hCu/exec',
 };
 const configJson = JSON.stringify(config).replace(/</g, '\\u003c');
 ---

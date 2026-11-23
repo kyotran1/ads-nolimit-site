@@ -10,6 +10,7 @@
  */
 import '../styles/auth.css';
 import '../styles/dashboard.css';
+import '../styles/ad-reports.css';
 import { Image } from 'astro:assets';
 import logoMark from '../assets/brand/logo-mark.png';
 import BaseLayout from '../layouts/BaseLayout.astro';
@@ -18,6 +19,7 @@ import Icon from '../components/Icon.astro';
 import Overview from '../components/account/Overview.astro';
 import TopUp from '../components/account/TopUp.astro';
 import Orders from '../components/account/Orders.astro';
+import AdReports from '../components/account/AdReports.astro';
 import Services from '../components/account/Services.astro';
 import Courses from '../components/account/Courses.astro';
 import Guides from '../components/account/Guides.astro';
@@ -173,6 +175,7 @@ const configJson = JSON.stringify(config).replace(/</g, '\\u003c');
         <Overview lang={lang} />
         <TopUp lang={lang} />
         <Orders lang={lang} />
+        <AdReports lang={lang} />
         <Services lang={lang} />
         <Courses lang={lang} />
         <Guides lang={lang} />

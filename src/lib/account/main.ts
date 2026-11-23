@@ -20,6 +20,7 @@ import { selectCard } from './services';
 import './courses';
 import './guides';
 import './keys';
+import './ads';
 import { loadProfile } from './profile';
 import { isLeaving, renderSecurity, whenDeleted } from './security';
 
@@ -163,7 +164,7 @@ const start = () =>
     started = true;
     show(fromParams ?? fromHash() ?? { section: 'overview', sub: '' }, false);
     // Dữ liệu nền cho menu, tổng quan và số dư
-    void ensure('wallet', 'access', 'orders', 'keys', 'topups', 'transactions');
+    void ensure('wallet', 'access', 'orders', 'keys', 'topups', 'transactions', 'adAccounts');
     void loadProfile(user, (u) => renderUser(u));
   });
 

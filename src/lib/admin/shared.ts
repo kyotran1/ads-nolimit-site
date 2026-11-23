@@ -39,6 +39,7 @@ export interface AdminConfig {
   banks: Bank[];
   planNames: Record<string, string>;
   accountPath: string;
+  adsSyncUrl: string;
 }
 export const config: AdminConfig = JSON.parse(document.getElementById('admin-config')?.textContent ?? '{}');
 

@@ -4,7 +4,7 @@
   "description": "Test luật bảo mật Firestore (../firestore.rules) trên Firebase Emulator. Không thuộc phần build website, không chạm dự án Firebase thật.",
   "type": "module",
   "scripts": {
-    "test": "firebase --config ../firebase.json emulators:exec --only firestore --project demo-ads-nolimit \"node --test --test-concurrency=1 test/rules.test.mjs test/money.test.mjs\""
+    "test": "firebase --config ../firebase.json emulators:exec --only firestore --project demo-ads-nolimit \"node --test --test-concurrency=1 test/rules.test.mjs test/money.test.mjs test/ads.test.mjs\""
   },
   "devDependencies": {
     "@firebase/rules-unit-testing": "^6.0.0",

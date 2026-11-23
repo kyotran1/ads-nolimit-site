@@ -10,6 +10,7 @@ import { byId, copyButton, h } from '../ui/dom';
 import { db, errText, setAdmin } from './shared';
 import { renderCustomers, renderOrders, renderOverview, renderRequests, renderTopups } from './money';
 import { renderKeys } from './keys';
+import { renderAdAccounts } from './ads';
 import { renderContent } from './content';
 import { renderSettings } from './settings';
 
@@ -19,6 +20,7 @@ const tabs: Record<string, { title: string; render: (root: HTMLElement) => Promi
   'don-hang': { title: 'Đơn hàng', render: renderOrders },
   'yeu-cau': { title: 'Yêu cầu dịch vụ', render: renderRequests },
   'khach-hang': { title: 'Khách hàng', render: renderCustomers },
+  'tai-khoan-quang-cao': { title: 'Tài khoản quảng cáo', render: renderAdAccounts },
   'key-may': { title: 'Key & máy', render: renderKeys },
   'noi-dung': { title: 'Khóa học & Hướng dẫn', render: renderContent },
   'cai-dat': { title: 'Cài đặt thanh toán', render: renderSettings },

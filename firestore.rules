@@ -724,6 +724,49 @@ service cloud.firestore {
       allow delete: if false;
     }
 
+    // ======================================================================
+    // adAccounts/{actId} — TKQC của khách (quản trị gắn TKQC ↔ khách).
+    // Số liệu (latest, lastAlertDay) do Apps Script của chủ ghi qua Firestore REST bằng quyền Google
+    // của chủ (không đi qua rules). Trình duyệt chỉ đọc; quản trị chỉ sửa phần cấu hình.
+    // ======================================================================
+
+    function adConfigKeys() {
+      return ['uid', 'customerEmail', 'accountName', 'label', 'service', 'tabPattern', 'lowVnd', 'lowDays', 'emailAlerts', 'active', 'updatedAt', 'updatedBy'];
+    }
+
+    function validAdConfig(actId, d) {
+      return actId.matches('^act_[0-9]{5,20}$')
+        && safeId(d.uid)
+        && reqString(d, 'customerEmail', 3, 200)
+        && reqString(d, 'accountName', 1, 120)
+        && optString(d, 'label', 120)
+        && d['service'] in ['ads', 'agency-account', 'ad-budget']
+        && reqString(d, 'tabPattern', 2, 120)
+        && d.lowVnd is int && d.lowVnd >= 0 && d.lowVnd <= 1000000000
+        && d.lowDays is int && d.lowDays >= 0 && d.lowDays <= 60
+        && d.emailAlerts is bool
+        && d.active is bool
+        && d.updatedAt == request.time
+        && d.updatedBy == request.auth.uid;
+    }
+
+    match /adAccounts/{actId} {
+      allow read: if ownsResource() || isAdmin();
+      allow create: if isAdmin()
+        && request.resource.data.keys().hasOnly(adConfigKeys())
+        && validAdConfig(actId, request.resource.data);
+      allow update: if isAdmin()
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(adConfigKeys())
+        && validAdConfig(actId, request.resource.data);
+      allow delete: if isAdmin();
+    }
+
+    // adReports/{actId}_{YYYY-MM} — báo cáo tháng, chỉ Apps Script ghi.
+    match /adReports/{rid} {
+      allow read: if ownsResource() || isAdmin();
+      allow write: if false;
+    }
+
     // Mọi đường dẫn khác: cấm.
   }
 }

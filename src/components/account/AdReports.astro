@@ -1,0 +1,39 @@
+---
+/** Báo cáo quảng cáo: thẻ từng TKQC (số dư, chi tiêu, còn ~N ngày) + báo cáo tháng giống tab trang tính. Xử lý: src/lib/account/ads.ts */
+import Icon from '../Icon.astro';
+import Empty from './Empty.astro';
+import type { Lang } from '../../config/i18n';
+
+interface Props {
+  lang: Lang;
+}
+const { lang } = Astro.props;
+
+const copy = {
+  vi: {
+    lead: 'Số dư, chi tiêu và kết quả từng ngày của các tài khoản quảng cáo ADS-Nolimit đang chạy cho bạn. Số liệu lấy thẳng từ Meta, cập nhật nhiều lần mỗi ngày.',
+    emptyTitle: 'Chưa có tài khoản quảng cáo nào',
+    emptyText: 'Khi ADS-Nolimit chạy quảng cáo hoặc cấp tài khoản quảng cáo cho bạn, báo cáo chi tiêu và số dư sẽ hiện ở đây.',
+    back: 'Tất cả tài khoản',
+  },
+  en: {
+    lead: 'Balance, spend and daily results of the ad accounts ADS-Nolimit runs for you. Figures come straight from Meta and refresh several times a day.',
+    emptyTitle: 'No ad accounts yet',
+    emptyText: 'When ADS-Nolimit runs ads or provides an ad account for you, its spend report and balance appear here.',
+    back: 'All accounts',
+  },
+}[lang];
+---
+
+<section class="view" data-view="ads" hidden>
+  <div class="auth-alert" role="alert" id="ads-alert"></div>
+  <div id="ads-list-view">
+    <p class="view-lead">{copy.lead}</p>
+    <ul class="ad-cards" id="ad-cards"></ul>
+    <Empty id="ads-empty" icon="chart" title={copy.emptyTitle} text={copy.emptyText} hidden />
+  </div>
+  <div id="ads-report-view" hidden>
+    <a class="text-link ads-back" href="#" id="ads-back"><Icon name="arrow-left" />{copy.back}</a>
+    <div id="ads-report"></div>
+  </div>
+</section>
