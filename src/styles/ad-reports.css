@@ -144,6 +144,115 @@
 }
 
 /* Bảng giống hệt tab trang tính "BC ADS": nền trắng, viền đen, màu ô như Google Sheets */
+/* Khung xem kiểu ứng dụng Google Trang tính: trang báo cáo giữ nguyên bố cục máy tính (rộng cố định),
+   cuộn ngang/dọc trong khung, phóng to/thu nhỏ (nút hoặc chụm 2 ngón), thanh tab tài khoản ở chân. */
+.xv {
+  border-radius: var(--r-md);
+  overflow: hidden;
+  border: 1px solid #dadce0;
+  background: #fff;
+  color: #000;
+}
+.xv-bar {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.35rem 0.5rem;
+  background: #f8f9fa;
+  border-bottom: 1px solid #dadce0;
+  font-family: Arial, sans-serif;
+  font-size: 0.85rem;
+}
+.xv-bar button {
+  min-width: 2.25rem;
+  min-height: 2.25rem;
+  padding: 0 0.6rem;
+  border: 1px solid #dadce0;
+  border-radius: 6px;
+  background: #fff;
+  color: #202124;
+  font: inherit;
+  font-weight: 700;
+  cursor: pointer;
+}
+.xv-bar button:focus-visible {
+  outline: 2px solid #1a73e8;
+  outline-offset: 1px;
+}
+.xv-zoom {
+  min-width: 3.2rem;
+  text-align: center;
+  color: #202124;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+.xv-hint {
+  margin-left: auto;
+  color: #5f6368;
+  font-size: 0.75rem;
+}
+.xv-view {
+  overflow: auto;
+  max-height: min(78vh, 56rem);
+  touch-action: pan-x pan-y;
+  overscroll-behavior: contain;
+  background: #fff;
+  scrollbar-width: auto;
+  scrollbar-color: #9aa0a6 #f1f3f4;
+}
+.xv-view::-webkit-scrollbar {
+  width: 12px;
+  height: 12px;
+}
+.xv-view::-webkit-scrollbar-track {
+  background: #f1f3f4;
+}
+.xv-view::-webkit-scrollbar-thumb {
+  background: #9aa0a6;
+  border-radius: 6px;
+  border: 2px solid #f1f3f4;
+}
+.xv-view:focus-visible {
+  outline: 2px solid #1a73e8;
+  outline-offset: -2px;
+}
+.xv-canvas {
+  width: 74rem;
+}
+.xv-tabs {
+  display: flex;
+  gap: 0;
+  overflow-x: auto;
+  background: #f8f9fa;
+  border-top: 1px solid #dadce0;
+  font-family: Arial, sans-serif;
+  scrollbar-width: none;
+}
+.xv-tabs::-webkit-scrollbar {
+  display: none;
+}
+.xv-tab {
+  flex: none;
+  max-width: 22rem;
+  padding: 0.7rem 1rem;
+  border: 0;
+  border-right: 1px solid #dadce0;
+  background: transparent;
+  color: #3c4043;
+  font: inherit;
+  font-size: 0.85rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  cursor: pointer;
+}
+.xv-tab[aria-current='page'] {
+  background: #e6f4ea;
+  color: #137333;
+  font-weight: 700;
+  box-shadow: inset 0 -3px 0 #137333;
+}
+
 .xl {
   --xl-blue: #0b5394;
   --xl-g1: #0ae50a;
@@ -174,25 +283,9 @@
 }
 .xl-grid {
   display: grid;
+  grid-template-columns: 15rem minmax(0, 1fr) 16rem;
   gap: 0.6rem;
   align-items: start;
-}
-@media (min-width: 1180px) {
-  .xl-grid {
-    grid-template-columns: minmax(12.5rem, 0.95fr) minmax(0, 2.6fr) minmax(13rem, 1fr);
-  }
-}
-@media (max-width: 1179px) {
-  /* điện thoại / máy tính bảng: tổng nạp – chi – số dư lên đầu, thông tin chuyển khoản xuống cuối */
-  .xl-side {
-    display: contents;
-  }
-  .xl-sum {
-    order: -1;
-  }
-  .xl-bank {
-    order: 5;
-  }
 }
 .xl-t {
   width: 100%;
@@ -244,30 +337,10 @@
   white-space: normal !important;
   line-height: 1.35;
 }
-.xl-scroll {
-  overflow-x: auto;
-}
-.xl-scroll:focus-visible {
-  outline: 2px solid var(--violet);
-  outline-offset: 2px;
-}
-.xl-days {
-  min-width: 36rem;
-}
-/* cột ngày đứng yên khi cuộn ngang trên điện thoại */
-.xl-days .xl-daycol {
-  position: sticky;
-  left: 0;
-  z-index: 1;
-}
-.xl-days tbody .xl-daycol {
-  background: #fff;
-}
-@media (min-width: 1180px) {
-  .xl-side {
-    display: grid;
-    gap: 0.6rem;
-  }
+
+.xl-side {
+  display: grid;
+  gap: 0.6rem;
 }
 .xl-sum th,
 .xl-sum td {
@@ -302,14 +375,6 @@
   width: 100%;
   height: auto;
 }
-@media (max-width: 559px) {
-  .xl {
-    padding: 0.4rem;
-  }
-  .xl-t {
-    font-size: 0.8rem;
-  }
-}
 
 /* Quản trị */
 .adm-item.is-low {
@@ -330,4 +395,15 @@
 }
 .xl .xl-banner p {
   color: #ffff00;
+}
+.xv-bar button {
+  white-space: nowrap;
+}
+@media (max-width: 559px) {
+  .xv-hint {
+    display: none;
+  }
+  .xv-view {
+    max-height: 72vh;
+  }
 }
