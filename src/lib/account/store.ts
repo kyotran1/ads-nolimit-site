@@ -25,8 +25,8 @@ import { app } from '../auth/client';
 import { makeOps } from '../ledger/ops';
 import type { Sdk } from '../ledger/ops';
 import { toDate } from '../ui/dom';
-import { parseAdAccount, parseAdReport } from '../ads/report';
-import type { AdAccount, AdReport } from '../ads/report';
+import { parseAdAccount, parseAdBudgetTopup, parseAdReport, parseAdTopupSettings } from '../ads/report';
+import type { AdAccount, AdBudgetTopup, AdReport, AdTopupSettings } from '../ads/report';
 
 export const db = getFirestore(app);
 export const ops = makeOps(
@@ -180,6 +180,8 @@ export const state = {
   products: new Map<string, Product>(),
   adAccounts: [] as AdAccount[],
   adReports: [] as AdReport[],
+  adTopups: [] as AdBudgetTopup[],
+  adTopupSettings: null as AdTopupSettings | null,
   /** undefined = chưa tải; null = chủ chưa điền */
   payment: undefined as Payment | null | undefined,
 };
@@ -198,7 +200,9 @@ export type StoreKey =
   | 'products'
   | 'payment'
   | 'adAccounts'
-  | 'adReports';
+  | 'adReports'
+  | 'adTopups'
+  | 'adTopupSettings';
 
 const mine = (name: string) => getDocs(query(collection(db, name), where('uid', '==', state.uid)));
 
@@ -312,6 +316,14 @@ const loaders: Record<StoreKey, () => Promise<void>> = {
   adReports: async () => {
     const snap = await mine('adReports');
     state.adReports = snap.docs.map((x) => parseAdReport(x.id, x.data())).sort((a, b) => b.month.localeCompare(a.month));
+  },
+  adTopups: async () => {
+    const snap = await mine('adTopups');
+    state.adTopups = snap.docs.map((x) => parseAdBudgetTopup(x.id, x.data())).sort(newestFirst);
+  },
+  adTopupSettings: async () => {
+    const snap = await getDoc(doc(db, 'settings', 'adTopup'));
+    state.adTopupSettings = parseAdTopupSettings(snap.data());
   },
   keyRequests: async () => {
     const snap = await mine('keyRequests');

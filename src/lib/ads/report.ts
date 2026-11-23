@@ -134,3 +134,77 @@ export const parseAdReport = (id: string, d: DocumentData): AdReport => {
 export const dmy = (iso: string) => (/^\d{4}-\d{2}-\d{2}$/.test(iso) ? `${iso.slice(8, 10)}/${iso.slice(5, 7)}/${iso.slice(0, 4)}` : iso);
 /** 2026-11 → 11/2026 */
 export const my = (ym: string) => (/^\d{4}-\d{2}$/.test(ym) ? `${ym.slice(5, 7)}/${ym.slice(0, 4)}` : ym);
+
+/* ---------- Nạp ngân sách TKQC (adTopups, settings/adTopup) ---------- */
+
+export interface AdTopupSettings {
+  /** Số tiền khách chuyển (đã gồm phí) */
+  presets: number[];
+  min: number;
+  max: number;
+  feePercent: number;
+}
+
+/** Mặc định khi chủ chưa lưu cài đặt (khớp firestore.rules adTopupCfg()). */
+export const AD_TOPUP_DEFAULTS: AdTopupSettings = { presets: [11_000_000, 22_000_000], min: 11_000_000, max: 110_000_000, feePercent: 10 };
+
+/** Ngân sách vào TKQC từ số tiền chuyển (gồm phí). */
+export const budgetOf = (amount: number, feePercent: number) => Math.round((amount * 100) / (100 + feePercent));
+
+export const parseAdTopupSettings = (d: DocumentData | undefined): AdTopupSettings => {
+  if (!d) return { ...AD_TOPUP_DEFAULTS };
+  const presets = Array.isArray(d.presets) ? (d.presets as unknown[]).filter((x): x is number => typeof x === 'number' && x > 0) : [];
+  return {
+    presets: presets.length ? presets : AD_TOPUP_DEFAULTS.presets,
+    min: n(d, 'min') || AD_TOPUP_DEFAULTS.min,
+    max: n(d, 'max') || AD_TOPUP_DEFAULTS.max,
+    feePercent: typeof d.feePercent === 'number' ? d.feePercent : AD_TOPUP_DEFAULTS.feePercent,
+  };
+};
+
+export type AdTopupStatus = 'pending' | 'approved' | 'rejected' | 'cancelled';
+
+export interface AdBudgetTopup {
+  code: string;
+  uid: string;
+  email: string;
+  name: string;
+  actId: string;
+  accountLabel: string;
+  amount: number;
+  budget: number;
+  feePercent: number;
+  day: string;
+  status: AdTopupStatus;
+  reason: string;
+  written: boolean;
+  sheetTab: string;
+  createdAt: Date | null;
+  decidedAt: Date | null;
+  writtenAt: Date | null;
+}
+
+const statuses: AdTopupStatus[] = ['pending', 'approved', 'rejected', 'cancelled'];
+
+export const parseAdBudgetTopup = (code: string, d: DocumentData): AdBudgetTopup => ({
+  code,
+  uid: s(d, 'uid'),
+  email: s(d, 'email'),
+  name: s(d, 'name'),
+  actId: s(d, 'actId'),
+  accountLabel: s(d, 'accountLabel'),
+  amount: n(d, 'amount'),
+  budget: n(d, 'budget'),
+  feePercent: n(d, 'feePercent'),
+  day: s(d, 'day'),
+  status: statuses.includes(d.status) ? (d.status as AdTopupStatus) : 'pending',
+  reason: s(d, 'reason'),
+  written: d.written === true,
+  sheetTab: s(d, 'sheetTab'),
+  createdAt: toDate(d.createdAt),
+  decidedAt: toDate(d.decidedAt),
+  writtenAt: toDate(d.writtenAt),
+});
+
+/** Ngày hôm nay theo giờ Việt Nam, dạng YYYY-MM-DD. */
+export const todayVn = () => new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Ho_Chi_Minh' }).format(new Date());

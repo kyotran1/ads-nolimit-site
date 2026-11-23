@@ -416,3 +416,131 @@
     max-height: 72vh;
   }
 }
+
+/* Nạp thêm ngân sách TKQC (hộp thoại trong báo cáo) */
+dialog.at-dialog {
+  width: min(34rem, calc(100vw - 1.5rem));
+  max-height: calc(100dvh - 1.5rem);
+  overflow: auto;
+}
+.at-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 0.75rem;
+  padding: 1.25rem 1.25rem 0;
+}
+.at-head h2 {
+  font-size: 1.2rem;
+  line-height: 1.3;
+}
+.at-close {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 2.5rem;
+  height: 2.5rem;
+  border-radius: 50%;
+  border: 1px solid var(--line-strong);
+  background: transparent;
+  color: var(--text);
+  cursor: pointer;
+}
+.at-close svg {
+  width: 1.1rem;
+  height: 1.1rem;
+}
+.at-body {
+  display: grid;
+  gap: 1rem;
+  padding: 1rem 1.25rem 1.25rem;
+}
+.at-form {
+  display: grid;
+  gap: 1rem;
+}
+.at-form .amounts {
+  border: 0;
+  padding: 0;
+  margin: 0;
+}
+.at-split:empty {
+  display: none;
+}
+.at-pay-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+.at-pay-head h3 {
+  font-size: 1.05rem;
+}
+.at-pay {
+  display: grid;
+  gap: 0.9rem;
+}
+.at-qr-wrap {
+  display: grid;
+  justify-items: center;
+  gap: 0.7rem;
+}
+.at-qr {
+  width: min(15rem, 100%);
+  padding: 0.5rem;
+  border-radius: var(--r-md);
+  background: #fff;
+}
+.at-qr svg {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+.at-dl {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+}
+
+.at-recent {
+  margin-top: 1.25rem;
+}
+.at-list {
+  list-style: none;
+  display: grid;
+  gap: 0.5rem;
+  margin-top: 0.6rem;
+}
+.at-item {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem 1rem;
+  flex-wrap: wrap;
+  padding: 0.7rem 0.9rem;
+  border-radius: var(--r-md);
+  border: 1px solid var(--line);
+  background: var(--card-bg);
+}
+.at-item > div {
+  flex: 1 1 14rem;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+.at-status {
+  font-weight: 700;
+  font-size: 0.85rem;
+  color: var(--text-2);
+}
+.at-item.is-pending .at-status {
+  color: #f6c453;
+}
+.at-item.is-approved .at-status {
+  color: #4cc9f0;
+}
+.at-item.is-written .at-status {
+  color: #3ddc84;
+}
+.at-item.is-rejected .at-status {
+  color: var(--auth-danger);
+}

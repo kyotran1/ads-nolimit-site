@@ -3,11 +3,13 @@
  * xem số dư mọi TKQC, nút "Đồng bộ ngay" (gọi Apps Script trong trang tính bot 3).
  * Số liệu (latest, adReports) do Apps Script ghi; ở đây chỉ sửa phần cấu hình.
  */
-import { collection, deleteDoc, doc, getDocs, serverTimestamp, setDoc } from 'firebase/firestore/lite';
+import { collection, deleteDoc, doc, getDoc, getDocs, serverTimestamp, setDoc, updateDoc } from 'firebase/firestore/lite';
 import { confirmDialog, h, icon, toast } from '../ui/dom';
-import { parseAdAccount } from '../ads/report';
-import type { AdAccount } from '../ads/report';
+import { AD_TOPUP_DEFAULTS, dmy, parseAdAccount, parseAdBudgetTopup, parseAdTopupSettings, todayVn } from '../ads/report';
+import type { AdAccount, AdBudgetTopup } from '../ads/report';
 import { buildForm, config, customerByEmail, db, errText, loadCustomers, me, money, parseVnd, when, who } from './shared';
+
+const vn = (n: number) => new Intl.NumberFormat('vi-VN').format(n);
 
 const services = [
   { value: 'ads', label: 'Quảng cáo hiệu suất' },
@@ -198,11 +200,191 @@ export const renderAdAccounts = async (root: HTMLElement) => {
     }
   };
 
+  /* ---------- Cài đặt nạp ngân sách (settings/adTopup) ---------- */
+  const sf = buildForm(
+    [
+      {
+        name: 'presets',
+        label: 'Các mức nạp gợi ý (số tiền khách chuyển, đã gồm phí)',
+        required: true,
+        wide: true,
+        placeholder: '11.000.000, 22.000.000',
+        hint: 'Cách nhau bằng dấu phẩy, tối đa 8 mức. Ví dụ: 11.000.000, 22.000.000, 55.000.000',
+      },
+      { name: 'min', label: 'Tối thiểu (đ)', type: 'number', required: true },
+      { name: 'max', label: 'Tối đa (đ)', type: 'number', required: true },
+      { name: 'feePercent', label: 'Phí (%)', type: 'number', required: true, hint: 'Ngân sách vào TKQC = số tiền chuyển × 100 / (100 + phí).' },
+    ],
+    'Lưu cài đặt nạp',
+  );
+  const fillSettings = async () => {
+    try {
+      const snap = await getDoc(doc(db, 'settings', 'adTopup'));
+      const c = snap.exists() ? parseAdTopupSettings(snap.data()) : AD_TOPUP_DEFAULTS;
+      (sf.inputs.get('presets') as HTMLInputElement).value = c.presets.map(vn).join(', ');
+      (sf.inputs.get('min') as HTMLInputElement).value = vn(c.min);
+      (sf.inputs.get('max') as HTMLInputElement).value = vn(c.max);
+      (sf.inputs.get('feePercent') as HTMLInputElement).value = String(c.feePercent);
+      if (!snap.exists()) sf.alert.replaceChildren(h('p', { text: 'Chưa lưu cài đặt — khách đang thấy mức mặc định ở trên. Bấm "Lưu cài đặt nạp" để dùng mức của anh.' }));
+    } catch (err) {
+      sf.alert.replaceChildren(h('p', { text: errText(err) }));
+    }
+  };
+  sf.form.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    sf.clearErrors();
+    sf.alert.replaceChildren();
+    const parts = sf.value('presets').split(/[,;\n]+/).map((x) => x.trim()).filter(Boolean);
+    const presets = parts.map(parseVnd);
+    const min = parseVnd(sf.value('min'));
+    const max = parseVnd(sf.value('max'));
+    const fee = Number(sf.value('feePercent'));
+    const okMoney = (v: number) => Number.isInteger(v) && v >= 100000 && v <= 1e9 && v % 1000 === 0;
+    if (!okMoney(min)) sf.setError('min', 'Từ 100.000đ, chẵn nghìn.');
+    if (!okMoney(max) || max < min) sf.setError('max', 'Chẵn nghìn, không nhỏ hơn mức tối thiểu, tối đa 1 tỷ.');
+    if (!Number.isInteger(fee) || fee < 0 || fee > 50) sf.setError('feePercent', 'Từ 0 đến 50.');
+    if (!presets.length || presets.length > 8 || presets.some((v) => !okMoney(v) || v < min || v > max))
+      sf.setError('presets', 'Từ 1 đến 8 mức, mỗi mức chẵn nghìn và nằm trong khoảng tối thiểu – tối đa.');
+    if (sf.focusFirstError()) return;
+    sf.submit.disabled = true;
+    try {
+      await setDoc(doc(db, 'settings', 'adTopup'), {
+        presets: [...new Set(presets)].sort((a, b) => a - b),
+        min,
+        max,
+        feePercent: fee,
+        updatedAt: serverTimestamp(),
+        updatedBy: me(),
+      });
+      toast('Đã lưu cài đặt nạp ngân sách. Khách thấy mức mới ngay lần mở khung nạp tiếp theo.');
+      await fillSettings();
+    } catch (err) {
+      sf.alert.replaceChildren(h('p', { text: errText(err) }));
+    } finally {
+      sf.submit.disabled = false;
+    }
+  });
+
+  /* ---------- Lệnh nạp ngân sách (adTopups) ---------- */
+  const orders = h('div', { class: 'adm-list' });
+  const orderStatus = h('p', { class: 'muted small', role: 'status' });
+  const syncNow = async (): Promise<string> => {
+    if (!config.adsSyncUrl) return 'Chưa cấu hình địa chỉ đồng bộ — trang tính sẽ ghi ở lần đồng bộ mỗi giờ.';
+    try {
+      const res = await fetch(`${config.adsSyncUrl}?dongbo=1`);
+      const data = (await res.json()) as { ok?: boolean; loi?: string; ghiNap?: number };
+      return data.ok
+        ? `Đã ghi ${data.ghiNap ?? 0} lệnh vào trang tính và cập nhật số dư trên web.`
+        : `Chưa đồng bộ ngay được (${data.loi ?? 'lỗi không rõ'}) — trang tính sẽ tự ghi ở lần đồng bộ mỗi giờ, hoặc bấm "Đồng bộ ngay" sau 30 giây.`;
+    } catch (err) {
+      return `Chưa đồng bộ ngay được (${String(err)}) — trang tính sẽ tự ghi ở lần đồng bộ mỗi giờ.`;
+    }
+  };
+  const tState = (t: AdBudgetTopup) =>
+    t.status === 'approved'
+      ? t.written
+        ? `Đã ghi vào trang tính${t.sheetTab ? ` (${t.sheetTab})` : ''} ${when(t.writtenAt)}`
+        : 'Đã nhận tiền — chờ ghi vào trang tính'
+      : t.status === 'pending'
+        ? 'Chờ chuyển khoản'
+        : t.status === 'cancelled'
+          ? 'Khách đã hủy'
+          : `Từ chối${t.reason ? `: ${t.reason}` : ''}`;
+  const drawOrders = async () => {
+    orders.replaceChildren(h('p', { class: 'muted', text: 'Đang tải…' }));
+    try {
+      await loadCustomers();
+      const snap = await getDocs(collection(db, 'adTopups'));
+      const all = snap.docs.map((x) => parseAdBudgetTopup(x.id, x.data()));
+      const rank = (t: AdBudgetTopup) => (t.status === 'pending' ? 0 : t.status === 'approved' && !t.written ? 1 : 2);
+      all.sort((a, b) => rank(a) - rank(b) || (b.createdAt?.getTime() ?? 0) - (a.createdAt?.getTime() ?? 0));
+      const list = all.filter((t, i) => rank(t) < 2 || i < 30);
+      if (!list.length) {
+        orders.replaceChildren(h('p', { class: 'muted', text: 'Chưa có lệnh nạp ngân sách nào.' }));
+        return;
+      }
+      orders.replaceChildren(
+        ...list.map((t) => {
+          const canDecide = (t.status === 'pending' || t.status === 'cancelled') && !t.written;
+          const day = h('input', { type: 'date', value: t.day || todayVn(), 'aria-label': `Ngày ghi vào trang tính cho ${t.code}` }) as HTMLInputElement;
+          const ok = h('button', { type: 'button', class: 'btn btn-sm btn-primary', text: 'Đã nhận tiền' });
+          const no = h('button', { type: 'button', class: 'btn btn-sm btn-ghost', text: 'Từ chối' });
+          ok.addEventListener('click', async () => {
+            if (!/^\d{4}-\d{2}-\d{2}$/.test(day.value)) {
+              toast('Chọn ngày ghi vào trang tính.', 'error');
+              return;
+            }
+            const c = await confirmDialog({
+              title: `Xác nhận đã nhận ${money(t.amount)}?`,
+              body: [
+                h('p', { text: `Nội dung chuyển khoản: ${t.code}. Khách: ${who(t.uid, t.email)}.` }),
+                h('p', { text: `Trang tính bot 3 sẽ cộng ${money(t.budget)} (đã trừ phí ${t.feePercent}%) vào cột nạp của ${t.accountLabel}, ngày ${dmy(day.value)}.` }),
+                h('p', { text: 'Anh kiểm tra app ngân hàng đã có tiền với đúng nội dung này rồi mới bấm.' }),
+              ],
+              confirm: 'Đã nhận tiền',
+              cancel: 'Chưa',
+            });
+            if (!c.ok) return;
+            ok.disabled = true;
+            no.disabled = true;
+            try {
+              await updateDoc(doc(db, 'adTopups', t.code), { status: 'approved', day: day.value, decidedAt: serverTimestamp(), decidedBy: me() });
+              orderStatus.textContent = 'Đã duyệt. Đang ghi vào trang tính…';
+              orderStatus.textContent = await syncNow();
+              void drawOrders();
+              void drawList();
+            } catch (err) {
+              toast(errText(err), 'error');
+              ok.disabled = false;
+              no.disabled = false;
+            }
+          });
+          no.addEventListener('click', async () => {
+            const c = await confirmDialog({
+              title: `Từ chối lệnh ${t.code}?`,
+              body: ['Khách sẽ thấy lệnh bị từ chối kèm lý do. Trang tính không thay đổi.'],
+              confirm: 'Từ chối',
+              cancel: 'Giữ lại',
+              danger: true,
+              input: { label: 'Lý do (khách thấy)', required: true, maxlength: 300 },
+            });
+            if (!c.ok) return;
+            try {
+              await updateDoc(doc(db, 'adTopups', t.code), { status: 'rejected', reason: c.value, decidedAt: serverTimestamp(), decidedBy: me() });
+              toast('Đã từ chối.');
+              void drawOrders();
+            } catch (err) {
+              toast(errText(err), 'error');
+            }
+          });
+          return h(
+            'article',
+            { class: `adm-item${canDecide ? ' is-low' : ''}` },
+            h(
+              'div',
+              { class: 'adm-ad-main' },
+              h('h3', { text: `${money(t.amount)} · ${t.code}` }),
+              h('p', { class: 'small', text: `${t.accountLabel} (${t.actId}) · Ngân sách ${money(t.budget)} · phí ${t.feePercent}%` }),
+              h('p', { class: 'small muted', text: `Khách: ${who(t.uid, t.email)} · tạo ${when(t.createdAt)} · ngày ghi ${dmy(t.day)}` }),
+              h('p', { class: 'small', text: tState(t) }),
+            ),
+            canDecide ? h('div', { class: 'adm-actions' }, h('label', { class: 'small' }, 'Ngày ghi ', day), ok, no) : null,
+          );
+        }),
+      );
+    } catch (err) {
+      orders.replaceChildren(h('p', { class: 'auth-alert', text: errText(err) }));
+    }
+  };
+  const refreshOrders = h('button', { type: 'button', class: 'btn btn-sm', onclick: () => void drawOrders() }, icon('refresh'), 'Tải lại');
+
   root.replaceChildren(
     h('p', { class: 'view-lead', text: 'Gắn tài khoản quảng cáo với khách để khách xem báo cáo chi tiêu, số dư và nhận cảnh báo số dư thấp. Số liệu lấy từ trang tính "BC ADS - META API (BOT 3)": chi tiêu do bot 3 nhập từ Meta, tiền nạp anh nhập ở cột B/C.' }),
-    h('section', { class: 'panel' }, formTitle, f.form),
+    h('section', {}, h('div', { class: 'panel-head' }, h('h2', { class: 'sub-title', text: 'Lệnh nạp ngân sách' }), refreshOrders), h('p', { class: 'muted small', text: 'Khách tạo lệnh trong Báo cáo quảng cáo. Thấy tiền về đúng nội dung chuyển khoản thì bấm "Đã nhận tiền": trang tính bot 3 tự cộng ngân sách (đã trừ phí) vào cột nạp đúng ngày, số dư trên web tự cập nhật.' }), orderStatus, orders),
     h('section', {}, h('div', { class: 'panel-head' }, h('h2', { class: 'sub-title', text: 'Tất cả tài khoản quảng cáo' }), syncBtn), syncStatus, list),
+    h('section', { class: 'panel' }, formTitle, f.form),
+    h('section', { class: 'panel' }, h('h2', { text: 'Cài đặt nạp ngân sách' }), sf.form),
   );
   fill(null);
-  await drawList();
+  await Promise.all([drawList(), drawOrders(), fillSettings()]);
 };

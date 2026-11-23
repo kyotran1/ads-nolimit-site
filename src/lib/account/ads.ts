@@ -17,7 +17,7 @@ import {
   when,
 } from "./ctx";
 import { ensure, errors, isLoaded, on, reload, state } from "./store";
-import { selectCard } from "./services";
+import { openAdTopup, recentTopups } from "./ad-topup";
 import QRCode from "qrcode";
 import { buildVietQr } from "../vietqr";
 
@@ -127,10 +127,6 @@ const fact = (label: string, value: string, cls = "") =>
     h("dd", { text: value }),
   );
 
-const addBudget = () => {
-  selectCard("ad-budget");
-  go("services");
-};
 
 const accountCard = (a: AdAccount) => {
   const l = a.latest;
@@ -663,7 +659,11 @@ const renderReport = (actId: string) => {
           { class: "ad-report-foot" },
           h(
             "button",
-            { type: "button", class: "btn btn-primary", onclick: addBudget },
+            {
+              type: "button",
+              class: "btn btn-primary",
+              onclick: () => void openAdTopup(a),
+            },
             icon("plus"),
             T.addBudget,
           ),
@@ -675,6 +675,7 @@ const renderReport = (actId: string) => {
             : null,
         )
       : null,
+    recentTopups(a),
   ];
   box.replaceChildren(...parts.filter((x): x is Node => x !== null));
 };
@@ -696,7 +697,7 @@ byId("ads-back").addEventListener("click", (e) => {
   go("ads");
 });
 
-on(["adAccounts", "adReports", "payment"], () => {
+on(["adAccounts", "adReports", "payment", "adTopups"], () => {
   if (isVisible("ads")) render();
   renderBanner();
 });
@@ -729,6 +730,6 @@ const renderBanner = () => {
 register("ads", {
   enter() {
     render();
-    void ensure("adAccounts", "adReports", "payment");
+    void ensure("adAccounts", "adReports", "payment", "adTopups", "adTopupSettings");
   },
 });
