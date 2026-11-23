@@ -229,19 +229,33 @@ const banner = (note: string) => {
   );
 };
 
+/** Mọi ngày của tháng YYYY-MM (giống cột ngày trên trang tính). */
+const monthDays = (ym: string): string[] => {
+  const [y, m] = ym.split("-").map(Number);
+  if (!y || !m) return [];
+  const n = new Date(y, m, 0).getDate();
+  return Array.from({ length: n }, (_, i) => `${ym}-${String(i + 1).padStart(2, "0")}`);
+};
+
+/** Hôm nay theo giờ Việt Nam, dạng YYYY-MM-DD. */
+const todayVn = () => new Intl.DateTimeFormat("en-CA", { timeZone: "Asia/Ho_Chi_Minh" }).format(new Date());
+
 const topupTable = (r: AdReport) => {
-  const rows = r.topups.map((t) => {
-    if (!t.date) {
-      const cls = t.amount < 0 ? "xl-red" : "xl-g1";
-      return h(
-        "tr",
-        { class: cls },
-        td(t.label, "xl-label"),
-        td(money(t.amount)),
-      );
-    }
-    return h("tr", {}, td(dmy(t.date), "xl-date"), td(money(t.amount)));
-  });
+  const labels = r.topups.filter((t) => !t.date);
+  const byDate = new Map<string, number>();
+  r.topups.filter((t) => t.date).forEach((t) => byDate.set(t.date, (byDate.get(t.date) ?? 0) + t.amount));
+  const today = todayVn();
+  const rows = [
+    ...labels.map((t) =>
+      h("tr", { class: t.amount < 0 ? "xl-red" : "xl-g1" }, td(t.label, "xl-label"), td(money(t.amount))),
+    ),
+    // Ngày đã qua: có nạp thì ghi số tiền, không nạp ghi 0đ. Hôm nay và các ngày tới: chỉ ghi khi có nạp.
+    ...monthDays(r.month).map((d) => {
+      const amt = byDate.get(d) ?? 0;
+      const text = amt !== 0 ? money(amt) : d < today ? money(0) : "";
+      return h("tr", {}, td(dmy(d), "xl-date"), td(text));
+    }),
+  ];
   return h(
     "table",
     { class: "xl-t xl-topup" },
@@ -308,22 +322,19 @@ const daysTable = (r: AdReport) => {
       h(
         "tbody",
         {},
-        ...r.days.map((d) =>
-          h(
+        ...monthDays(r.month).map((date) => {
+          const d = r.days.find((x) => x.date === date);
+          return h(
             "tr",
             {},
-            h("th", {
-              scope: "row",
-              class: "xl-date xl-daycol",
-              text: dmy(d.date),
-            }),
-            td(num(d.comment)),
-            td(num(d.inbox)),
-            td(num(d.data)),
-            td(money(d.cpd)),
-            td(money(d.spend)),
-          ),
-        ),
+            h("th", { scope: "row", class: "xl-date xl-daycol", text: dmy(date) }),
+            td(d ? num(d.comment) : ""),
+            td(d ? num(d.inbox) : ""),
+            td(d ? num(d.data) : ""),
+            td(d ? money(d.cpd) : ""),
+            td(d ? money(d.spend) : ""),
+          );
+        }),
       ),
     ),
   );
