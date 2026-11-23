@@ -9,6 +9,8 @@ import { dmy, my } from '../ads/report';
 import { go, isVisible, lang, loadError, money, register, route, when } from './ctx';
 import { ensure, errors, isLoaded, on, reload, state } from './store';
 import { selectCard } from './services';
+import QRCode from 'qrcode';
+import { buildVietQr } from '../vietqr';
 
 const T = {
   vi: {
@@ -38,6 +40,10 @@ const T = {
     service: { ads: 'Quảng cáo hiệu suất', 'agency-account': 'Tài khoản Agency BM2500', 'ad-budget': 'Nạp ngân sách quảng cáo' },
     notFound: 'Không tìm thấy tài khoản quảng cáo này.',
     tableLabel: 'Chi tiêu và kết quả từng ngày',
+    account: 'STK NHẬN TIỀN',
+    qr: 'MÃ QR',
+    scan: 'Quét mã để chuyển tiền đến',
+    qrAlt: 'Mã QR chuyển khoản nạp ngân sách quảng cáo',
   },
   en: {
     balance: 'Balance',
@@ -66,6 +72,10 @@ const T = {
     service: { ads: 'Performance ads', 'agency-account': 'Agency ad account BM2500', 'ad-budget': 'Ad budget top-up' },
     notFound: 'This ad account was not found.',
     tableLabel: 'Daily spend and results',
+    account: 'ACCOUNT NO.',
+    qr: 'QR CODE',
+    scan: 'Scan to transfer to',
+    qrAlt: 'Bank transfer QR code for ad budget top-ups',
   },
 }[lang];
 
@@ -125,85 +135,110 @@ const renderList = () => {
   cards.replaceChildren(...state.adAccounts.map(accountCard));
 };
 
-const topupBlock = (r: AdReport) =>
-  h(
-    'section',
-    { class: 'ad-block ad-topups', 'aria-label': T.topupBlock },
-    h('h3', { class: 'ad-block-title', text: T.topupBlock }),
+/* ---------- Báo cáo tháng: dựng lại đúng tab trang tính (màu, khối, viền) ---------- */
+
+const td = (text: string, cls = '', attrs: Record<string, string | number> = {}) => h('td', { class: cls, text, ...attrs });
+const th = (text: string, cls = '', attrs: Record<string, string | number> = {}) => h('th', { class: cls, text, scope: 'col', ...attrs });
+
+/** Dòng chữ xanh dương trên cùng của tab (ghi chú chuyển khoản + cảm ơn), "[ ADS-NOLIMIT.AGENCY ]" tô xanh lá. */
+const banner = (note: string) => {
+  const lines = note.split(/\n+/).map((x) => x.trim()).filter(Boolean);
+  if (!lines.length) return null;
+  return h(
+    'div',
+    { class: 'xl-banner' },
+    ...lines.map((line) => {
+      const m = /^(.*?)(ADS-NOLIMIT\.AGENCY)(.*)$/i.exec(line);
+      return m ? h('p', {}, m[1], h('span', { class: 'xl-brand', text: m[2] }), m[3]) : h('p', { text: line });
+    }),
+  );
+};
+
+const topupTable = (r: AdReport) => {
+  const rows = r.topups.map((t) => {
+    if (!t.date) {
+      const cls = t.amount < 0 ? 'xl-red' : 'xl-g1';
+      return h('tr', { class: cls }, td(t.label, 'xl-label'), td(money(t.amount)));
+    }
+    return h('tr', {}, td(dmy(t.date), 'xl-date'), td(money(t.amount)));
+  });
+  return h(
+    'table',
+    { class: 'xl-t xl-topup' },
+    h('caption', { class: 'visually-hidden', text: T.topupBlock }),
+    h('thead', {}, h('tr', {}, th(T.topupBlock.toUpperCase(), 'xl-g1 xl-title', { colspan: 2 })), h('tr', {}, th(T.date.toUpperCase(), 'xl-g2'), th(T.amount.toUpperCase(), 'xl-g2'))),
+    h('tbody', {}, ...rows),
+  );
+};
+
+const daysTable = (r: AdReport) => {
+  const cols = [T.comment, T.inbox, T.data, T.cpd, T.spend].map((x) => x.toUpperCase());
+  const t = r.totals;
+  return h(
+    'div',
+    { class: 'xl-scroll', tabindex: 0, role: 'region', 'aria-label': T.tableLabel },
     h(
       'table',
-      { class: 'ad-table' },
-      h('thead', {}, h('tr', {}, h('th', { scope: 'col', text: T.date }), h('th', { scope: 'col', class: 'num', text: T.amount }))),
+      { class: 'xl-t xl-days' },
+      h(
+        'thead',
+        {},
+        h('tr', {}, th(`NAME TKQC : ${r.accountName}`, 'xl-g2 xl-name', { colspan: 6 })),
+        h('tr', {}, th(T.date.toUpperCase(), 'xl-g2 xl-daycol', { rowspan: 2 }), ...cols.map((c) => th(c, 'xl-g2'))),
+        h('tr', { class: 'xl-y' }, td(num(t.comment)), td(num(t.inbox)), td(num(t.data)), td(money(t.cpd)), td(money(t.spend))),
+      ),
       h(
         'tbody',
         {},
-        ...r.topups
-          .filter((t) => t.amount !== 0 || !t.date)
-          .map((t) => h('tr', { class: t.date ? '' : 'is-label' }, h('td', { text: t.date ? dmy(t.date) : t.label }), h('td', { class: 'num', text: money(t.amount) }))),
-      ),
-    ),
-  );
-
-const daysTable = (r: AdReport) => {
-  const head = [T.date, T.comment, T.inbox, T.data, T.cpd, T.spend];
-  return h(
-    'section',
-    { class: 'ad-block ad-days' },
-    h('h3', { class: 'ad-block-title', text: r.accountName }),
-    h(
-      'div',
-      { class: 'ad-scroll', tabindex: 0, role: 'region', 'aria-label': T.tableLabel },
-      h(
-        'table',
-        { class: 'ad-table ad-table--days' },
-        h('thead', {}, h('tr', {}, ...head.map((x, i) => h('th', { scope: 'col', class: i ? 'num' : '', text: x })))),
-        h(
-          'tbody',
-          {},
-          h(
-            'tr',
-            { class: 'is-total' },
-            h('th', { scope: 'row', text: T.total }),
-            h('td', { class: 'num', text: num(r.totals.comment) }),
-            h('td', { class: 'num', text: num(r.totals.inbox) }),
-            h('td', { class: 'num', text: num(r.totals.data) }),
-            h('td', { class: 'num', text: money(r.totals.cpd) }),
-            h('td', { class: 'num', text: money(r.totals.spend) }),
-          ),
-          ...r.days.map((d) =>
-            h(
-              'tr',
-              {},
-              h('th', { scope: 'row', text: dmy(d.date) }),
-              h('td', { class: 'num', text: num(d.comment) }),
-              h('td', { class: 'num', text: num(d.inbox) }),
-              h('td', { class: 'num', text: num(d.data) }),
-              h('td', { class: 'num', text: money(d.cpd) }),
-              h('td', { class: 'num', text: money(d.spend) }),
-            ),
-          ),
+        ...r.days.map((d) =>
+          h('tr', {}, h('th', { scope: 'row', class: 'xl-date xl-daycol', text: dmy(d.date) }), td(num(d.comment)), td(num(d.inbox)), td(num(d.data)), td(money(d.cpd)), td(money(d.spend))),
         ),
       ),
     ),
   );
 };
 
-const summaryBlock = (a: AdAccount, r: AdReport) =>
-  h(
-    'section',
-    { class: `ad-block ad-summary${a.latest?.low && r.month === a.latest.month ? ' is-low' : ''}` },
+const sideBlock = (r: AdReport) => {
+  const p = state.payment;
+  const sum = h(
+    'table',
+    { class: 'xl-t xl-sum' },
     h(
-      'dl',
-      { class: 'ad-sum' },
-      h('div', {}, h('dt', { text: T.totalTopup }), h('dd', { text: money(r.totals.topup) })),
-      h('div', {}, h('dt', { text: T.totalSpend }), h('dd', { text: money(r.totals.spend) })),
-      h('div', { class: 'ad-sum-balance' }, h('dt', { text: T.balance }), h('dd', { text: money(r.totals.balance) })),
+      'tbody',
+      {},
+      h('tr', { class: 'xl-g1' }, h('th', { scope: 'row', text: T.totalTopup.toUpperCase() }), td(money(r.totals.topup))),
+      h('tr', { class: 'xl-y' }, h('th', { scope: 'row', text: T.totalSpend.toUpperCase() }), td(money(r.totals.spend))),
+      h('tr', { class: 'xl-g1' }, h('th', { scope: 'row', text: T.balance.toUpperCase() }), td(money(r.totals.balance))),
     ),
-    a.latest?.low && r.month === a.latest.month ? h('p', { class: 'ad-low' }, icon('bell'), h('span', { text: T.low })) : null,
-    h('button', { type: 'button', class: 'btn btn-primary', onclick: addBudget }, icon('plus'), T.addBudget),
-    r.note ? h('p', { class: 'ad-note', text: r.note }) : null,
-    r.updatedAt ? h('p', { class: 'muted small', text: `${T.updated} ${when(r.updatedAt)}` }) : null,
   );
+  if (!p) return h('div', { class: 'xl-side' }, sum);
+  const qr = h('div', { class: 'xl-qr', role: 'img', 'aria-label': T.qrAlt });
+  try {
+    const payload = buildVietQr({ bin: p.bankBin, account: p.accountNumber });
+    void QRCode.toString(payload, { type: 'svg', errorCorrectionLevel: 'M', margin: 1, color: { dark: '#000000ff', light: '#ffffffff' } }).then((svg: string) => {
+      // SVG do thư viện tạo từ chuỗi VietQR (không chứa dữ liệu người dùng dạng HTML)
+      qr.innerHTML = svg;
+      qr.querySelector('svg')?.setAttribute('aria-hidden', 'true');
+    });
+  } catch {
+    /* thiếu thông tin ngân hàng hợp lệ: bỏ QR */
+  }
+  const bank = h(
+    'table',
+    { class: 'xl-t xl-bank' },
+    h(
+      'tbody',
+      {},
+      h('tr', { class: 'xl-red' }, td(p.bankName.toUpperCase()), td(p.accountName)),
+      h('tr', { class: 'xl-red' }, td(T.account), td(p.accountNumber)),
+      h('tr', {}, td(T.qr, 'xl-qrtitle', { colspan: 2 })),
+      h('tr', {}, h('td', { colspan: 2, class: 'xl-qrcell' }, h('p', { class: 'xl-qrnote' }, T.scan, h('br'), h('strong', { text: p.accountName }), h('br'), h('strong', { text: p.accountNumber })), qr)),
+    ),
+  );
+  return h('div', { class: 'xl-side' }, sum, bank);
+};
+
+const sheetView = (r: AdReport) => h('div', { class: 'xl' }, banner(r.note), h('div', { class: 'xl-grid' }, topupTable(r), daysTable(r), sideBlock(r)));
 
 const renderReport = (actId: string) => {
   listView.hidden = true;
@@ -224,16 +259,27 @@ const renderReport = (actId: string) => {
     month = (select as HTMLSelectElement).value;
     renderReport(actId);
   });
+  const low = a.latest?.low && r?.month === a.latest.month;
 
-  box.replaceChildren(
+  const parts: (Node | null)[] = [
     h(
       'div',
       { class: 'ad-report-head' },
       h('div', {}, h('h2', { class: 'sub-title', text: a.label || a.accountName }), h('p', { class: 'muted small', text: `${a.accountName} · ${T.service[a.service]}` })),
       reports.length > 1 ? select : reports.length ? h('span', { class: 'chip', text: `${T.month} ${my(month)}` }) : null,
     ),
-    r ? h('div', { class: 'ad-sheet' }, summaryBlock(a, r), topupBlock(r), daysTable(r)) : h('p', { class: 'muted', text: T.noReport }),
-  );
+    low ? h('p', { class: 'ad-low' }, icon('bell'), h('span', { text: T.low })) : null,
+    r ? sheetView(r) : h('p', { class: 'muted', text: T.noReport }),
+    r
+      ? h(
+          'div',
+          { class: 'ad-report-foot' },
+          h('button', { type: 'button', class: 'btn btn-primary', onclick: addBudget }, icon('plus'), T.addBudget),
+          r.updatedAt ? h('p', { class: 'muted small', text: `${T.updated} ${when(r.updatedAt)}` }) : null,
+        )
+      : null,
+  ];
+  box.replaceChildren(...parts.filter((x): x is Node => x !== null));
 };
 
 const render = () => {
@@ -253,7 +299,7 @@ byId('ads-back').addEventListener('click', (e) => {
   go('ads');
 });
 
-on(['adAccounts', 'adReports'], () => {
+on(['adAccounts', 'adReports', 'payment'], () => {
   if (isVisible('ads')) render();
   renderBanner();
 });
@@ -272,6 +318,6 @@ const renderBanner = () => {
 register('ads', {
   enter() {
     render();
-    void ensure('adAccounts', 'adReports');
+    void ensure('adAccounts', 'adReports', 'payment');
   },
 });
