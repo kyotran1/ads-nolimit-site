@@ -458,7 +458,10 @@ const saveZoom = (z: number) => {
 };
 
 const viewer = (r: AdReport, actId: string) => {
+  // Thu nhỏ bằng transform (cả báo cáo co lại như một bức ảnh, bố cục không đổi).
+  // Không dùng CSS zoom: Safari iPhone co bảng nhưng không co cột cố định/QR → đè lên nhau.
   const canvas = h("div", { class: "xv-canvas" }, sheetView(r));
+  const sizer = h("div", { class: "xv-sizer" }, canvas);
   const view = h(
     "div",
     {
@@ -467,8 +470,14 @@ const viewer = (r: AdReport, actId: string) => {
       role: "region",
       "aria-label": T.tableLabel,
     },
-    canvas,
+    sizer,
   );
+  let cur = 1;
+  const resize = () => {
+    sizer.style.width = `${canvas.offsetWidth * cur}px`;
+    sizer.style.height = `${canvas.offsetHeight * cur}px`;
+  };
+  if ("ResizeObserver" in window) new ResizeObserver(resize).observe(canvas);
   const label = h("span", { class: "xv-zoom", "aria-live": "polite" });
   const canvasPx = () =>
     CANVAS_REM *
@@ -476,12 +485,11 @@ const viewer = (r: AdReport, actId: string) => {
   const fit = () =>
     Math.max(0.3, Math.min(1, (view.clientWidth - 2) / canvasPx()));
   const apply = (z: number, keep?: { x: number; y: number }) => {
-    const old =
-      parseFloat(
-        (canvas.style as CSSStyleDeclaration & { zoom: string }).zoom || "1",
-      ) || 1;
+    const old = cur;
     const nz = Math.round(Math.max(0.3, Math.min(2, z)) * 100) / 100;
-    (canvas.style as CSSStyleDeclaration & { zoom: string }).zoom = String(nz);
+    cur = nz;
+    canvas.style.transform = `scale(${nz})`;
+    resize();
     label.textContent = `${Math.round(nz * 100)}%`;
     if (keep) {
       // giữ điểm đang nhìn (giữa 2 ngón tay / giữa khung) đứng yên khi đổi cỡ

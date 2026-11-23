@@ -147,6 +147,8 @@
 /* Khung xem kiểu ứng dụng Google Trang tính: trang báo cáo giữ nguyên bố cục máy tính (rộng cố định),
    cuộn ngang/dọc trong khung, phóng to/thu nhỏ (nút hoặc chụm 2 ngón), thanh tab tài khoản ở chân. */
 .xv {
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
   border-radius: var(--r-md);
   overflow: hidden;
   border: 1px solid #dadce0;
@@ -216,8 +218,15 @@
   outline: 2px solid #1a73e8;
   outline-offset: -2px;
 }
+.xv-sizer {
+  position: relative;
+  overflow: hidden;
+}
 .xv-canvas {
   width: 74rem;
+  transform-origin: 0 0;
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
 }
 .xv-tabs {
   display: flex;
