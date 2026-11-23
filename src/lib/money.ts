@@ -9,10 +9,15 @@ const nf = {
   vi: new Intl.NumberFormat('vi-VN'),
   en: new Intl.NumberFormat('en-US'),
 };
+/** VNĐ không có số lẻ: làm tròn về đồng (trang tính có thể chứa số chia chưa làm tròn, ví dụ giá / data). */
+const nfVnd = {
+  vi: new Intl.NumberFormat('vi-VN', { maximumFractionDigits: 0 }),
+  en: new Intl.NumberFormat('en-US', { maximumFractionDigits: 0 }),
+};
 
 /** 1000000 → "1.000.000đ" (vi) / "1,000,000 VND" (en). */
 export const formatVnd = (amount: number, lang: Lang): string =>
-  lang === 'en' ? `${nf.en.format(amount)} VND` : `${nf.vi.format(amount)}đ`;
+  lang === 'en' ? `${nfVnd.en.format(amount)} VND` : `${nfVnd.vi.format(amount)}đ`;
 
 /** Có dấu: "+1.000.000đ" / "−990.000đ". */
 export const formatSigned = (amount: number, lang: Lang): string =>
