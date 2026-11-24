@@ -34,22 +34,16 @@ fit(sq, 512).save('public/icon-512.png'); fit(sq, 192).save('public/icon-192.png
 # 2) iPhone: không hỗ trợ trong suốt → nền trắng, iOS tự bo góc; khung thu 88% để không bị cắt
 fit(sq, 180, 0.88, (255, 255, 255, 255)).convert('RGB').save('public/apple-touch-icon.png')
 
-# 3) Android kiểu mới (maskable): hệ điều hành tự cắt hình → nền trắng tràn viền, chỉ logo + chữ trong vùng an toàn
-cx0, cx1, cy0, cy1 = x0 + 170, x1 - 170, y0 + 170, y1 - 170                # phần trong khung, bỏ cả quầng sáng sát khung
-sub = a[cy0:cy1, cx0:cx1]
-ink = sub.min(axis=2) < 150                                                # chỉ nét đậm của logo và chữ
-iy, ix = np.where(ink)
-pad = 14
-bx0, bx1, by0, by1 = ix.min() + cx0 - pad, ix.max() + 1 + cx0 + pad, iy.min() + cy0 - pad, iy.max() + 1 + cy0 + pad
-print('logo+chu:', bx0, by0, bx1, by1)
-content = src.crop((bx0, by0, bx1, by1)).convert('RGBA')
-diag = (content.width ** 2 + content.height ** 2) ** 0.5
-k = (0.80 * 512) / diag * 0.97                                             # nằm trong vòng tròn an toàn 80%
-cw, ch = round(content.width * k), round(content.height * k)
-mk = Image.new('RGBA', (512, 512), (255, 255, 255, 255))
-mk.alpha_composite(content.resize((cw, ch), Image.LANCZOS), ((512 - cw) // 2, (512 - ch) // 2))
+# 3) Android kiểu mới (maskable): mỗi hãng tự cắt hình (tròn / vuông bo) → nền trắng tràn viền,
+#    cả khung thu nhỏ vừa vòng tròn an toàn 80% để không hãng nào cắt lẹm viền (Chủ tịch yêu cầu Android cũng có khung).
+top = np.where(inside[y0 + 3])[0]
+radius = int(top.min() - x0)                                              # bán kính bo góc của khung (px ảnh gốc)
+s_side = x1 - x0
+far = (s_side / 2 - radius) * 2 ** 0.5 + radius                           # điểm xa tâm nhất của khung
+k = (0.40 * 512) / far * 0.97
+print('ban kinh goc', radius, 'ti le khung tren maskable', round(k * s_side / 512, 3))
+mk = fit(sq, 512, k * side / 512, (255, 255, 255, 255))
 mk.convert('RGB').save('public/icon-maskable-512.png')
-print('maskable noi dung', cw, ch)
 
 # Ảnh xem trước: trên nền hình nền tối và nền sáng, + iPhone bo góc, + Android hình tròn
 def rounded(img, radius_ratio):
