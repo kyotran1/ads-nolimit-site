@@ -162,12 +162,13 @@ const start = () =>
     if (!first) return;
     byId('acc-loading').hidden = true;
     byId('acc-app').hidden = false;
+    const welcome = new URLSearchParams(location.search).has('welcome');
     const fromParams = readParams(user);
     started = true;
     show(fromParams ?? fromHash() ?? { section: 'overview', sub: '' }, false);
     // Dữ liệu nền cho menu, tổng quan và số dư
     void ensure('wallet', 'access', 'orders', 'keys', 'topups', 'transactions', 'adAccounts');
-    void loadProfile(user, (u) => renderUser(u));
+    void loadProfile(user, (u) => renderUser(u), welcome);
   });
 
 setupPasswordToggles(document);

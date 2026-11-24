@@ -11,6 +11,7 @@ import { authErrorMessage, dataErrorMessage, m } from '../auth/messages';
 import { initialOf, nameOf, setProfileAvatar, writeUserCache } from '../auth/user-cache';
 import { byId } from '../ui/dom';
 import { fileToAvatarDataUrl } from '../ui/avatar-image';
+import { maybeOnboard } from './onboarding';
 
 import { lang, me, register } from './ctx';
 import { db } from './store';
@@ -100,6 +101,26 @@ avatarRemove.addEventListener('click', () => {
   drawAvatar();
 });
 
+/** Ghi tên + điện thoại (+ ảnh nếu có) từ hộp thoại hoàn thiện hồ sơ; cập nhật form, menu, header. */
+export const saveBasics = async (b: { displayName: string; phone: string; avatar: string | null }) => {
+  const user = me();
+  if (!user) return;
+  const ref = doc(db, 'users', user.uid);
+  if (profileExists === null) profileExists = (await getDoc(ref)).exists();
+  const data: Record<string, unknown> = { displayName: b.displayName, phone: b.phone, updatedAt: serverTimestamp() };
+  if (user.email) data.email = user.email;
+  if (b.avatar !== null) data.avatar = b.avatar;
+  if (profileExists) await updateDoc(ref, data);
+  else await setDoc(ref, { ...data, createdAt: serverTimestamp() });
+  profileExists = true;
+  pName.value = b.displayName;
+  pPhone.value = b.phone;
+  if (b.avatar !== null) applySavedAvatar(b.avatar);
+  if (b.displayName !== (user.displayName ?? '')) await updateProfile(user, { displayName: b.displayName });
+  writeUserCache(user);
+  onRenamed(user);
+};
+
 /** Ghi riêng ảnh đại diện (dùng cho hộp thoại hoàn thiện hồ sơ). */
 export const saveAvatar = async (dataUrl: string) => {
   const user = me();
@@ -130,7 +151,7 @@ const lockForm = (locked: boolean) => {
 /** Số điện thoại trong hồ sơ (gợi ý cho ô "cách liên hệ" của yêu cầu tư vấn). */
 export const profilePhone = () => pPhone.value;
 
-export const loadProfile = async (user: User, renamed?: (user: User) => void) => {
+export const loadProfile = async (user: User, renamed?: (user: User) => void, welcome = false) => {
   if (renamed) onRenamed = renamed;
   say(alertBox, '');
   pName.value ||= user.displayName ?? '';
@@ -166,6 +187,8 @@ export const loadProfile = async (user: User, renamed?: (user: User) => void) =>
       }
     }
     loadedOnce = true;
+    // Vừa đăng ký, hoặc chưa có tên hiển thị → mời hoàn thiện hồ sơ (tên, ảnh, điện thoại)
+    if (welcome || !pName.value.trim()) maybeOnboard(user, { displayName: pName.value.trim(), phone: pPhone.value, avatar: savedAvatar });
   } catch (err) {
     profileExists = profileExists ?? null;
     say(alertBox, `${m('loadFailed')} ${dataErrorMessage(err)}`, {
