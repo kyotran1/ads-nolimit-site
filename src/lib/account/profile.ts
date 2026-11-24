@@ -12,6 +12,7 @@ import { initialOf, nameOf, setProfileAvatar, writeUserCache } from '../auth/use
 import { byId } from '../ui/dom';
 import { fileToAvatarDataUrl } from '../ui/avatar-image';
 import { maybeOnboard } from './onboarding';
+import { mountInstall } from '../pwa/install-ui';
 
 import { lang, me, register } from './ctx';
 import { db } from './store';
@@ -272,3 +273,6 @@ register('profile', {
     if (user && !loadedOnce && form.getAttribute('aria-busy') !== 'true') void loadProfile(user);
   },
 });
+
+// Khối "Cài ứng dụng" cố định ở cuối mục Hồ sơ (ẩn khi đang chạy như app)
+mountInstall('profile', (el) => document.querySelector('[data-view="profile"]')?.append(el));

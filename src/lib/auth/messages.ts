@@ -4,6 +4,8 @@
  *
  * File này được nạp ở trình duyệt, chỉ trên 4 trang tài khoản.
  */
+import { isIos, isStandalone } from '../pwa/install';
+
 export type Lang = 'vi' | 'en';
 type Text = Record<Lang, string>;
 
@@ -111,6 +113,12 @@ const googleUnavailable: Text = {
   en: 'Google sign-in could not start. Your browser or an ad blocker may be blocking Google; allow it for this site and try again.',
 };
 
+/** Thêm vào lỗi đăng nhập Google khi đang chạy trong ứng dụng đã cài trên iPhone/iPad. */
+const iosAppGoogleHint: Text = {
+  vi: 'Trong ứng dụng trên iPhone, hãy đăng nhập bằng email và mật khẩu. Tài khoản Google chưa có mật khẩu: bấm Quên mật khẩu để đặt.',
+  en: 'In the iPhone app, please sign in with your email and password. If your Google account has no password yet, tap Forgot password to set one.',
+};
+
 /** Lỗi khi xác nhận lại mật khẩu (đổi mật khẩu, xóa tài khoản): nói rõ là "mật khẩu hiện tại". */
 const reauthErrors: Record<string, Text> = {
   'invalid-credential': {
@@ -129,7 +137,11 @@ export const authErrorMessage = (err: unknown, context: 'default' | 'reauth' | '
   const raw = errorCode(err);
   const code = aliases[raw] ?? raw;
   if (context === 'reauth' && reauthErrors[code]) return pick(reauthErrors[code]);
-  if (context === 'google' && (!authErrors[code] || code === 'network-request-failed')) return pick(googleUnavailable);
+  if (context === 'google') {
+    const base = !authErrors[code] || code === 'network-request-failed' ? googleUnavailable : authErrors[code];
+    // Ứng dụng đã cài trên iPhone/iPad: cửa sổ bật lên của Google có thể không trả kết quả về app
+    return isStandalone() && isIos() ? `${pick(base)} ${pick(iosAppGoogleHint)}` : pick(base);
+  }
   return pick(authErrors[code] ?? authErrors.generic);
 };
 
