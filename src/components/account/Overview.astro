@@ -1,5 +1,5 @@
 ---
-/** Tổng quan: lời chào, 4 ô số liệu, 3 bước bắt đầu, giao dịch gần đây. Dữ liệu: src/lib/account/overview.ts */
+/** Tổng quan (V4.2): lời chào + ảnh, 3 ô số liệu, dịch vụ đang dùng, lệnh nạp chờ, 5 giao dịch gần đây. Dữ liệu: src/lib/account/overview.ts */
 import Icon from '../Icon.astro';
 import { primaryChannel } from '../../config/site';
 import type { Lang } from '../../config/i18n';
@@ -25,12 +25,10 @@ const copy = {
     orders: 'Đơn hàng',
     keys: 'Key & máy',
     courses: 'Khóa học',
-    stepsTitle: '3 bước bắt đầu',
-    steps: [
-      { icon: 'wallet', title: 'Nạp tiền', text: 'Tạo lệnh nạp, quét mã VietQR bằng app ngân hàng. ADS-Nolimit xác nhận là số dư được cộng.', cta: 'Nạp tiền', to: h('topup') },
-      { icon: 'spark', title: 'Chọn dịch vụ', text: 'Chọn AI Agent, quảng cáo, khóa học… thanh toán ngay bằng số dư hoặc gửi yêu cầu tư vấn.', cta: 'Chọn dịch vụ', to: h('services') },
-      { icon: 'bolt', title: 'ADS-Nolimit triển khai', text: 'Đội ngũ liên hệ bạn để bắt tay vào việc. Theo dõi tiến độ ở mục Đơn hàng.', cta: 'Xem đơn hàng', to: h('orders') },
-    ],
+    ads: 'Tài khoản quảng cáo',
+    services: 'Dịch vụ đang dùng',
+    servicesLead: 'Những dịch vụ ADS-Nolimit đang làm cho bạn. Cần thêm gì, chọn ở mục Dịch vụ.',
+    allServices: 'Xem các dịch vụ',
     recent: 'Giao dịch gần đây',
     seeAll: 'Xem tất cả',
   },
@@ -46,12 +44,10 @@ const copy = {
     orders: 'Orders',
     keys: 'Keys & devices',
     courses: 'Courses',
-    stepsTitle: 'Get started in 3 steps',
-    steps: [
-      { icon: 'wallet', title: 'Top up', text: 'Create a top-up and scan the VietQR code with your banking app. Your balance is credited once we confirm.', cta: 'Top up', to: h('topup') },
-      { icon: 'spark', title: 'Choose a service', text: 'AI agents, advertising, courses… pay straight from your balance or ask for a consultation.', cta: 'Choose a service', to: h('services') },
-      { icon: 'bolt', title: 'ADS-Nolimit delivers', text: 'Our team contacts you to get started. Follow progress under Orders.', cta: 'View orders', to: h('orders') },
-    ],
+    ads: 'Ad accounts',
+    services: 'Services in use',
+    servicesLead: 'What ADS-Nolimit is currently running for you. Need more? Pick from Services.',
+    allServices: 'Browse services',
     recent: 'Recent transactions',
     seeAll: 'See all',
   },
@@ -60,16 +56,20 @@ const copy = {
 const stats = [
   { id: 'balance', icon: 'wallet', tone: 'tone-green', label: copy.balance, to: h('topup') },
   { id: 'orders', icon: 'bag', tone: 'tone-blue', label: copy.orders, to: h('orders') },
-  { id: 'keys', icon: 'key', tone: 'tone-violet', label: copy.keys, to: h('keys') },
-  { id: 'courses', icon: 'book', tone: 'tone-teal', label: copy.courses, to: h('courses') },
+  { id: 'ads', icon: 'chart', tone: 'tone-violet', label: copy.ads, to: h('ads') },
 ] as const;
 ---
 
 <section class="view" data-view="overview" hidden>
   <div class="welcome">
     <div class="welcome-text">
-      <p class="eyebrow">{copy.eyebrow}</p>
-      <h2 class="welcome-title" id="ov-hello">{copy.hello}</h2>
+      <div class="welcome-who">
+        <div class="avatar avatar--ov" id="ov-avatar" aria-hidden="true"></div>
+        <div>
+          <p class="eyebrow">{copy.eyebrow}</p>
+          <h2 class="welcome-title" id="ov-hello">{copy.hello}</h2>
+        </div>
+      </div>
       <p class="welcome-lead">{copy.lead}</p>
       <div class="btn-row welcome-actions">
         <a class="btn btn-primary" href={h('topup')}><Icon name="wallet" />{copy.topUp}</a>
@@ -107,7 +107,7 @@ const stats = [
   </div>
 
   <h2 class="visually-hidden">{copy.stats}</h2>
-  <div class="stats">
+  <div class="stats stats--3">
     {
       stats.map((s) => (
         <a class:list={['stat', s.tone]} href={s.to} data-glow>
@@ -129,28 +129,15 @@ const stats = [
     }
   </div>
 
-  <section class="steps3" aria-labelledby="ov-steps-title">
-    <h2 class="sub-title" id="ov-steps-title">{copy.stepsTitle}</h2>
-    <ol>
-      {
-        copy.steps.map((step, i) => (
-          <li class="step3" data-glow>
-            <span class="step3-num" aria-hidden="true">
-              {i + 1}
-            </span>
-            <span class="step3-icon" aria-hidden="true">
-              <Icon name={step.icon as 'wallet'} />
-            </span>
-            <h3>{step.title}</h3>
-            <p>{step.text}</p>
-            <a class="text-link" href={step.to}>
-              {step.cta}
-              <Icon name="arrow" />
-            </a>
-          </li>
-        ))
-      }
-    </ol>
+  <section class="panel ov-services-panel" aria-labelledby="ov-services-title">
+    <div class="panel-head">
+      <div>
+        <h2 id="ov-services-title">{copy.services}</h2>
+        <p class="muted small">{copy.servicesLead}</p>
+      </div>
+      <a class="text-link" href={h('services')}>{copy.allServices}<Icon name="arrow" /></a>
+    </div>
+    <div class="ov-services" id="ov-services"></div>
   </section>
 
   <section class="panel" aria-labelledby="ov-tx-title">
