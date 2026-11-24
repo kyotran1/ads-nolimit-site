@@ -156,6 +156,7 @@ export const renderAdAccounts = async (root: HTMLElement) => {
         },
         { merge: true },
       );
+      await loadCustomers(true); // số TKQC của từng khách (danh sách Khách hàng) đổi theo người chính / người xem thêm
       toast(editing ? 'Đã lưu thay đổi. Đang đồng bộ báo cáo cho khách…' : 'Đã thêm tài khoản quảng cáo. Đang đồng bộ số liệu…');
       fill(null);
       // Báo cáo (adReports) mang uid của khách do Apps Script ghi lúc đồng bộ. Đổi khách mà không đồng bộ ngay thì
