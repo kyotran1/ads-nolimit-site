@@ -27,6 +27,8 @@ import type { Sdk } from '../ledger/ops';
 import { toDate } from '../ui/dom';
 import { parseAdAccount, parseAdBudgetTopup, parseAdReport, parseAdTopupSettings } from '../ads/report';
 import type { AdAccount, AdBudgetTopup, AdReport, AdTopupSettings } from '../ads/report';
+import { EMPTY_SERVICES, parseCustomerServices } from '../customer/services';
+import type { AutoFacts, CustomerServices } from '../customer/services';
 
 export const db = getFirestore(app);
 export const ops = makeOps(
@@ -182,6 +184,8 @@ export const state = {
   adReports: [] as AdReport[],
   adTopups: [] as AdBudgetTopup[],
   adTopupSettings: null as AdTopupSettings | null,
+  /** Dịch vụ chủ gán + quyền truy cập mục (customerServices/{uid}); chưa có tài liệu → rỗng */
+  customerServices: EMPTY_SERVICES as CustomerServices,
   /** undefined = chưa tải; null = chủ chưa điền */
   payment: undefined as Payment | null | undefined,
 };
@@ -202,7 +206,8 @@ export type StoreKey =
   | 'adAccounts'
   | 'adReports'
   | 'adTopups'
-  | 'adTopupSettings';
+  | 'adTopupSettings'
+  | 'customerServices';
 
 const mine = (name: string) => getDocs(query(collection(db, name), where('uid', '==', state.uid)));
 
@@ -320,6 +325,10 @@ const loaders: Record<StoreKey, () => Promise<void>> = {
   adTopups: async () => {
     const snap = await mine('adTopups');
     state.adTopups = snap.docs.map((x) => parseAdBudgetTopup(x.id, x.data())).sort(newestFirst);
+  },
+  customerServices: async () => {
+    const snap = await getDoc(doc(db, 'customerServices', state.uid));
+    state.customerServices = parseCustomerServices(snap.data());
   },
   adTopupSettings: async () => {
     const snap = await getDoc(doc(db, 'settings', 'adTopup'));
@@ -460,3 +469,13 @@ export const isLoaded = (key: StoreKey) => loaded.has(key);
 export const isLoading = (key: StoreKey) => running.has(key);
 
 export const balance = () => state.wallet?.balance ?? 0;
+
+/** Nguồn tự động cho mergeServices()/isOpen(): từ các phần đã tải (phần chưa tải coi như rỗng). */
+export const autoFacts = (): AutoFacts => ({
+  paidOrders: state.orders
+    .filter((o) => o.status === 'paid' || o.status === 'processing' || o.status === 'done')
+    .map((o) => ({ type: o.type, productId: o.productId, name: o.name, createdAt: o.createdAt })),
+  adAccounts: state.adAccounts.map((a) => ({ label: a.label || a.accountName, service: a.service })),
+  courses: state.access.size,
+  keys: state.keys.filter((k) => k.status === 'active').length,
+});
