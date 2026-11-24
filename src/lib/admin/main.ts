@@ -11,6 +11,7 @@ import { db, errText, setAdmin } from './shared';
 import { renderCustomers, renderOrders, renderOverview, renderRequests, renderTopups } from './money';
 import { renderKeys } from './keys';
 import { renderAdAccounts } from './ads';
+import { renderCustomer } from './customer';
 import { renderContent } from './content';
 import { renderSettings } from './settings';
 
@@ -33,12 +34,29 @@ let ready = false;
 /** Đang đăng xuất: không tự chuyển sang trang đăng nhập khi Firebase báo "đã thoát". */
 let leaving = false;
 
+/** #khach-hang/<uid>[/<tab>] → trang chi tiết khách; null nếu không phải. */
+const customerRoute = (hash: string): { uid: string; tab: string } | null => {
+  const m = /^khach-hang\/([A-Za-z0-9_-]{1,128})(?:\/([a-z-]{1,20}))?$/.exec(hash);
+  return m ? { uid: m[1], tab: m[2] ?? 'dich-vu' } : null;
+};
+const knownHash = (hash: string) => hash in tabs || customerRoute(hash) !== null;
+
 const show = (focus: boolean) => {
-  const id = location.hash.slice(1) in tabs ? location.hash.slice(1) : 'tong-quan';
+  const hash = location.hash.slice(1);
+  const cust = customerRoute(hash);
+  const id = cust ? 'khach-hang' : hash in tabs ? hash : 'tong-quan';
   links.forEach((a) => (a.dataset.tab === id ? a.setAttribute('aria-current', 'page') : a.removeAttribute('aria-current')));
   titleEl.textContent = tabs[id].title;
   document.title = `${tabs[id].title} · Quản trị | ADS-Nolimit`;
-  void tabs[id].render(root);
+  if (cust) {
+    void renderCustomer(root, cust.uid, cust.tab).then(() => {
+      const name = root.querySelector('.adm-cust-id h2')?.textContent;
+      if (name) {
+        titleEl.textContent = `Khách hàng · ${name}`;
+        document.title = `${name} · Khách hàng · Quản trị | ADS-Nolimit`;
+      }
+    });
+  } else void tabs[id].render(root);
   if (focus) {
     titleEl.focus({ preventScroll: true });
     window.scrollTo({ top: 0 });
@@ -46,7 +64,7 @@ const show = (focus: boolean) => {
 };
 
 window.addEventListener('hashchange', () => {
-  if (ready && location.hash.slice(1) in tabs) show(true);
+  if (ready && knownHash(location.hash.slice(1))) show(true);
 });
 
 document.querySelectorAll<HTMLButtonElement>('[data-signout]').forEach((b) =>
