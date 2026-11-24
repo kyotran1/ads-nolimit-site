@@ -110,9 +110,11 @@ export const renderAdAccounts = async (root: HTMLElement) => {
         },
         { merge: true },
       );
-      toast(editing ? 'Đã lưu thay đổi.' : 'Đã thêm tài khoản quảng cáo. Bấm "Đồng bộ ngay" để lấy số liệu.');
+      toast(editing ? 'Đã lưu thay đổi. Đang đồng bộ báo cáo cho khách…' : 'Đã thêm tài khoản quảng cáo. Đang đồng bộ số liệu…');
       fill(null);
-      void drawList();
+      // Báo cáo (adReports) mang uid của khách do Apps Script ghi lúc đồng bộ. Đổi khách mà không đồng bộ ngay thì
+      // khách mới thấy "Chưa có báo cáo" và khách cũ vẫn đọc được báo cáo cho tới lần đồng bộ mỗi giờ → đồng bộ luôn.
+      syncBtn.click();
     } catch (err) {
       f.alert.replaceChildren(h('p', { text: errText(err) }));
     } finally {
