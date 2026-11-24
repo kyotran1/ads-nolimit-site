@@ -8,7 +8,7 @@ import type { User } from 'firebase/auth';
 import { auth, config as authConfig, say, setupPasswordToggles } from '../auth/client';
 import { m } from '../auth/messages';
 import { clearUserCache, initialOf, nameOf, profileAvatarUrl, writeUserCache } from '../auth/user-cache';
-import { byId } from '../ui/dom';
+import { byId, icon, toast } from '../ui/dom';
 import { lang, me, modules, money, route, setMe, setRoute } from './ctx';
 import { hashFor, parseHash, sections } from './routes';
 import type { Route } from './routes';
@@ -184,6 +184,31 @@ document.addEventListener('visibilitychange', () => {
   hiddenAt = 0;
   if (refresh) void reloadLoaded();
 });
+
+// Nút "Làm mới" ở đầu trang: tải lại số dư, lệnh nạp, báo cáo… mà không tải lại cả trang.
+const refreshBtn = document.getElementById('acc-refresh') as HTMLButtonElement | null;
+if (refreshBtn) {
+  refreshBtn.prepend(icon('refresh'));
+  refreshBtn.addEventListener('click', async () => {
+    if (!started || refreshBtn.disabled) return;
+    if (navigator.onLine === false) {
+      toast(lang === 'vi' ? 'Không có mạng. Kiểm tra kết nối rồi bấm lại.' : 'No connection. Check your network and try again.', 'error');
+      return;
+    }
+    refreshBtn.disabled = true;
+    refreshBtn.classList.add('is-busy');
+    try {
+      await reloadLoaded();
+      const t = new Intl.DateTimeFormat(lang === 'vi' ? 'vi-VN' : 'en-GB', { hour: '2-digit', minute: '2-digit' }).format(new Date());
+      toast(lang === 'vi' ? `Đã cập nhật lúc ${t}.` : `Updated at ${t}.`);
+    } catch {
+      toast(lang === 'vi' ? 'Chưa tải lại được. Thử lại sau ít phút.' : 'Could not refresh. Please try again shortly.', 'error');
+    } finally {
+      refreshBtn.disabled = false;
+      refreshBtn.classList.remove('is-busy');
+    }
+  });
+}
 
 setupPasswordToggles(document);
 // Chạy sau cùng: mọi phần tử và hàm ở trên đã sẵn sàng khi Firebase báo trạng thái đăng nhập.

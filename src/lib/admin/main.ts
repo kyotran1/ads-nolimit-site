@@ -6,7 +6,7 @@ import { onAuthStateChanged, signOut } from 'firebase/auth';
 import { doc, getDoc } from 'firebase/firestore/lite';
 import { auth, config as authConfig } from '../auth/client';
 import { clearUserCache, nameOf, writeUserCache } from '../auth/user-cache';
-import { byId, copyButton, h } from '../ui/dom';
+import { byId, copyButton, h, icon } from '../ui/dom';
 import { db, errText, setAdmin } from './shared';
 import { renderCustomers, renderOrders, renderOverview, renderRequests, renderTopups } from './money';
 import { renderKeys } from './keys';
@@ -26,6 +26,17 @@ const tabs: Record<string, { title: string; render: (root: HTMLElement) => Promi
   'noi-dung': { title: 'Khóa học & Hướng dẫn', render: renderContent },
   'cai-dat': { title: 'Cài đặt thanh toán', render: renderSettings },
 };
+
+// Nút "Làm mới": các mục quản trị tự nạp dữ liệu khi mở, nên tải lại trang là lấy số liệu mới nhất (giữ nguyên mục đang xem nhờ hash).
+const refreshBtn = document.getElementById('adm-refresh') as HTMLButtonElement | null;
+if (refreshBtn) {
+  refreshBtn.prepend(icon('refresh'));
+  refreshBtn.addEventListener('click', () => {
+    refreshBtn.disabled = true;
+    refreshBtn.classList.add('is-busy');
+    location.reload();
+  });
+}
 
 const titleEl = byId('dash-title');
 const root = byId('adm-view');
