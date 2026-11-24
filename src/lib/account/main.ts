@@ -9,7 +9,7 @@ import { auth, config as authConfig, say, setupPasswordToggles } from '../auth/c
 import { m } from '../auth/messages';
 import { clearUserCache, initialOf, nameOf, writeUserCache } from '../auth/user-cache';
 import { byId } from '../ui/dom';
-import { lang, me, modules, money, setMe, setRoute } from './ctx';
+import { lang, me, modules, money, route, setMe, setRoute } from './ctx';
 import { hashFor, parseHash, sections } from './routes';
 import type { Route } from './routes';
 import { ensure, on, state } from './store';
@@ -23,6 +23,7 @@ import './keys';
 import './ads';
 import { loadProfile } from './profile';
 import { isLeaving, renderSecurity, whenDeleted } from './security';
+import { gate, initLocks } from './locked';
 
 const titleEl = byId('dash-title');
 const views = Array.from(document.querySelectorAll<HTMLElement>('[data-view]'));
@@ -44,7 +45,8 @@ const show = (r: Route, focus: boolean) => {
   const label = (section.title ?? section.label)[lang];
   titleEl.textContent = label;
   document.title = `${section.label[lang]} · ${baseTitle}`;
-  modules.get(section.id)?.enter(r);
+  // Mục chưa được cấp (ads/courses/keys/guides): thay bằng lời giới thiệu + liên hệ; chưa đủ dữ liệu thì chờ (locked.ts show lại)
+  if (gate(section.id, views.find((v) => v.dataset.view === section.id)) === 'open') modules.get(section.id)?.enter(r);
   if (focus) {
     titleEl.focus({ preventScroll: true });
     window.scrollTo({ top: 0, behavior: 'instant' as ScrollBehavior });
@@ -101,9 +103,6 @@ const renderUser = (user: User) => {
 on(['wallet'], () => {
   const text = state.wallet ? money(state.wallet.balance) : '—';
   document.querySelectorAll<HTMLElement>('[data-bind="balance"]').forEach((el) => (el.textContent = text));
-});
-on(['access'], () => {
-  document.querySelectorAll<HTMLElement>('[data-lock="courses"]').forEach((el) => (el.hidden = state.access.size > 0));
 });
 
 /* ---------- ?welcome=… (vừa tạo tài khoản), ?plan=… (chọn sẵn dịch vụ) ---------- */
@@ -165,6 +164,7 @@ const start = () =>
     show(fromParams ?? fromHash() ?? { section: 'overview', sub: '' }, false);
     // Dữ liệu nền cho menu, tổng quan và số dư
     void ensure('wallet', 'access', 'orders', 'keys', 'topups', 'transactions', 'adAccounts');
+    initLocks(() => show(route(), false)); // biểu tượng khóa trên menu + show lại mục đang xem khi biết quyền
     void loadProfile(user, (u) => renderUser(u));
   });
 

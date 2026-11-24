@@ -132,8 +132,8 @@ const configJson = JSON.stringify(config).replace(/</g, '\\u003c');
                           <Icon name={s.icon} />
                           <span class="side-link-text">{s.label[lang]}</span>
                           {s.id === 'keys' && <span class="side-soon">{copy.soon}</span>}
-                          {s.id === 'courses' && (
-                            <span class="side-lock" data-lock="courses" title={copy.locked} hidden>
+                          {(s.id === 'ads' || s.id === 'courses' || s.id === 'keys' || s.id === 'guides') && (
+                            <span class="side-lock" data-lock={s.id} title={copy.locked} hidden>
                               <Icon name="lock" />
                             </span>
                           )}

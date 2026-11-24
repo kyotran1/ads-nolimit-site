@@ -3004,6 +3004,7 @@ dialog.confirm-dialog {
   justify-self: start;
 }
 .ov-services-empty {
+  grid-column: 1 / -1;
   display: grid;
   justify-items: start;
   gap: 0.75rem;
@@ -3022,4 +3023,45 @@ dialog.confirm-dialog {
     grid-template-columns: auto minmax(0, 1fr) auto;
     align-items: center;
   }
+}
+
+/* ---------- Mục chưa được cấp (locked.ts) ---------- */
+.locked-view {
+  display: grid;
+  justify-items: start;
+  gap: 0.8rem;
+  max-width: 38rem;
+  padding: 1.5rem;
+  border-radius: var(--r-xl);
+  border: 1px dashed var(--line-strong);
+  background: var(--card-bg);
+}
+.locked-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.25rem 0.65rem;
+  border-radius: 999px;
+  border: 1px solid var(--line-strong);
+  color: var(--text-2);
+  font-size: 0.82rem;
+  font-weight: 700;
+}
+.locked-tag svg {
+  width: 0.95rem;
+  height: 0.95rem;
+}
+.locked-view h2 {
+  font-size: 1.35rem;
+}
+.locked-text {
+  color: var(--text-2);
+  line-height: 1.6;
+}
+.side-link[aria-current='page'] .side-lock {
+  color: inherit;
+}
+/* Mục vừa "Sắp ra mắt" vừa khóa: chỉ hiện khóa để chữ không xuống dòng */
+.side-link:has(.side-lock:not([hidden])) .side-soon {
+  display: none;
 }
