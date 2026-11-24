@@ -18,6 +18,7 @@ import { Image } from 'astro:assets';
 import logoMark from '../assets/brand/logo-mark.png';
 import AuthConfig from '../components/auth/AuthConfig.astro';
 import Icon from '../components/Icon.astro';
+import PwaHead from '../components/PwaHead.astro';
 import type { IconName } from '../components/icon-paths';
 import { banks } from '../data/banks';
 import { catalogProducts, pickerGroups } from '../data/catalog';
@@ -60,6 +61,7 @@ const configJson = JSON.stringify(config).replace(/</g, '\\u003c');
     <title>Quản trị | ADS-Nolimit</title>
     <link rel="icon" href="/favicon.ico" sizes="48x48" />
     <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png" />
+    <PwaHead lang="vi" />
   </head>
   <body class="admin-body">
     <header class="adm-top">
