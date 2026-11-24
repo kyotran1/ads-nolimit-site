@@ -7,7 +7,7 @@ import { onAuthStateChanged } from 'firebase/auth';
 import type { User } from 'firebase/auth';
 import { auth, config as authConfig, say, setupPasswordToggles } from '../auth/client';
 import { m } from '../auth/messages';
-import { clearUserCache, initialOf, nameOf, writeUserCache } from '../auth/user-cache';
+import { clearUserCache, initialOf, nameOf, profileAvatarUrl, writeUserCache } from '../auth/user-cache';
 import { byId } from '../ui/dom';
 import { lang, me, modules, money, route, setMe, setRoute } from './ctx';
 import { hashFor, parseHash, sections } from './routes';
@@ -76,17 +76,19 @@ window.addEventListener('hashchange', () => {
 
 /* ---------- Người dùng ---------- */
 
+/** Ảnh đại diện: ưu tiên ảnh khách tải lên (hồ sơ), rồi ảnh Google; không có → chữ cái đầu. */
 const renderAvatar = (user: User) => {
   const box = byId('acc-avatar');
   const name = nameOf(user);
   box.replaceChildren(document.createTextNode(initialOf(name)));
-  if (user.photoURL && /^https:\/\//.test(user.photoURL)) {
+  const src = profileAvatarUrl() || (user.photoURL && /^https:\/\//.test(user.photoURL) ? user.photoURL : '');
+  if (src) {
     const img = document.createElement('img');
     img.alt = '';
     img.referrerPolicy = 'no-referrer';
     img.decoding = 'async';
     img.addEventListener('load', () => box.replaceChildren(img), { once: true });
-    img.src = user.photoURL;
+    img.src = src;
   }
 };
 
@@ -159,13 +161,14 @@ const start = () =>
     if (!first) return;
     byId('acc-loading').hidden = true;
     byId('acc-app').hidden = false;
+    const welcome = new URLSearchParams(location.search).has('welcome');
     const fromParams = readParams(user);
     started = true;
     show(fromParams ?? fromHash() ?? { section: 'overview', sub: '' }, false);
     // Dữ liệu nền cho menu, tổng quan và số dư
     void ensure('wallet', 'access', 'orders', 'keys', 'topups', 'transactions', 'adAccounts');
     initLocks(() => show(route(), false)); // biểu tượng khóa trên menu + show lại mục đang xem khi biết quyền
-    void loadProfile(user, (u) => renderUser(u));
+    void loadProfile(user, (u) => renderUser(u), welcome);
   });
 
 setupPasswordToggles(document);

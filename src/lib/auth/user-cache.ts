@@ -12,8 +12,23 @@ export const USER_CACHE_EVENT = 'adsnl-user';
 export interface CachedUser {
   name: string;
   initial: string;
+  /** Ảnh Google (https) hoặc ảnh đại diện khách tải lên (data:image/…) */
   photoURL?: string;
 }
+
+/** Ảnh đại diện trong hồ sơ (data URL) — đặt bởi trang Tài khoản để header/menu hiện ngay. */
+let profileAvatar = '';
+try {
+  // Lấy lại ảnh đã lưu lần trước để menu/header hiện ngay khi tải trang (hồ sơ tải về sau sẽ ghi đè).
+  const cached = JSON.parse(localStorage.getItem(USER_CACHE_KEY) ?? 'null') as CachedUser | null;
+  if (cached?.photoURL && /^data:image\//.test(cached.photoURL)) profileAvatar = cached.photoURL;
+} catch {
+  /* không có localStorage */
+}
+export const setProfileAvatar = (dataUrl: string) => {
+  profileAvatar = /^data:image\//.test(dataUrl) ? dataUrl : '';
+};
+export const profileAvatarUrl = () => profileAvatar;
 
 interface UserLike {
   displayName: string | null;
@@ -38,7 +53,8 @@ const notify = () => {
 export const writeUserCache = (user: UserLike): void => {
   const name = nameOf(user);
   const value: CachedUser = { name, initial: initialOf(name) };
-  if (user.photoURL && /^https:\/\//.test(user.photoURL)) value.photoURL = user.photoURL;
+  if (profileAvatar) value.photoURL = profileAvatar;
+  else if (user.photoURL && /^https:\/\//.test(user.photoURL)) value.photoURL = user.photoURL;
   try {
     localStorage.setItem(USER_CACHE_KEY, JSON.stringify(value));
   } catch {
