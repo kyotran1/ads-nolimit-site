@@ -21,6 +21,7 @@ import type { AccessKey, AutoFacts, CustomerServices, ManualService, ServiceId, 
 import { balancePanel, docsOf, empty, failed, loading, orderItem, requestItem } from './money';
 import { avatarEl, buildForm, db, errText, loadCustomerServices, loadCustomers, money, saveCustomerServices, str, when } from './shared';
 import type { Customer } from './shared';
+import { roleInAccount } from './viewers';
 
 export const CUSTOMER_TABS = [
   ['dich-vu', 'Dịch vụ & quyền'],
@@ -135,8 +136,19 @@ const ordersPanel = async (c: Customer) => {
   return box;
 };
 
+/** TKQC của một khách: là khách chính (uid ==) HOẶC là người xem thêm (memberUids array-contains); gộp theo id, không trùng. */
+const adAccountsOf = async (uid: string) => {
+  const [main, member] = await Promise.all([
+    docsOf(query(collection(db, 'adAccounts'), where('uid', '==', uid))),
+    docsOf(query(collection(db, 'adAccounts'), where('memberUids', 'array-contains', uid))),
+  ]);
+  const seen = new Set(main.map((d) => d.id));
+  return [...main, ...member.filter((d) => !seen.has(d.id))];
+};
+
 const adsPanel = async (c: Customer) => {
-  const snap = await docsOf(query(collection(db, 'adAccounts'), where('uid', '==', c.uid)));
+  const snap = await adAccountsOf(c.uid);
+  const raw = new Map(snap.map((d) => [d.id, d] as const));
   const accounts = snap.map((d) => parseAdAccount(d.id, d));
   if (!accounts.length)
     return h('div', { class: 'adm-list' }, empty('Chưa gắn tài khoản quảng cáo nào cho khách.'), h('p', {}, h('a', { class: 'btn btn-sm', href: '#tai-khoan-quang-cao', text: 'Gắn TKQC' })));
@@ -148,7 +160,7 @@ const adsPanel = async (c: Customer) => {
       return h(
         'article',
         { class: `adm-item${l?.low ? ' is-low' : ''}` },
-        h('div', { class: 'adm-item-head' }, h('strong', { class: 'adm-title', text: `${a.label || a.accountName}${a.active ? '' : ' (đang ẩn)'}` }), l?.low ? h('span', { class: 'badge badge--rejected', text: 'Số dư thấp' }) : null),
+        h('div', { class: 'adm-item-head' }, h('strong', { class: 'adm-title', text: `${a.label || a.accountName}${a.active ? '' : ' (đang ẩn)'}` }), roleInAccount(raw.get(a.id) ?? {}, c.uid) === 'viewer' ? h('span', { class: 'badge', text: 'người xem thêm' }) : null, l?.low ? h('span', { class: 'badge badge--rejected', text: 'Số dư thấp' }) : null),
         h('p', { class: 'muted small', text: `${a.id} · ${a.accountName} · tab "${a.tabPattern}"` }),
         l
           ? h('p', { class: 'small' }, h('strong', { text: `Số dư ${money(l.balance)}` }), ` · hôm qua ${money(l.spendYesterday)} · TB 7 ngày ${money(l.avg7)} · cập nhật ${when(l.updatedAt)}`)
@@ -176,7 +188,7 @@ const requestsPanel = async (c: Customer) => {
 const loadFacts = async (uid: string): Promise<AutoFacts> => {
   const [orders, ads, courses, keys] = await Promise.all([
     docsOf(query(collection(db, 'orders'), where('uid', '==', uid))),
-    docsOf(query(collection(db, 'adAccounts'), where('uid', '==', uid))),
+    adAccountsOf(uid),
     docsOf(query(collection(db, 'courseAccess'), where('uid', '==', uid))),
     docsOf(query(collection(db, 'keys'), where('uid', '==', uid))),
   ]);

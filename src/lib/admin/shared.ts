@@ -28,6 +28,7 @@ import { h, toDate } from '../ui/dom';
 import type { Bank } from '../../data/banks';
 import type { ProductDoc } from '../../data/catalog';
 import { parseCustomerServices } from '../customer/services';
+import { readStrings } from './viewers';
 import type { CustomerServices } from '../customer/services';
 
 export const db = getFirestore(app);
@@ -155,8 +156,13 @@ export const loadCustomers = (force = false): Promise<Map<string, Customer>> => 
         if (c) c.servicesCount = parseCustomerServices(x.data()).services.filter((s) => s.status !== 'ended').length;
       });
       ads.docs.forEach((x) => {
-        const c = map.get(str(x.data(), 'uid'));
-        if (c && x.data().active !== false) c.adAccounts += 1;
+        const d = x.data();
+        if (d.active === false) return;
+        // đếm theo mọi thành viên (chính + người xem thêm); tài liệu cũ chưa có memberUids → chỉ theo uid
+        new Set([str(d, 'uid'), ...readStrings(d.memberUids)]).forEach((u) => {
+          const c = map.get(u);
+          if (c) c.adAccounts += 1;
+        });
       });
       customers = map;
       return map;
