@@ -5,6 +5,9 @@
  */
 import type { DocumentData } from 'firebase/firestore/lite';
 import { toDate } from '../ui/dom';
+import { parseMembers } from './members';
+
+export { mergeById, mergeSettled, parseMembers } from './members';
 
 export type AdService = 'ads' | 'agency-account' | 'ad-budget';
 
@@ -24,7 +27,13 @@ export interface AdLatest {
 
 export interface AdAccount {
   id: string;
+  /** Tài khoản chính */
   uid: string;
+  /** Người xem thêm (≤ 10); tài liệu cũ → [] */
+  viewerUids: string[];
+  viewerEmails: string[];
+  /** [uid, ...viewerUids]; tài liệu cũ → [uid] */
+  memberUids: string[];
   customerEmail: string;
   accountName: string;
   label: string;
@@ -88,6 +97,7 @@ export const parseAdAccount = (id: string, d: DocumentData): AdAccount => {
   return {
     id,
     uid: s(d, 'uid'),
+    ...parseMembers(d),
     customerEmail: s(d, 'customerEmail'),
     accountName: s(d, 'accountName'),
     label: s(d, 'label'),
