@@ -7,6 +7,7 @@ import { collection, doc, getCount, getDocs, query, serverTimestamp, updateDoc, 
 import type { DocumentData, Query } from 'firebase/firestore/lite';
 import { byId, confirmDialog, copyButton, h, icon, toast } from '../ui/dom';
 import {
+  avatarEl,
   badge,
   buildForm,
   config,
@@ -249,10 +250,10 @@ export const renderOrders = async (root: HTMLElement) => {
     list.replaceChildren(failed(err, () => void renderOrders(root)));
     return;
   }
-  list.replaceChildren(...(rows.length ? rows.slice(0, 300).map((o) => orderItem(o, root)) : [empty('Không có đơn nào.')]));
+  list.replaceChildren(...(rows.length ? rows.slice(0, 300).map((o) => orderItem(o, () => void renderOrders(root))) : [empty('Không có đơn nào.')]));
 };
 
-const orderItem = (o: DocumentData & { id: string }, root: HTMLElement) => {
+export const orderItem = (o: DocumentData & { id: string }, onChanged: () => void) => {
   const status = str(o, 'status');
   const facts = h(
     'dl',
@@ -283,7 +284,7 @@ const orderItem = (o: DocumentData & { id: string }, root: HTMLElement) => {
         if (note.value.trim() !== str(o, 'adminNote')) patch.adminNote = note.value.trim();
         await updateDoc(doc(db, 'orders', o.id), patch);
         toast(`Đơn ${o.id.slice(0, 8)}: ${statusLabel(select.value)}.`);
-        void renderOrders(root);
+        onChanged();
       } catch (err) {
         toast(errText(err), 'error');
         save.disabled = false;
@@ -305,7 +306,7 @@ const orderItem = (o: DocumentData & { id: string }, root: HTMLElement) => {
         const r = await ops.refundOrder(me(), o.id, ok.value || undefined);
         toast(`Đã hoàn tiền. Số dư khách: ${money(r.balanceAfter)}.`);
         void loadCustomers(true);
-        void renderOrders(root);
+        onChanged();
       } catch (err) {
         toast(errText(err), 'error');
         refund.disabled = false;
@@ -363,56 +364,74 @@ export const renderRequests = async (root: HTMLElement) => {
   }
   list.replaceChildren(
     ...(rows.length
-      ? rows.slice(0, 300).map((r) => {
-          const select = h(
-            'select',
-            { class: 'adm-select', 'aria-label': 'Trạng thái yêu cầu' },
-            ...['new', 'contacted', 'in_progress', 'done', 'cancelled'].map((s) => h('option', { value: s, text: statusLabel(s) })),
-          );
-          select.value = str(r, 'status');
-          const save = h('button', { type: 'button', class: 'btn btn-sm', text: 'Lưu' });
-          save.addEventListener('click', async () => {
-            save.disabled = true;
-            try {
-              await updateDoc(doc(db, 'requests', r.id), { status: select.value, updatedAt: serverTimestamp() });
-              toast(`Yêu cầu: ${statusLabel(select.value)}.`);
-              void renderRequests(root);
-            } catch (err) {
-              toast(errText(err), 'error');
-              save.disabled = false;
-            }
-          });
-          return h(
-            'article',
-            { class: 'adm-item' },
-            h('div', { class: 'adm-item-head' }, h('strong', { class: 'adm-title', text: config.planNames[str(r, 'planId')] ?? str(r, 'planId') }), badge(str(r, 'status'))),
-            h(
-              'dl',
-              { class: 'adm-facts' },
-              h('div', {}, h('dt', { text: 'Khách' }), h('dd', { text: who(str(r, 'uid')) })),
-              h('div', {}, h('dt', { text: 'Gửi lúc' }), h('dd', { text: when(r.createdAt) })),
-              r.contact ? h('div', {}, h('dt', { text: 'Liên hệ' }), h('dd', { text: str(r, 'contact') })) : null,
-              h('div', {}, h('dt', { text: 'Ngôn ngữ' }), h('dd', { text: str(r, 'lang') === 'en' ? 'Tiếng Anh' : 'Tiếng Việt' })),
-            ),
-            r.note ? h('p', { class: 'adm-note pre', text: str(r, 'note') }) : null,
-            h('div', { class: 'adm-actions' }, select, save),
-          );
-        })
+      ? rows.slice(0, 300).map((r) => requestItem(r, () => void renderRequests(root)))
       : [empty('Không có yêu cầu nào.')]),
+  );
+};
+
+export const requestItem = (r: DocumentData & { id: string }, onChanged: () => void) => {
+  const select = h(
+    'select',
+    { class: 'adm-select', 'aria-label': 'Trạng thái yêu cầu' },
+    ...['new', 'contacted', 'in_progress', 'done', 'cancelled'].map((s) => h('option', { value: s, text: statusLabel(s) })),
+  );
+  select.value = str(r, 'status');
+  const save = h('button', { type: 'button', class: 'btn btn-sm', text: 'Lưu' });
+  save.addEventListener('click', async () => {
+    save.disabled = true;
+    try {
+      await updateDoc(doc(db, 'requests', r.id), { status: select.value, updatedAt: serverTimestamp() });
+      toast(`Yêu cầu: ${statusLabel(select.value)}.`);
+      onChanged();
+    } catch (err) {
+      toast(errText(err), 'error');
+      save.disabled = false;
+    }
+  });
+  return h(
+    'article',
+    { class: 'adm-item' },
+    h('div', { class: 'adm-item-head' }, h('strong', { class: 'adm-title', text: config.planNames[str(r, 'planId')] ?? str(r, 'planId') }), badge(str(r, 'status'))),
+    h(
+      'dl',
+      { class: 'adm-facts' },
+      h('div', {}, h('dt', { text: 'Khách' }), h('dd', { text: who(str(r, 'uid')) })),
+      h('div', {}, h('dt', { text: 'Gửi lúc' }), h('dd', { text: when(r.createdAt) })),
+      r.contact ? h('div', {}, h('dt', { text: 'Liên hệ' }), h('dd', { text: str(r, 'contact') })) : null,
+      h('div', {}, h('dt', { text: 'Ngôn ngữ' }), h('dd', { text: str(r, 'lang') === 'en' ? 'Tiếng Anh' : 'Tiếng Việt' })),
+    ),
+    r.note ? h('p', { class: 'adm-note pre', text: str(r, 'note') }) : null,
+    h('div', { class: 'adm-actions' }, select, save),
   );
 };
 
 /* ======================== Khách hàng ======================== */
 
 let customerSearch = '';
-let openCustomer = '';
+const customerFilters = { balance: false, ads: false, new: false };
 
 export const renderCustomers = async (root: HTMLElement, force = false) => {
-  const list = h('div', { class: 'adm-list' }, loading());
+  const list = h('div', { class: 'adm-list adm-rows' }, loading());
   const search = h('input', { type: 'search', class: 'adm-search', placeholder: 'Tìm theo email, tên, số điện thoại', value: customerSearch, 'aria-label': 'Tìm khách' });
+  const filterBtn = (key: keyof typeof customerFilters, label: string) => {
+    const b = h('button', { type: 'button', class: 'chip adm-filter', 'data-filter': key, 'aria-pressed': String(customerFilters[key]), text: label });
+    b.addEventListener('click', () => {
+      customerFilters[key] = !customerFilters[key];
+      b.setAttribute('aria-pressed', String(customerFilters[key]));
+      draw();
+    });
+    return b;
+  };
+  const count = h('p', { class: 'muted small', role: 'status' });
   root.replaceChildren(
-    h('p', { class: 'view-lead', text: 'Khách đã đăng nhập trang tài khoản ít nhất một lần. Mở một khách để xem số dư, sổ giao dịch và điều chỉnh số dư bằng tay (bắt buộc ghi chú).' }),
-    h('div', { class: 'adm-toolbar' }, search),
+    h('p', { class: 'view-lead', text: 'Khách đã đăng nhập trang tài khoản ít nhất một lần. Bấm một khách để xem dịch vụ đang dùng, cấp quyền, số dư, đơn hàng, tài khoản quảng cáo và yêu cầu.' }),
+    h(
+      'div',
+      { class: 'adm-toolbar' },
+      search,
+      h('div', { class: 'chips', role: 'group', 'aria-label': 'Lọc' }, filterBtn('balance', 'Có số dư'), filterBtn('ads', 'Có TKQC'), filterBtn('new', 'Mới 7 ngày')),
+    ),
+    count,
     list,
   );
   let all: Customer[];
@@ -424,8 +443,16 @@ export const renderCustomers = async (root: HTMLElement, force = false) => {
   }
   const draw = () => {
     const q = customerSearch.trim().toLowerCase();
-    const shown = all.filter((c) => !q || [c.email, c.name, c.phone, c.company, c.uid].join(' ').toLowerCase().includes(q));
-    list.replaceChildren(...(shown.length ? shown.slice(0, 200).map((c) => customerItem(c, root)) : [empty('Không tìm thấy khách nào.')]));
+    const weekAgo = Date.now() - 7 * 864e5;
+    const shown = all.filter(
+      (c) =>
+        (!q || [c.email, c.name, c.phone, c.company, c.uid].join(' ').toLowerCase().includes(q)) &&
+        (!customerFilters.balance || c.balance > 0) &&
+        (!customerFilters.ads || c.adAccounts > 0) &&
+        (!customerFilters.new || c.createdAt >= weekAgo),
+    );
+    count.textContent = shown.length === all.length ? `${all.length} khách` : `${shown.length} / ${all.length} khách`;
+    list.replaceChildren(...(shown.length ? shown.slice(0, 200).map(customerRow) : [empty('Không tìm thấy khách nào.')]));
   };
   search.addEventListener('input', () => {
     customerSearch = search.value;
@@ -434,95 +461,93 @@ export const renderCustomers = async (root: HTMLElement, force = false) => {
   draw();
 };
 
-const customerItem = (c: Customer, root: HTMLElement) => {
-  const detail = h('div', { class: 'adm-detail' });
-  const toggle = h('button', { type: 'button', class: 'btn btn-sm', 'aria-expanded': String(openCustomer === c.uid), text: openCustomer === c.uid ? 'Đóng' : 'Chi tiết' });
-  const item = h(
-    'article',
-    { class: 'adm-item', 'data-customer': c.email },
+const customerRow = (c: Customer) => {
+  const services = c.servicesCount ? `${c.servicesCount} dịch vụ` : c.adAccounts ? `${c.adAccounts} TKQC` : 'Chưa gán dịch vụ';
+  return h(
+    'a',
+    { class: 'adm-row', href: `#khach-hang/${c.uid}` },
+    avatarEl(c),
     h(
-      'div',
-      { class: 'adm-item-head' },
-      h('div', {}, h('strong', { class: 'adm-title', text: c.name || '(chưa có tên)' }), h('p', { class: 'muted small', text: [c.email, c.phone, c.company].filter(Boolean).join(' · ') || c.uid })),
-      h('div', { class: 'adm-balance' }, h('span', { class: 'muted small', text: 'Số dư' }), h('strong', { text: money(c.balance) })),
+      'span',
+      { class: 'adm-row-main' },
+      h('strong', { class: 'adm-title', text: c.name || '(chưa có tên)' }),
+      h('span', { class: 'muted small', text: [c.email, c.phone, c.company].filter(Boolean).join(' · ') || c.uid }),
     ),
-    h('div', { class: 'adm-actions' }, toggle),
-    detail,
+    h('span', { class: 'adm-row-meta' }, h('span', { class: 'small', text: services }), h('span', { class: 'muted small', text: c.createdAt ? `Tạo ${when(new Date(c.createdAt)).slice(0, 10)}` : '' })),
+    h('span', { class: 'adm-balance' }, h('span', { class: 'muted small', text: 'Số dư' }), h('strong', { text: money(c.balance) })),
+    h('span', { class: 'adm-row-go', 'aria-hidden': 'true' }, icon('arrow')),
   );
-  const open = async () => {
-    detail.replaceChildren(loading());
-    let txs: (DocumentData & { id: string })[];
-    try {
-      txs = await docsOf(query(collection(db, 'transactions'), where('uid', '==', c.uid)));
-    } catch (err) {
-      detail.replaceChildren(failed(err, () => void open()));
-      return;
-    }
-    const f = buildForm(
-      [
-        { name: 'amount', label: 'Số tiền điều chỉnh (VNĐ, số âm để trừ)', type: 'number', required: true, placeholder: 'Ví dụ 500000 hoặc -200000', inputmode: 'numeric' },
-        { name: 'note', label: 'Ghi chú (bắt buộc, khách thấy được)', required: true, maxlength: 300, placeholder: 'Ví dụ: Khách chuyển dư 50.000đ cho lệnh ADSN…' },
-      ],
-      'Điều chỉnh số dư',
-    );
-    f.form.addEventListener('submit', async (e) => {
-      e.preventDefault();
-      f.clearErrors();
-      const amount = parseVnd(f.value('amount'));
-      if (!Number.isInteger(amount) || amount === 0) f.setError('amount', 'Nhập số tiền khác 0, ví dụ 500000 hoặc -200000.');
-      else if (c.balance + amount < 0) f.setError('amount', `Số dư hiện ${money(c.balance)}, không trừ quá số này.`);
-      if (f.value('note').length < 3) f.setError('note', 'Ghi chú ít nhất 3 ký tự.');
-      if (f.focusFirstError()) return;
-      const ok = await confirmDialog({
-        title: `${amount > 0 ? 'Cộng' : 'Trừ'} ${money(Math.abs(amount))}?`,
-        body: [`Khách: ${c.name || c.email}`, `Số dư: ${money(c.balance)} → ${money(c.balance + amount)}`],
-        confirm: 'Xác nhận',
-        cancel: 'Quay lại',
-      });
-      if (!ok.ok) return;
-      f.submit.disabled = true;
-      try {
-        const r = await ops.adjustBalance(me(), c.uid, amount, f.value('note'));
-        c.balance = r.balanceAfter;
-        toast(`Đã điều chỉnh. Số dư mới: ${money(r.balanceAfter)}.`);
-        void loadCustomers(true).then(() => renderCustomers(root));
-      } catch (err) {
-        f.alert.replaceChildren(h('p', { text: errText(err) }));
-        f.submit.disabled = false;
-      }
-    });
-    const typeText: Record<string, string> = { topup: 'Nạp tiền', purchase: 'Thanh toán', refund: 'Hoàn tiền', adjust: 'Điều chỉnh' };
-    detail.replaceChildren(
-      h('h3', { class: 'adm-sub', text: 'Sổ giao dịch' }),
-      txs.length
-        ? h(
-            'ul',
-            { class: 'ledger' },
-            ...txs.slice(0, 50).map((t) =>
-              h(
-                'li',
-                { class: `ledger-item ledger-item--${num(t, 'amount') >= 0 ? 'in' : 'out'}` },
-                h('span', { class: 'ledger-icon', 'aria-hidden': 'true' }, icon(num(t, 'amount') >= 0 ? 'plus' : 'minus')),
-                h('span', { class: 'ledger-main' }, h('span', { class: 'ledger-type', text: typeText[str(t, 'type')] ?? str(t, 'type') }), h('span', { class: 'ledger-ref', text: [str(t, 'refId') || str(t, 'note'), when(t.createdAt)].filter(Boolean).join(' · ') })),
-                h('span', { class: 'ledger-amounts' }, h('strong', { class: 'ledger-amount', text: `${num(t, 'amount') > 0 ? '+' : ''}${money(num(t, 'amount'))}` }), h('span', { class: 'ledger-after', text: `Số dư sau: ${money(num(t, 'balanceAfter'))}` })),
-              ),
-            ),
-          )
-        : empty('Chưa có giao dịch.'),
-      h('h3', { class: 'adm-sub', text: 'Điều chỉnh số dư bằng tay' }),
-      f.form,
-      h('p', { class: 'muted small', text: `UID: ${c.uid}` }),
-    );
-  };
-  toggle.addEventListener('click', () => {
-    openCustomer = openCustomer === c.uid ? '' : c.uid;
-    toggle.setAttribute('aria-expanded', String(openCustomer === c.uid));
-    toggle.textContent = openCustomer === c.uid ? 'Đóng' : 'Chi tiết';
-    if (openCustomer === c.uid) void open();
-    else detail.replaceChildren();
-  });
-  if (openCustomer === c.uid) void open();
-  return item;
 };
+
+/** Tab "Số dư & giao dịch" của trang Chi tiết khách: sổ giao dịch + điều chỉnh số dư bằng tay. */
+export const balancePanel = async (c: Customer, onChanged: () => void): Promise<HTMLElement> => {
+  const box = h('div', { class: 'adm-detail adm-detail--open' }, loading());
+  let txs: (DocumentData & { id: string })[];
+  try {
+    txs = await docsOf(query(collection(db, 'transactions'), where('uid', '==', c.uid)));
+  } catch (err) {
+    box.replaceChildren(failed(err, () => void balancePanel(c, onChanged).then((el) => box.replaceWith(el))));
+    return box;
+  }
+  const f = buildForm(
+    [
+      { name: 'amount', label: 'Số tiền điều chỉnh (VNĐ, số âm để trừ)', type: 'number', required: true, placeholder: 'Ví dụ 500000 hoặc -200000', inputmode: 'numeric' },
+      { name: 'note', label: 'Ghi chú (bắt buộc, khách thấy được)', required: true, maxlength: 300, placeholder: 'Ví dụ: Khách chuyển dư 50.000đ cho lệnh ADSN…' },
+    ],
+    'Điều chỉnh số dư',
+  );
+  f.form.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    f.clearErrors();
+    const amount = parseVnd(f.value('amount'));
+    if (!Number.isInteger(amount) || amount === 0) f.setError('amount', 'Nhập số tiền khác 0, ví dụ 500000 hoặc -200000.');
+    else if (c.balance + amount < 0) f.setError('amount', `Số dư hiện ${money(c.balance)}, không trừ quá số này.`);
+    if (f.value('note').length < 3) f.setError('note', 'Ghi chú ít nhất 3 ký tự.');
+    if (f.focusFirstError()) return;
+    const ok = await confirmDialog({
+      title: `${amount > 0 ? 'Cộng' : 'Trừ'} ${money(Math.abs(amount))}?`,
+      body: [`Khách: ${c.name || c.email}`, `Số dư: ${money(c.balance)} → ${money(c.balance + amount)}`],
+      confirm: 'Xác nhận',
+      cancel: 'Quay lại',
+    });
+    if (!ok.ok) return;
+    f.submit.disabled = true;
+    try {
+      const r = await ops.adjustBalance(me(), c.uid, amount, f.value('note'));
+      c.balance = r.balanceAfter;
+      toast(`Đã điều chỉnh. Số dư mới: ${money(r.balanceAfter)}.`);
+      void loadCustomers(true).then(onChanged);
+    } catch (err) {
+      f.alert.replaceChildren(h('p', { text: errText(err) }));
+      f.submit.disabled = false;
+    }
+  });
+  const typeText: Record<string, string> = { topup: 'Nạp tiền', purchase: 'Thanh toán', refund: 'Hoàn tiền', adjust: 'Điều chỉnh' };
+  box.replaceChildren(
+    h('h3', { class: 'adm-sub', text: 'Điều chỉnh số dư bằng tay' }),
+    f.form,
+    h('h3', { class: 'adm-sub', text: 'Sổ giao dịch' }),
+    txs.length
+      ? h(
+          'ul',
+          { class: 'ledger' },
+          ...txs.slice(0, 50).map((t) =>
+            h(
+              'li',
+              { class: `ledger-item ledger-item--${num(t, 'amount') >= 0 ? 'in' : 'out'}` },
+              h('span', { class: 'ledger-icon', 'aria-hidden': 'true' }, icon(num(t, 'amount') >= 0 ? 'plus' : 'minus')),
+              h('span', { class: 'ledger-main' }, h('span', { class: 'ledger-type', text: typeText[str(t, 'type')] ?? str(t, 'type') }), h('span', { class: 'ledger-ref', text: [str(t, 'refId') || str(t, 'note'), when(t.createdAt)].filter(Boolean).join(' · ') })),
+              h('span', { class: 'ledger-amounts' }, h('strong', { class: 'ledger-amount', text: `${num(t, 'amount') > 0 ? '+' : ''}${money(num(t, 'amount'))}` }), h('span', { class: 'ledger-after', text: `Số dư sau: ${money(num(t, 'balanceAfter'))}` })),
+            ),
+          ),
+        )
+      : empty('Chưa có giao dịch.'),
+    h('p', { class: 'muted small', text: `UID: ${c.uid}` }),
+  );
+  return box;
+};
+
+/** Dùng chung với trang Chi tiết khách. */
+export { docsOf, loading, empty, failed, chips };
 
 export { customerByEmail };

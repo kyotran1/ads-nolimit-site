@@ -27,6 +27,8 @@ import { formatVnd } from '../money';
 import { h, toDate } from '../ui/dom';
 import type { Bank } from '../../data/banks';
 import type { ProductDoc } from '../../data/catalog';
+import { parseCustomerServices } from '../customer/services';
+import type { CustomerServices } from '../customer/services';
 
 export const db = getFirestore(app);
 export const ops = makeOps(
@@ -105,8 +107,14 @@ export interface Customer {
   email: string;
   phone: string;
   company: string;
+  /** Ảnh đại diện (data URL, khách tự tải lên) hoặc '' */
+  avatar: string;
   createdAt: number;
   balance: number;
+  /** Số dịch vụ chủ gán tay đang dùng/tạm dừng (customerServices) */
+  servicesCount: number;
+  /** Số TKQC đã gắn (adAccounts) */
+  adAccounts: number;
 }
 
 let customers: Map<string, Customer> | null = null;
@@ -115,25 +123,40 @@ let loadingCustomers: Promise<Map<string, Customer>> | null = null;
 export const loadCustomers = (force = false): Promise<Map<string, Customer>> => {
   if (customers && !force) return Promise.resolve(customers);
   if (loadingCustomers && !force) return loadingCustomers;
-  loadingCustomers = Promise.all([getDocs(collection(db, 'users')), getDocs(collection(db, 'wallets'))])
-    .then(([users, wallets]) => {
+  loadingCustomers = Promise.all([
+    getDocs(collection(db, 'users')),
+    getDocs(collection(db, 'wallets')),
+    getDocs(collection(db, 'customerServices')),
+    getDocs(collection(db, 'adAccounts')),
+  ])
+    .then(([users, wallets, services, ads]) => {
       const map = new Map<string, Customer>();
+      const blank = (uid: string): Customer => ({ uid, name: '', email: '', phone: '', company: '', avatar: '', createdAt: 0, balance: 0, servicesCount: 0, adAccounts: 0 });
       users.docs.forEach((u) => {
         const d = u.data();
+        const avatar = str(d, 'avatar');
         map.set(u.id, {
-          uid: u.id,
+          ...blank(u.id),
           name: str(d, 'displayName'),
           email: str(d, 'email'),
           phone: str(d, 'phone'),
           company: str(d, 'company'),
+          avatar: avatar.startsWith('data:image/') ? avatar : '',
           createdAt: time(d),
-          balance: 0,
         });
       });
       wallets.docs.forEach((w) => {
-        const c = map.get(w.id) ?? { uid: w.id, name: '', email: '', phone: '', company: '', createdAt: 0, balance: 0 };
+        const c = map.get(w.id) ?? blank(w.id);
         c.balance = num(w.data(), 'balance');
         map.set(w.id, c);
+      });
+      services.docs.forEach((x) => {
+        const c = map.get(x.id);
+        if (c) c.servicesCount = parseCustomerServices(x.data()).services.filter((s) => s.status !== 'ended').length;
+      });
+      ads.docs.forEach((x) => {
+        const c = map.get(str(x.data(), 'uid'));
+        if (c && x.data().active !== false) c.adAccounts += 1;
       });
       customers = map;
       return map;
@@ -149,6 +172,33 @@ export const customerByEmail = async (email: string) => {
   const map = await loadCustomers();
   const e = email.trim().toLowerCase();
   return Array.from(map.values()).find((c) => c.email.toLowerCase() === e);
+};
+
+/** customerServices/{uid} của một khách (chưa có → rỗng). */
+export const loadCustomerServices = async (uid: string): Promise<CustomerServices> =>
+  parseCustomerServices((await getDoc(doc(db, 'customerServices', uid))).data());
+
+/** Ghi customerServices/{uid} (luật: chỉ quản trị; đúng 4 khóa; services ≤ 30). */
+export const saveCustomerServices = async (uid: string, cs: CustomerServices) => {
+  await setDoc(doc(db, 'customerServices', uid), {
+    services: cs.services.slice(0, 30).map((s) => ({ id: s.id, label: s.label, status: s.status, since: s.since, note: s.note, source: 'manual' })),
+    access: { ads: cs.access.ads, courses: cs.access.courses, keys: cs.access.keys, guides: cs.access.guides },
+    updatedAt: serverTimestamp(),
+    updatedBy: me(),
+  });
+  const c = customers?.get(uid);
+  if (c) c.servicesCount = cs.services.filter((s) => s.status !== 'ended').length;
+};
+
+/** Ảnh tròn: ảnh khách tải lên nếu có, không thì chữ cái đầu. */
+export const avatarEl = (c: { name: string; email: string; avatar: string }, cls = 'avatar') => {
+  const box = h('span', { class: cls, 'aria-hidden': 'true' });
+  if (c.avatar) {
+    const img = h('img', { alt: '', decoding: 'async' }) as HTMLImageElement;
+    img.src = c.avatar;
+    box.append(img);
+  } else box.textContent = (c.name || c.email || '?').trim().charAt(0).toUpperCase();
+  return box;
 };
 
 /** "Tên · email" của một uid (để hiện cạnh lệnh nạp / đơn / yêu cầu). */
