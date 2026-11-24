@@ -8,6 +8,7 @@ import { confirmDialog, h, icon, toast } from '../ui/dom';
 import { AD_TOPUP_DEFAULTS, dmy, parseAdAccount, parseAdBudgetTopup, parseAdTopupSettings, todayVn } from '../ads/report';
 import type { AdAccount, AdBudgetTopup } from '../ads/report';
 import { buildForm, config, customerByEmail, db, errText, loadCustomers, me, money, parseVnd, when, who } from './shared';
+import { MAX_VIEWERS, buildMembers, parseViewerEmails, readStrings } from './viewers';
 
 const vn = (n: number) => new Intl.NumberFormat('vi-VN').format(n);
 
@@ -20,6 +21,9 @@ const serviceName = (v: string) => services.find((s) => s.value === v)?.label ??
 
 export const renderAdAccounts = async (root: HTMLElement) => {
   let editing: AdAccount | null = null;
+  /** Email người xem thêm đã lưu của từng TKQC (đọc thẳng từ Firestore; tài liệu cũ không có → rỗng). */
+  const viewerEmailsOf = new Map<string, string[]>();
+  const viewerUidsOf = new Map<string, string[]>();
   const f = buildForm(
     [
       { name: 'actId', label: 'ID tài khoản quảng cáo', required: true, placeholder: '626818827055263', inputmode: 'numeric', hint: 'Số ID trong Trình quản lý quảng cáo (có hoặc không có "act_").' },
@@ -27,6 +31,15 @@ export const renderAdAccounts = async (root: HTMLElement) => {
       { name: 'label', label: 'Tên page / tên hiển thị cho khách', maxlength: 120, placeholder: 'K-Aura' },
       { name: 'service', label: 'Dịch vụ', type: 'select', value: 'ads', options: services, required: true },
       { name: 'email', label: 'Email khách', type: 'email', required: true, placeholder: 'khach@example.com', hint: 'Khách phải đã tạo tài khoản trên web.' },
+      {
+        name: 'viewers',
+        label: `Email người xem thêm (mỗi dòng một email, tối đa ${MAX_VIEWERS})`,
+        type: 'textarea',
+        rows: 4,
+        maxlength: 1500,
+        placeholder: 'codong1@example.com\ncodong2@example.com',
+        hint: 'Cổ đông/nhân sự của khách. Mỗi người phải đã tạo tài khoản trên web.',
+      },
       {
         name: 'tabPattern',
         label: 'Tên tab trong trang tính bot 3 (phần sau "BC ADS T11")',
@@ -59,6 +72,7 @@ export const renderAdAccounts = async (root: HTMLElement) => {
     set('label', a?.label ?? '');
     set('service', a?.service ?? 'ads');
     set('email', a?.customerEmail ?? '');
+    set('viewers', a ? (viewerEmailsOf.get(a.id) ?? []).join('\n') : '');
     set('tabPattern', a?.tabPattern ?? '');
     set('lowVnd', a ? new Intl.NumberFormat('vi-VN').format(a.lowVnd) : '3.000.000');
     set('lowDays', String(a?.lowDays ?? 3));
@@ -91,12 +105,44 @@ export const renderAdAccounts = async (root: HTMLElement) => {
         f.focusFirstError();
         return;
       }
+      // Người xem thêm: mỗi email phải là khách đã đăng ký. Đổi khách chính sang người từng là người xem thì
+      // dòng cũ của người đó tự bỏ (người đó chỉ còn là khách chính).
+      const oldViewers = editing ? (viewerEmailsOf.get(editing.id) ?? []) : [];
+      const viewerText = f
+        .value('viewers')
+        .split(/[\s,;]+/)
+        .filter((t) => !(oldViewers.includes(t.toLowerCase()) && t.toLowerCase() === c.email.toLowerCase()))
+        .join('\n');
+      const parsed = parseViewerEmails(viewerText, c.email);
+      if (parsed.errors.length) {
+        f.setError('viewers', parsed.errors.join(' '));
+        f.focusFirstError();
+        return;
+      }
+      let found = await Promise.all(parsed.emails.map((e) => customerByEmail(e)));
+      if (found.some((x) => !x)) {
+        await loadCustomers(true); // người mới đăng ký sau khi mở trang
+        found = await Promise.all(parsed.emails.map((e) => customerByEmail(e)));
+      }
+      const missing = parsed.emails.filter((_, i) => !found[i]);
+      if (missing.length) {
+        f.setError('viewers', missing.map((e) => `Chưa có tài khoản với email: ${e}. Người này cần tạo tài khoản trên web trước.`).join(' '));
+        f.focusFirstError();
+        return;
+      }
+      const members = buildMembers(
+        c.uid,
+        parsed.emails.map((e, i) => ({ uid: found[i]!.uid, email: found[i]!.email })),
+      );
       const id = `act_${raw}`;
       await setDoc(
         doc(db, 'adAccounts', id),
         {
           uid: c.uid,
           customerEmail: c.email,
+          viewerUids: members.viewerUids,
+          viewerEmails: members.viewerEmails,
+          memberUids: members.memberUids,
           accountName: f.value('accountName'),
           label: f.value('label'),
           service: f.value('service'),
@@ -153,6 +199,12 @@ export const renderAdAccounts = async (root: HTMLElement) => {
     try {
       await loadCustomers();
       const snap = await getDocs(collection(db, 'adAccounts'));
+      viewerEmailsOf.clear();
+      viewerUidsOf.clear();
+      snap.docs.forEach((x) => {
+        viewerEmailsOf.set(x.id, readStrings(x.data().viewerEmails));
+        viewerUidsOf.set(x.id, readStrings(x.data().viewerUids));
+      });
       const accounts = snap.docs.map((x) => parseAdAccount(x.id, x.data())).sort((a, b) => a.accountName.localeCompare(b.accountName));
       if (!accounts.length) {
         list.replaceChildren(h('p', { class: 'muted', text: 'Chưa có tài khoản quảng cáo nào.' }));
@@ -188,6 +240,7 @@ export const renderAdAccounts = async (root: HTMLElement) => {
               h('h3', { text: `${a.label || a.accountName}${a.active ? '' : ' (đang ẩn)'}` }),
               h('p', { class: 'muted small', text: `${a.id} · ${a.accountName} · ${serviceName(a.service)}` }),
               h('p', { class: 'small', text: `Khách: ${who(a.uid, a.customerEmail)}` }),
+              viewerEmailsOf.get(a.id)?.length ? h('p', { class: 'small', text: `Người xem thêm: ${viewerEmailsOf.get(a.id)!.map((e, i) => who(viewerUidsOf.get(a.id)?.[i] ?? '', e)).join(', ')}` }) : null,
               h('p', { class: 'small', text: `Tab: "${a.tabPattern}" · Báo thấp: dưới ${money(a.lowVnd)} hoặc dưới ${a.lowDays} ngày · Email: ${a.emailAlerts ? 'bật' : 'tắt'}` }),
               l
                 ? h('p', { class: 'small' }, h('strong', { text: `Số dư ${money(l.balance)}` }), ` · tháng ${money(l.totalSpend)} · hôm nay ${money(l.spendToday)} · hôm qua ${money(l.spendYesterday)} · cập nhật ${when(l.updatedAt)}`, l.low ? h('span', { class: 'badge badge--rejected', text: ' Số dư thấp' }) : null)
