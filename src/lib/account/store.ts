@@ -25,7 +25,7 @@ import { app } from '../auth/client';
 import { makeOps } from '../ledger/ops';
 import type { Sdk } from '../ledger/ops';
 import { toDate } from '../ui/dom';
-import { parseAdAccount, parseAdBudgetTopup, parseAdReport, parseAdTopupSettings } from '../ads/report';
+import { mergeSettled, parseAdAccount, parseAdBudgetTopup, parseAdReport, parseAdTopupSettings } from '../ads/report';
 import type { AdAccount, AdBudgetTopup, AdReport, AdTopupSettings } from '../ads/report';
 import { EMPTY_SERVICES, parseCustomerServices } from '../customer/services';
 import type { AutoFacts, CustomerServices } from '../customer/services';
@@ -211,6 +211,16 @@ export type StoreKey =
 
 const mine = (name: string) => getDocs(query(collection(db, name), where('uid', '==', state.uid)));
 
+/**
+ * TKQC / báo cáo mà mình là tài khoản chính (uid ==) hoặc người xem thêm (memberUids array-contains).
+ * Hai truy vấn chạy song song rồi gộp theo id; tài liệu cũ chưa có memberUids chỉ khớp truy vấn uid.
+ * Một truy vấn lỗi thì vẫn dùng kết quả truy vấn kia; cả hai lỗi mới báo lỗi.
+ */
+const mineOrMember = async <T extends { id: string }>(name: string, parse: (id: string, d: DocumentData) => T): Promise<T[]> => {
+  const run = async (q: ReturnType<typeof where>): Promise<T[]> => (await getDocs(query(collection(db, name), q))).docs.map((x) => parse(x.id, x.data()));
+  return mergeSettled(await Promise.allSettled([run(where('uid', '==', state.uid)), run(where('memberUids', 'array-contains', state.uid))]));
+};
+
 const loaders: Record<StoreKey, () => Promise<void>> = {
   wallet: async () => {
     const snap = await getDoc(doc(db, 'wallets', state.uid));
@@ -312,15 +322,12 @@ const loaders: Record<StoreKey, () => Promise<void>> = {
       .sort(newestFirst);
   },
   adAccounts: async () => {
-    const snap = await mine('adAccounts');
-    state.adAccounts = snap.docs
-      .map((x) => parseAdAccount(x.id, x.data()))
+    state.adAccounts = (await mineOrMember('adAccounts', parseAdAccount))
       .filter((a) => a.active)
       .sort((a, b) => a.accountName.localeCompare(b.accountName));
   },
   adReports: async () => {
-    const snap = await mine('adReports');
-    state.adReports = snap.docs.map((x) => parseAdReport(x.id, x.data())).sort((a, b) => b.month.localeCompare(a.month));
+    state.adReports = (await mineOrMember('adReports', parseAdReport)).sort((a, b) => b.month.localeCompare(a.month));
   },
   adTopups: async () => {
     const snap = await mine('adTopups');

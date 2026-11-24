@@ -783,7 +783,29 @@ service cloud.firestore {
     // ======================================================================
 
     function adConfigKeys() {
-      return ['uid', 'customerEmail', 'accountName', 'label', 'service', 'tabPattern', 'lowVnd', 'lowDays', 'emailAlerts', 'active', 'updatedAt', 'updatedBy'];
+      return ['uid', 'customerEmail', 'accountName', 'label', 'service', 'tabPattern', 'lowVnd', 'lowDays', 'emailAlerts', 'active', 'updatedAt', 'updatedBy', 'viewerUids', 'viewerEmails', 'memberUids'];
+    }
+
+    // Người xem thêm: mình có trong memberUids của tài liệu (TKQC hoặc báo cáo). Tài liệu cũ chưa có
+    // memberUids → không khớp (chủ vẫn đọc qua ownsResource). Dùng riêng cho adAccounts/adReports/adTopups;
+    // KHÔNG đổi ownsResource() vì nhiều bộ sưu tập khác dùng.
+    function isAdMember() {
+      return signedIn() && 'memberUids' in resource.data && request.auth.uid in resource.data.memberUids;
+    }
+
+    // 3 khóa người xem: hoặc không có khóa nào (tài liệu cũ), hoặc đủ cả 3 và nhất quán:
+    // memberUids = [uid, ...viewerUids], ≤ 10 người xem, không trùng, không chứa uid chính, viewerEmails cùng độ dài.
+    function validAdMembers(d) {
+      return !d.keys().hasAny(['viewerUids', 'viewerEmails', 'memberUids'])
+        || (d.keys().hasAll(['viewerUids', 'viewerEmails', 'memberUids'])
+          && d.viewerUids is list && d.viewerEmails is list && d.memberUids is list
+          && d.viewerUids.size() <= 10
+          && d.viewerEmails.size() == d.viewerUids.size()
+          && d.memberUids.size() == d.viewerUids.size() + 1
+          && d.memberUids[0] == d.uid
+          && d.memberUids.hasAll(d.viewerUids)
+          && d.viewerUids.toSet().size() == d.viewerUids.size()
+          && !(d.uid in d.viewerUids));
     }
 
     function validAdConfig(actId, d) {
@@ -799,11 +821,12 @@ service cloud.firestore {
         && d.emailAlerts is bool
         && d.active is bool
         && d.updatedAt == request.time
-        && d.updatedBy == request.auth.uid;
+        && d.updatedBy == request.auth.uid
+        && validAdMembers(d);
     }
 
     match /adAccounts/{actId} {
-      allow read: if ownsResource() || isAdmin();
+      allow read: if ownsResource() || isAdmin() || isAdMember();
       allow create: if isAdmin()
         && request.resource.data.keys().hasOnly(adConfigKeys())
         && validAdConfig(actId, request.resource.data);
@@ -815,7 +838,7 @@ service cloud.firestore {
 
     // adReports/{actId}_{YYYY-MM} — báo cáo tháng, chỉ Apps Script ghi.
     match /adReports/{rid} {
-      allow read: if ownsResource() || isAdmin();
+      allow read: if ownsResource() || isAdmin() || isAdMember();
       allow write: if false;
     }
 
@@ -849,7 +872,8 @@ service cloud.firestore {
         && d.email == myEmail()
         && optString(d, 'name', 120)
         && d.actId is string && d.actId.matches('^act_[0-9]{5,20}$')
-        && acc.data.uid == request.auth.uid
+        && (acc.data.uid == request.auth.uid
+          || ('memberUids' in acc.data && request.auth.uid in acc.data.memberUids))
         && acc.data.active == true
         && reqString(d, 'accountLabel', 1, 160)
         && d.amount is int && d.amount % 1000 == 0
