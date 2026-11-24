@@ -285,7 +285,9 @@ export const renderAdAccounts = async (root: HTMLElement) => {
       ? t.written
         ? `Đã ghi vào trang tính${t.sheetTab ? ` (${t.sheetTab})` : ''} ${when(t.writtenAt)}`
         : 'Đã nhận tiền — chờ ghi vào trang tính'
-      : t.status === 'pending'
+      : t.sepayNote
+        ? t.sepayNote
+        : t.status === 'pending'
         ? 'Chờ chuyển khoản'
         : t.status === 'cancelled'
           ? 'Khách đã hủy'
@@ -296,7 +298,7 @@ export const renderAdAccounts = async (root: HTMLElement) => {
       await loadCustomers();
       const snap = await getDocs(collection(db, 'adTopups'));
       const all = snap.docs.map((x) => parseAdBudgetTopup(x.id, x.data()));
-      const rank = (t: AdBudgetTopup) => (t.status === 'pending' ? 0 : t.status === 'approved' && !t.written ? 1 : 2);
+      const rank = (t: AdBudgetTopup) => (t.sepayNote && t.status !== 'approved' && t.status !== 'rejected' ? 0 : t.status === 'pending' ? 0 : t.status === 'approved' && !t.written ? 1 : 2);
       all.sort((a, b) => rank(a) - rank(b) || (b.createdAt?.getTime() ?? 0) - (a.createdAt?.getTime() ?? 0));
       const list = all.filter((t, i) => rank(t) < 2 || i < 30);
       if (!list.length) {
@@ -366,7 +368,7 @@ export const renderAdAccounts = async (root: HTMLElement) => {
               h('h3', { text: `${money(t.amount)} · ${t.code}` }),
               h('p', { class: 'small', text: `${t.accountLabel} (${t.actId}) · Ngân sách ${money(t.budget)} · phí ${t.feePercent}%` }),
               h('p', { class: 'small muted', text: `Khách: ${who(t.uid, t.email)} · tạo ${when(t.createdAt)} · ngày ghi ${dmy(t.day)}` }),
-              h('p', { class: 'small', text: tState(t) }),
+              h('p', { class: 'small', text: `${tState(t)}${t.status === 'approved' && t.decidedBy === 'sepay' ? ' · tự xác nhận qua SePay' : ''}` }),
             ),
             canDecide ? h('div', { class: 'adm-actions' }, h('label', { class: 'small' }, 'Ngày ghi ', day), ok, no) : null,
           );
@@ -380,7 +382,7 @@ export const renderAdAccounts = async (root: HTMLElement) => {
 
   root.replaceChildren(
     h('p', { class: 'view-lead', text: 'Gắn tài khoản quảng cáo với khách để khách xem báo cáo chi tiêu, số dư và nhận cảnh báo số dư thấp. Số liệu lấy từ trang tính "BC ADS - META API (BOT 3)": chi tiêu do bot 3 nhập từ Meta, tiền nạp anh nhập ở cột B/C.' }),
-    h('section', {}, h('div', { class: 'panel-head' }, h('h2', { class: 'sub-title', text: 'Lệnh nạp ngân sách' }), refreshOrders), h('p', { class: 'muted small', text: 'Khách tạo lệnh trong Báo cáo quảng cáo. Thấy tiền về đúng nội dung chuyển khoản thì bấm "Đã nhận tiền": trang tính bot 3 tự cộng ngân sách (đã trừ phí) vào cột nạp đúng ngày, số dư trên web tự cập nhật.' }), orderStatus, orders),
+    h('section', {}, h('div', { class: 'panel-head' }, h('h2', { class: 'sub-title', text: 'Lệnh nạp ngân sách' }), refreshOrders), h('p', { class: 'muted small', text: 'Khách tạo lệnh trong Báo cáo quảng cáo. Tiền về MB Bank đúng số tiền và nội dung → SePay báo, hệ thống tự xác nhận và cộng ngân sách (đã trừ phí) vào cột nạp đúng ngày. Lệnh chuyển sai số tiền hiện ghi chú "SePay: …" để anh tự bấm "Đã nhận tiền" hoặc "Từ chối".' }), orderStatus, orders),
     h('section', {}, h('div', { class: 'panel-head' }, h('h2', { class: 'sub-title', text: 'Tất cả tài khoản quảng cáo' }), syncBtn), syncStatus, list),
     h('section', { class: 'panel' }, formTitle, f.form),
     h('section', { class: 'panel' }, h('h2', { text: 'Cài đặt nạp ngân sách' }), sf.form),

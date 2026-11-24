@@ -20,7 +20,7 @@ import { db, ensure, reload, state } from './store';
 const T = {
   vi: {
     title: 'Nạp thêm ngân sách quảng cáo',
-    lead: 'Chọn số tiền, tạo lệnh nạp rồi chuyển khoản bằng mã VietQR. ADS-Nolimit xác nhận đã nhận tiền thì ngân sách được cộng vào tài khoản quảng cáo.',
+    lead: 'Chọn số tiền, tạo lệnh nạp rồi chuyển khoản bằng mã VietQR. Hệ thống tự xác nhận khi tiền về (thường trong vài phút) và cộng ngân sách vào tài khoản quảng cáo.',
     amount: 'Số tiền nạp',
     custom: 'Hoặc nhập số tiền khác',
     placeholder: (n: string) => `Ví dụ ${n}`,
@@ -44,7 +44,7 @@ const T = {
     holder: 'Chủ tài khoản',
     amountRow: 'Số tiền',
     budgetRow: 'Ngân sách vào TKQC',
-    contentWarn: 'Giữ nguyên nội dung chuyển khoản để ADS-Nolimit nhận ra lệnh nạp của bạn.',
+    contentWarn: 'Chuyển đúng số tiền và giữ nguyên nội dung chuyển khoản để hệ thống tự xác nhận lệnh nạp của bạn.',
     download: 'Tải ảnh QR',
     downloaded: 'Đã lưu ảnh QR.',
     downloadFail: 'Chưa lưu được ảnh. Bạn chụp màn hình mã QR giúp nhé.',
@@ -68,7 +68,7 @@ const T = {
   },
   en: {
     title: 'Add ad budget',
-    lead: 'Choose an amount, create a top-up, then pay by bank transfer with the VietQR code. The budget is added to your ad account once ADS-Nolimit confirms the payment.',
+    lead: 'Choose an amount, create a top-up, then pay by bank transfer with the VietQR code. Payments are confirmed automatically (usually within minutes) and the budget is added to your ad account.',
     amount: 'Amount',
     custom: 'Or enter another amount',
     placeholder: (n: string) => `For example ${n}`,
@@ -92,7 +92,7 @@ const T = {
     holder: 'Account name',
     amountRow: 'Amount',
     budgetRow: 'Ad budget',
-    contentWarn: 'Keep the transfer reference exactly as shown so we can match your payment.',
+    contentWarn: 'Transfer the exact amount and keep the reference as shown so your payment is confirmed automatically.',
     download: 'Save QR image',
     downloaded: 'QR image saved.',
     downloadFail: 'Could not save the image. Please take a screenshot of the QR code.',
@@ -416,7 +416,8 @@ const create = async (a: AdAccount, amount: number, feePercent: number, name: st
       await setDoc(doc(db, 'adTopups', code), data);
       return {
         code, uid, email, name, actId: a.id, accountLabel: data.accountLabel as string, amount, budget, feePercent, day,
-        status: 'pending', reason: '', written: false, sheetTab: '', createdAt: new Date(), decidedAt: null, writtenAt: null,
+        status: 'pending', reason: '', written: false, sheetTab: '', decidedBy: '', sepayNote: '', paidAmount: 0,
+        createdAt: new Date(), decidedAt: null, writtenAt: null,
       };
     } catch (err) {
       last = err;

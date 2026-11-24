@@ -179,6 +179,11 @@ export interface AdBudgetTopup {
   reason: string;
   written: boolean;
   sheetTab: string;
+  /** 'sepay' khi tự xác nhận qua SePay */
+  decidedBy: string;
+  /** Ghi chú khi SePay thấy tiền nhưng không tự duyệt được (sai số tiền…) */
+  sepayNote: string;
+  paidAmount: number;
   createdAt: Date | null;
   decidedAt: Date | null;
   writtenAt: Date | null;
@@ -201,6 +206,9 @@ export const parseAdBudgetTopup = (code: string, d: DocumentData): AdBudgetTopup
   reason: s(d, 'reason'),
   written: d.written === true,
   sheetTab: s(d, 'sheetTab'),
+  decidedBy: s(d, 'decidedBy'),
+  sepayNote: s(d, 'sepayNote'),
+  paidAmount: n(d, 'paidAmount'),
   createdAt: toDate(d.createdAt),
   decidedAt: toDate(d.decidedAt),
   writtenAt: toDate(d.writtenAt),
