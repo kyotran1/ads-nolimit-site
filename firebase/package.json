@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "test": "firebase --config ../firebase.json emulators:exec --only firestore --project demo-ads-nolimit \"node --test --test-concurrency=1 test/rules.test.mjs test/money.test.mjs test/ads.test.mjs test/profile-services.test.mjs\" && npm run test:unit",
-    "test:unit": "node --experimental-strip-types --no-warnings --test test/unit.test.mjs"
+    "test:unit": "node --experimental-strip-types --no-warnings --test \"test/unit*.test.mjs\""
   },
   "devDependencies": {
     "@firebase/rules-unit-testing": "^6.0.0",
