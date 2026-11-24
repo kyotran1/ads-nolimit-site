@@ -1,0 +1,41 @@
+---
+/**
+ * Thẻ <head> cho ứng dụng cài được (PWA): manifest, biểu tượng iPhone, chế độ ứng dụng,
+ * bắt lời mời cài của trình duyệt và đăng ký service worker (chỉ bản build, không đăng ký khi `astro dev`).
+ * Gắn trong BaseLayout và AdminPage. Phần thẻ mời cài nằm ở trang Tài khoản (src/lib/pwa/install.ts).
+ */
+interface Props {
+  lang: 'vi' | 'en';
+}
+const { lang } = Astro.props;
+const manifest = lang === 'en' ? '/site.en.webmanifest' : '/site.webmanifest';
+const register = import.meta.env.PROD;
+---
+
+<link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+<link rel="manifest" href={manifest} />
+<meta name="apple-mobile-web-app-title" content="ADS-Nolimit" />
+<meta name="mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-status-bar-style" content="black" />
+<script is:inline>
+  // Giữ lại sự kiện mời cài (Android/máy tính) để thẻ mời cài ở trang Tài khoản dùng sau.
+  window.addEventListener('beforeinstallprompt', function (event) {
+    event.preventDefault();
+    window.__adsnlInstall = event;
+    window.dispatchEvent(new Event('adsnl-install-ready'));
+  });
+</script>
+{register && (
+  <script is:inline>
+    // Đăng ký service worker sau khi trang tải xong; lỗi (chế độ riêng tư, trình duyệt cũ) thì bỏ qua.
+    (function () {
+      try {
+        if (!('serviceWorker' in navigator)) return;
+        window.addEventListener('load', function () {
+          navigator.serviceWorker.register('/sw.js').catch(function () {});
+        });
+      } catch (e) {}
+    })();
+  </script>
+)}

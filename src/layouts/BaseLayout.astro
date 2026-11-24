@@ -11,6 +11,7 @@ import Header from '../components/Header.astro';
 import Footer from '../components/Footer.astro';
 import MobileContactBar from '../components/MobileContactBar.astro';
 import Analytics from '../components/Analytics.astro';
+import PwaHead from '../components/PwaHead.astro';
 import { langFromPath, t } from '../config/i18n';
 import type { Lang } from '../config/i18n';
 
@@ -38,8 +39,7 @@ const { lang = langFromPath(Astro.url.pathname), ...seo } = Astro.props;
     <link rel="icon" href="/favicon.ico" sizes="48x48" />
     <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png" />
     <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16.png" />
-    <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
-    <link rel="manifest" href="/site.webmanifest" />
+    <PwaHead lang={lang} />
     <Seo lang={lang} {...seo} />
     <Analytics />
   </head>

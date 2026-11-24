@@ -57,6 +57,7 @@ export const routes: readonly RoutePair[] = [
 export const unlistedPaths: readonly string[] = [
   '/quen-mat-khau/',
   '/en/forgot-password/',
+  '/offline/',
   '/tai-khoan/',
   '/en/account/',
   // Trang quản trị của chủ (chỉ tiếng Việt, noindex)
