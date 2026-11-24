@@ -274,8 +274,12 @@ const text = {
   installIosStep1: { vi: 'Bấm nút Chia sẻ {icon} ở thanh Safari.', en: 'Tap the Share button {icon} in Safari.' },
   installIosStep2: { vi: 'Chọn “Thêm vào Màn hình chính”, rồi bấm Thêm.', en: 'Choose “Add to Home Screen”, then tap Add.' },
   installManual: {
-    vi: 'Mở menu của trình duyệt (dấu ⋮ hoặc ⋯) rồi chọn “Cài đặt ứng dụng” hoặc “Thêm vào màn hình chính”.',
-    en: 'Open your browser menu (⋮ or ⋯) and choose “Install app” or “Add to Home screen”.',
+    vi: 'Chưa cài: mở menu của trình duyệt (dấu ⋮ hoặc ⋯) rồi chọn “Cài đặt ứng dụng” hoặc “Thêm vào màn hình chính”.',
+    en: 'Not installed yet: open your browser menu (⋮ or ⋯) and choose “Install app” or “Add to Home screen”.',
+  },
+  installManualHave: {
+    vi: 'Đã cài rồi: mở ADS-Nolimit từ màn hình chính hoặc menu Start, không cần cài lại. Nếu lỡ xóa biểu tượng trên máy tính, gõ chrome://apps trong Chrome để mở lại, hoặc gỡ ở đó rồi cài lại.',
+    en: 'Already installed: open ADS-Nolimit from your home screen or Start menu — no need to install again. If you removed the icon on a computer, type chrome://apps in Chrome to open it, or uninstall it there and install again.',
   },
   installDone: { vi: 'Đã cài. Bạn mở ADS-Nolimit từ màn hình chính.', en: 'Installed. Open ADS-Nolimit from your home screen.' },
 

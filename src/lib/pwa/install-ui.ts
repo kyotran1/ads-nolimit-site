@@ -69,7 +69,8 @@ const build = (mode: InstallMode, where: 'card' | 'profile', redraw: () => void)
       ? h('p', { class: 'install-text muted', text: tx('installBenefit') })
       : mode === 'ios'
         ? h('div', { class: 'install-text' }, h('p', { class: 'muted', text: tx('installIosLead') }), iosSteps())
-        : h('p', { class: 'install-text muted', text: tx('installManual') });
+        : // Trình duyệt không đưa lời mời cài: hoặc chưa hỗ trợ, hoặc app ĐÃ cài (khi đó trình duyệt không mời nữa) → nói rõ cả hai trường hợp.
+          h('div', { class: 'install-text' }, h('p', { class: 'muted', text: tx('installManual') }), h('p', { class: 'muted', text: tx('installManualHave') }));
   const actions = h('div', { class: 'install-actions' }, mode === 'prompt' ? install : null, where === 'card' ? later : null);
   return h(
     'section',
