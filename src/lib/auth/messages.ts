@@ -133,14 +133,15 @@ export const errorCode = (err: unknown): string => {
 };
 
 /** Thông báo dễ hiểu cho một lỗi Firebase Authentication. */
-export const authErrorMessage = (err: unknown, context: 'default' | 'reauth' | 'google' = 'default'): string => {
+export const authErrorMessage = (err: unknown, context: 'default' | 'reauth' | 'google' | 'google-signin' = 'default'): string => {
   const raw = errorCode(err);
   const code = aliases[raw] ?? raw;
   if (context === 'reauth' && reauthErrors[code]) return pick(reauthErrors[code]);
-  if (context === 'google') {
+  if (context === 'google' || context === 'google-signin') {
     const base = !authErrors[code] || code === 'network-request-failed' ? googleUnavailable : authErrors[code];
     // Ứng dụng đã cài trên iPhone/iPad: cửa sổ bật lên của Google có thể không trả kết quả về app
-    return isStandalone() && isIos() ? `${pick(base)} ${pick(iosAppGoogleHint)}` : pick(base);
+    // Chỉ ở trang Đăng nhập / Đăng ký ('google-signin'); xác nhận lại bằng Google ở trang tài khoản giữ nguyên thông báo.
+    return context === 'google-signin' && isStandalone() && isIos() ? `${pick(base)} ${pick(iosAppGoogleHint)}` : pick(base);
   }
   return pick(authErrors[code] ?? authErrors.generic);
 };

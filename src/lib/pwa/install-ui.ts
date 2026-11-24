@@ -21,8 +21,7 @@ const shareIcon = () => {
   svg.setAttribute('stroke-linecap', 'round');
   svg.setAttribute('stroke-linejoin', 'round');
   svg.setAttribute('class', 'install-share');
-  svg.setAttribute('role', 'img');
-  svg.setAttribute('aria-label', 'Share');
+  svg.setAttribute('aria-hidden', 'true');
   svg.innerHTML = '<path d="M12 3v12"/><path d="m8 7 4-4 4 4"/><path d="M7 10H6a2 2 0 0 0-2 2v7a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-7a2 2 0 0 0-2-2h-1"/>';
   return svg;
 };

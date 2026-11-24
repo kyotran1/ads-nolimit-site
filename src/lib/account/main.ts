@@ -12,7 +12,8 @@ import { byId } from '../ui/dom';
 import { lang, me, modules, money, route, setMe, setRoute } from './ctx';
 import { hashFor, parseHash, sections } from './routes';
 import type { Route } from './routes';
-import { ensure, on, state } from './store';
+import { ensure, on, reloadLoaded, state } from './store';
+import { shouldRefresh } from '../pwa/refresh';
 import { renderHello } from './overview';
 import './topup';
 import './orders';
@@ -170,6 +171,19 @@ const start = () =>
     initLocks(() => show(route(), false)); // biểu tượng khóa trên menu + show lại mục đang xem khi biết quyền
     void loadProfile(user, (u) => renderUser(u), welcome);
   });
+
+// Khách rời trang rồi quay lại sau ≥ 5 phút (vd sang app ngân hàng chuyển khoản): tải lại số dư, lệnh nạp, báo cáo.
+// Cần nhất khi chạy như ứng dụng đã cài vì ở đó không có nút tải lại.
+let hiddenAt = 0;
+document.addEventListener('visibilitychange', () => {
+  if (document.hidden) {
+    hiddenAt = Date.now();
+    return;
+  }
+  const refresh = started && shouldRefresh(hiddenAt, Date.now(), navigator.onLine !== false);
+  hiddenAt = 0;
+  if (refresh) void reloadLoaded();
+});
 
 setupPasswordToggles(document);
 // Chạy sau cùng: mọi phần tử và hàm ở trên đã sẵn sàng khi Firebase báo trạng thái đăng nhập.

@@ -465,6 +465,8 @@ const run = (key: StoreKey): Promise<void> => {
 export const ensure = (...keys: StoreKey[]) => Promise.all(keys.map((k) => (loaded.has(k) ? Promise.resolve() : run(k))));
 /** Tải lại. */
 export const reload = (...keys: StoreKey[]) => Promise.all(keys.map(run));
+/** Tải lại mọi phần đã tải (dùng khi khách quay lại trang sau một lúc để số dư, báo cáo không bị cũ). */
+export const reloadLoaded = () => reload(...loaded);
 export const isLoaded = (key: StoreKey) => loaded.has(key);
 export const isLoading = (key: StoreKey) => running.has(key);
 

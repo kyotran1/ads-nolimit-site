@@ -272,7 +272,7 @@ const text = {
   installLater: { vi: 'Để sau', en: 'Not now' },
   installIosLead: { vi: 'Cài ứng dụng trên iPhone/iPad, làm 2 bước:', en: 'Install on iPhone/iPad in 2 steps:' },
   installIosStep1: { vi: 'Bấm nút Chia sẻ {icon} ở thanh Safari.', en: 'Tap the Share button {icon} in Safari.' },
-  installIosStep2: { vi: 'Chọn “Thêm vào MH chính”, rồi bấm Thêm.', en: 'Choose “Add to Home Screen”, then tap Add.' },
+  installIosStep2: { vi: 'Chọn “Thêm vào Màn hình chính”, rồi bấm Thêm.', en: 'Choose “Add to Home Screen”, then tap Add.' },
   installManual: {
     vi: 'Mở menu của trình duyệt (dấu ⋮ hoặc ⋯) rồi chọn “Cài đặt ứng dụng” hoặc “Thêm vào màn hình chính”.',
     en: 'Open your browser menu (⋮ or ⋯) and choose “Install app” or “Add to Home screen”.',

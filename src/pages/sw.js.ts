@@ -29,7 +29,7 @@ self.addEventListener('activate', (event) => {
   event.waitUntil(
     caches
       .keys()
-      .then((keys) => Promise.all(keys.filter((k) => k !== CACHE).map((k) => caches.delete(k))))
+      .then((keys) => Promise.all(keys.filter((k) => k.indexOf('adsnl-') === 0 && k !== CACHE).map((k) => caches.delete(k))))
       .then(() => self.clients.claim()),
   );
 });
@@ -43,8 +43,11 @@ self.addEventListener('fetch', (event) => {
     // Mạng trước. Có phản hồi (kể cả 404/500) → trả nguyên; chỉ lỗi mạng mới sang trang offline.
     // cache: 'no-cache' = luôn hỏi lại máy chủ (không dùng bản trong bộ nhớ đệm HTTP của trình duyệt, vd GitHub Pages max-age=600)
     // nên trang HTML mới đăng là thấy ngay; không đổi thì máy chủ trả 304, gần như không tốn băng thông.
+    // Nếu trình duyệt nào đó từ chối yêu cầu có tùy chọn → thử lại y nguyên một lần; cả hai cùng hỏng mới coi là mất mạng.
     event.respondWith(
-      fetch(request, { cache: 'no-cache' }).catch(() => caches.match('/offline/').then((r) => r || Response.error())),
+      fetch(request, { cache: 'no-cache' })
+        .catch(() => fetch(request))
+        .catch(() => caches.match('/offline/').then((r) => r || Response.error())),
     );
     return;
   }
@@ -56,7 +59,13 @@ self.addEventListener('fetch', (event) => {
       return fetch(request).then((res) => {
         if (res && res.ok && res.type === 'basic') {
           const copy = res.clone();
-          caches.open(CACHE).then((cache) => cache.put(request, copy));
+          // Giữ service worker sống tới khi lưu xong; hết chỗ lưu thì bỏ qua.
+          event.waitUntil(
+            caches
+              .open(CACHE)
+              .then((cache) => cache.put(request, copy))
+              .catch(() => {}),
+          );
         }
         return res;
       });

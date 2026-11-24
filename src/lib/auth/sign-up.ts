@@ -70,7 +70,7 @@ if (form) {
     working = false;
     setBusy(busyButton, false);
     lockButtons([submit, google], false);
-    say(alert, authErrorMessage(err, context));
+    say(alert, authErrorMessage(err, context === 'google' ? 'google-signin' : context));
   };
 
   form.addEventListener('submit', async (event) => {
