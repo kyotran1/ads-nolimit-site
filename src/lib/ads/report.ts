@@ -14,6 +14,8 @@ export interface AdLatest {
   totalTopup: number;
   totalSpend: number;
   spendYesterday: number;
+  /** Chi tiêu hôm nay (đến lần cập nhật gần nhất); báo cáo cũ không có → 0 */
+  spendToday: number;
   avg7: number;
   daysLeft: number | null;
   low: boolean;
@@ -103,6 +105,7 @@ export const parseAdAccount = (id: string, d: DocumentData): AdAccount => {
             totalTopup: n(l, 'totalTopup'),
             totalSpend: n(l, 'totalSpend'),
             spendYesterday: n(l, 'spendYesterday'),
+            spendToday: n(l, 'spendToday'),
             avg7: n(l, 'avg7'),
             daysLeft: typeof l.daysLeft === 'number' ? l.daysLeft : null,
             low: l.low === true,

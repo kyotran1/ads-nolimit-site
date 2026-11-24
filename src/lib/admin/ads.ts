@@ -188,7 +188,7 @@ export const renderAdAccounts = async (root: HTMLElement) => {
               h('p', { class: 'small', text: `Khách: ${who(a.uid, a.customerEmail)}` }),
               h('p', { class: 'small', text: `Tab: "${a.tabPattern}" · Báo thấp: dưới ${money(a.lowVnd)} hoặc dưới ${a.lowDays} ngày · Email: ${a.emailAlerts ? 'bật' : 'tắt'}` }),
               l
-                ? h('p', { class: 'small' }, h('strong', { text: `Số dư ${money(l.balance)}` }), ` · hôm qua ${money(l.spendYesterday)} · TB 7 ngày ${money(l.avg7)} · cập nhật ${when(l.updatedAt)}`, l.low ? h('span', { class: 'badge badge--rejected', text: ' Số dư thấp' }) : null)
+                ? h('p', { class: 'small' }, h('strong', { text: `Số dư ${money(l.balance)}` }), ` · tháng ${money(l.totalSpend)} · hôm nay ${money(l.spendToday)} · hôm qua ${money(l.spendYesterday)} · cập nhật ${when(l.updatedAt)}`, l.low ? h('span', { class: 'badge badge--rejected', text: ' Số dư thấp' }) : null)
                 : h('p', { class: 'small muted', text: 'Chưa có số liệu — bấm "Đồng bộ ngay".' }),
             ),
             h('div', { class: 'adm-actions' }, edit, h('a', { class: 'btn btn-sm btn-ghost', href: `#khach-hang/${a.uid}`, text: 'Xem khách' }), del),

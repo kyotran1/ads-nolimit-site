@@ -26,6 +26,8 @@ const T = {
   vi: {
     balance: "Số dư",
     spendYesterday: "Chi tiêu hôm qua",
+    spendToday: "Chi tiêu hôm nay",
+    monthSpend: (m: string) => `Tổng chi tiêu tháng ${m}`,
     avg7: "TB 7 ngày",
     daysLeft: "Còn khoảng",
     days: (n: number) => `${n} ngày`,
@@ -68,6 +70,8 @@ const T = {
   en: {
     balance: "Balance",
     spendYesterday: "Spent yesterday",
+    spendToday: "Spent today",
+    monthSpend: (m: string) => `Total spend ${m}`,
     avg7: "7-day average",
     daysLeft: "Lasts about",
     days: (n: number) => `${n} day${n === 1 ? "" : "s"}`,
@@ -165,9 +169,9 @@ const accountCard = (a: AdAccount) => {
     h(
       "dl",
       { class: "ad-facts" },
+      fact(T.monthSpend(l ? monthLabel(l.month) : ""), l ? money(l.totalSpend) : "—"),
+      fact(T.spendToday, l ? money(l.spendToday) : "—"),
       fact(T.spendYesterday, l ? money(l.spendYesterday) : "—"),
-      fact(T.avg7, l ? money(l.avg7) : "—"),
-      fact(T.daysLeft, l && l.daysLeft !== null ? T.days(l.daysLeft) : "—"),
     ),
     h(
       "p",
@@ -227,6 +231,9 @@ const banner = (note: string) => {
 };
 
 /** Mọi ngày của tháng YYYY-MM (giống cột ngày trên trang tính). */
+/** "2026-11" → "11" (vi) / "11/2026" (en) cho nhãn "Tổng chi tiêu tháng …" */
+const monthLabel = (ym: string) => (/^\d{4}-\d{2}$/.test(ym) ? (lang === "en" ? `${ym.slice(5, 7)}/${ym.slice(0, 4)}` : String(Number(ym.slice(5, 7)))) : "");
+
 const monthDays = (ym: string): string[] => {
   const [y, m] = ym.split("-").map(Number);
   if (!y || !m) return [];
