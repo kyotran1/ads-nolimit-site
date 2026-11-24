@@ -12,6 +12,7 @@ import { tx, txMaybe } from './text';
 import { mergeServices, statusName } from '../customer/services';
 import type { ServiceCard } from '../customer/services';
 import { dmy } from '../ads/report';
+import { mountInstall } from '../pwa/install-ui';
 
 const txIcon: Record<string, Parameters<typeof icon>[0]> = {
   topup: 'plus',
@@ -153,3 +154,6 @@ register('overview', {
     void ensure('wallet', 'orders', 'keys', 'access', 'adAccounts', 'customerServices', 'topups', 'transactions');
   },
 });
+
+// Thẻ mời cài ứng dụng: ngay dưới hàng 3 ô số liệu; không có gì để mời thì không chèn gì vào trang
+mountInstall('card', (el) => byId('ov-stats').after(el));

@@ -262,6 +262,23 @@ const text = {
   keyResetPending: { vi: 'Yêu cầu đổi máy đang chờ xử lý (gửi {date}).', en: 'Device reset requested on {date}, pending.' },
   keyRevokedHelp: { vi: 'Key này đã bị thu hồi. Liên hệ ADS-Nolimit nếu cần hỗ trợ.', en: 'This key has been revoked. Contact ADS-Nolimit if you need help.' },
 
+  // cài ứng dụng (PWA)
+  installTitle: { vi: 'Cài ứng dụng ADS-Nolimit', en: 'Install the ADS-Nolimit app' },
+  installBenefit: {
+    vi: 'Mở nhanh từ màn hình chính, vào thẳng Tài khoản, không cần gõ địa chỉ.',
+    en: 'Open it from your home screen and go straight to your account, no address to type.',
+  },
+  installBtn: { vi: 'Cài ứng dụng', en: 'Install app' },
+  installLater: { vi: 'Để sau', en: 'Not now' },
+  installIosLead: { vi: 'Cài ứng dụng trên iPhone/iPad, làm 2 bước:', en: 'Install on iPhone/iPad in 2 steps:' },
+  installIosStep1: { vi: 'Bấm nút Chia sẻ {icon} ở thanh Safari.', en: 'Tap the Share button {icon} in Safari.' },
+  installIosStep2: { vi: 'Chọn “Thêm vào MH chính”, rồi bấm Thêm.', en: 'Choose “Add to Home Screen”, then tap Add.' },
+  installManual: {
+    vi: 'Mở menu của trình duyệt (dấu ⋮ hoặc ⋯) rồi chọn “Cài đặt ứng dụng” hoặc “Thêm vào màn hình chính”.',
+    en: 'Open your browser menu (⋮ or ⋯) and choose “Install app” or “Add to Home screen”.',
+  },
+  installDone: { vi: 'Đã cài. Bạn mở ADS-Nolimit từ màn hình chính.', en: 'Installed. Open ADS-Nolimit from your home screen.' },
+
   // bảo mật / xóa tài khoản
   deleteBlocked: {
     vi: 'Tài khoản còn số dư {amount} nên chưa thể tự xóa. Bạn liên hệ ADS-Nolimit để được hỗ trợ xử lý số dư còn lại trước khi xóa tài khoản.',

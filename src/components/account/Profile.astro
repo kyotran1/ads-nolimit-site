@@ -109,7 +109,7 @@ const copy = {
         {
           quick.map((q) => (
             <li>
-              <a href={q.href} rel={q.external ? 'noopener' : undefined}>
+              <a href={q.href} rel={q.external ? 'noopener' : undefined} target={q.external ? '_blank' : undefined}>
                 <Icon name={q.icon} />
                 <span>
                   <small>{q.label}</small>
