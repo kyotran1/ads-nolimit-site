@@ -64,7 +64,7 @@ const account = localize('/tai-khoan/', lang);
       }
       var initial = String(u.initial || u.name.charAt(0) || '?').slice(0, 2);
       avatar.textContent = initial;
-      if (u.photoURL && /^https:\/\//.test(u.photoURL)) {
+      if (u.photoURL && /^(https:\/\/|data:image\/)/.test(u.photoURL)) {
         var img = new Image();
         img.alt = '';
         img.referrerPolicy = 'no-referrer';
