@@ -116,7 +116,7 @@ service cloud.firestore {
         && d.keys().hasAll(['createdAt', 'updatedAt'])
         && optString(d, 'displayName', 120)
         // ảnh đại diện: data URL ảnh đã thu nhỏ 128px (≤ 32 000 ký tự); '' = xóa ảnh
-        && (!('avatar' in d) || (d.avatar is string && d.avatar.size() <= 32000 && (d.avatar == '' || d.avatar.matches('^data:image/.*'))))
+        && (!('avatar' in d) || (d.avatar is string && d.avatar.size() <= 32000 && (d.avatar == '' || d.avatar.matches('^data:image/(webp|jpeg|png);base64,[A-Za-z0-9+/=]+$'))))
         // email (để chủ tìm khách) phải đúng email đăng nhập
         && (!('email' in d) || d.email == myEmail())
         && optString(d, 'phone', 20)

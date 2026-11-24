@@ -12,9 +12,10 @@ import { h, icon } from '../ui/dom';
 import type { IconName } from '../../components/icon-paths';
 import { go, lang, route } from './ctx';
 import type { SectionId } from './routes';
-import { autoFacts, ensure, isLoaded, on, state } from './store';
+import { autoFacts, ensure, errors, isLoaded, isLoading, on, state } from './store';
 
-const LOCKABLE: readonly AccessKey[] = ['ads', 'courses', 'keys', 'guides'];
+// Khóa học KHÔNG khóa: khách phải xem được danh mục để tự mua/mở khóa (như V4.1); bài học vẫn theo courseAccess.
+const LOCKABLE: readonly AccessKey[] = ['ads', 'keys', 'guides'];
 const isLockable = (id: SectionId): id is AccessKey => (LOCKABLE as readonly string[]).includes(id);
 
 const T = {
@@ -72,7 +73,10 @@ const T = {
 
 /** Dữ liệu cần có trước khi quyết định khóa/mở. */
 const READY = ['customerServices', 'adAccounts', 'access', 'keys'] as const;
-const ready = () => READY.every((k) => isLoaded(k));
+// "Xong" = đã tải hoặc tải LỖI (lỗi → mở như thường để module tự hiện thông báo + Thử lại; không gọi ensure lặp)
+const done = (k: (typeof READY)[number]) => isLoaded(k) || errors.has(k);
+const ready = () => READY.every(done);
+const anyError = () => READY.some((k) => errors.has(k));
 const locked = (id: AccessKey) => !isOpen(id, state.customerServices, autoFacts());
 
 /** Nội dung thay cho mục bị khóa. */
@@ -104,10 +108,12 @@ const originals = new WeakMap<HTMLElement, Node[]>();
 export const gate = (id: SectionId, view: HTMLElement | undefined): 'open' | 'locked' | 'pending' => {
   if (!isLockable(id) || !view) return 'open';
   if (!ready()) {
-    void ensure(...READY);
+    // chỉ xin tải khóa chưa tải, chưa lỗi và chưa đang tải — không bao giờ xin lại khóa vừa lỗi (tránh lặp request)
+    const need = READY.filter((k) => !isLoaded(k) && !errors.has(k) && !isLoading(k));
+    if (need.length) void ensure(...need);
     return 'pending';
   }
-  if (locked(id)) {
+  if (!anyError() && locked(id)) {
     if (!originals.has(view)) originals.set(view, Array.from(view.childNodes));
     if (!view.querySelector('.locked-view')) view.replaceChildren(lockedView(id));
     return 'locked';
@@ -125,7 +131,7 @@ const applyMenu = () => {
   if (!ready()) return;
   document.querySelectorAll<HTMLElement>('[data-lock]').forEach((el) => {
     const id = el.dataset.lock as SectionId;
-    el.hidden = !isLockable(id) || !locked(id);
+    el.hidden = !isLockable(id) || anyError() || !locked(id);
   });
 };
 

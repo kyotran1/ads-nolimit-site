@@ -92,8 +92,12 @@ export interface AutoFacts {
 export const EMPTY_FACTS: AutoFacts = { paidOrders: [], adAccounts: [], courses: 0, keys: 0 };
 
 /** Đơn hàng → id dịch vụ. */
-export const serviceOfOrder = (type: string, productId: string): ServiceId =>
-  type === 'course' ? 'training' : isServiceId(productId) ? productId : 'other';
+export const serviceOfOrder = (type: string, productId: string): ServiceId => {
+  if (type === 'course') return 'training';
+  // productId bán lẻ dạng "<id gói>-setup" / "<id gói>-monthly" / "training-workshop" → gói
+  const hit = SERVICE_IDS.find((id) => productId === id || productId.startsWith(`${id}-`));
+  return hit ?? 'other';
+};
 
 export interface ServiceCard {
   id: ServiceId;

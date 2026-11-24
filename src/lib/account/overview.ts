@@ -78,7 +78,8 @@ const serviceCard = (c: ServiceCard) =>
 const renderServices = () => {
   const box = byId('ov-services');
   // Chờ các nguồn chính (customerServices + đơn + TKQC) rồi mới vẽ, để không nháy "trống" rồi mới có thẻ
-  if (!isLoaded('customerServices') || !isLoaded('orders') || !isLoaded('adAccounts')) return;
+  const settled = (k: 'customerServices' | 'orders' | 'adAccounts') => isLoaded(k) || errors.has(k);
+  if (!settled('customerServices') || !settled('orders') || !settled('adAccounts')) return;
   const cards = mergeServices(state.customerServices, autoFacts(), lang);
   if (!cards.length) {
     box.replaceChildren(

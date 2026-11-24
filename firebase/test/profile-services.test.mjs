@@ -48,6 +48,7 @@ describe('users.avatar', () => {
     await assertFails(updateDoc(doc(as(ALICE), 'users/alice'), { avatar: 'https://x.test/a.png', updatedAt: serverTimestamp() }));
     await assertFails(updateDoc(doc(as(ALICE), 'users/alice'), { avatar: 'data:image/png;base64,' + 'A'.repeat(32000), updatedAt: serverTimestamp() }));
     await assertFails(updateDoc(doc(as(ALICE), 'users/alice'), { avatar: 123, updatedAt: serverTimestamp() }));
+    await assertFails(updateDoc(doc(as(ALICE), 'users/alice'), { avatar: 'data:image/svg+xml,<svg onload=alert(1)>', updatedAt: serverTimestamp() }));
   });
   test('tạo hồ sơ mới kèm ảnh', async () => {
     await assertSucceeds(setDoc(doc(as(BOB), 'users/bob'), profile({ displayName: 'Bob', email: 'bob@example.com', avatar: png, createdAt: serverTimestamp() })));

@@ -13,10 +13,11 @@ export const cropSquare = (w: number, h: number): { sx: number; sy: number; size
 };
 
 const decode = async (file: File): Promise<ImageBitmap | HTMLImageElement> => {
-  if (!file.type.startsWith('image/')) throw new Error('unreadable');
+  // file.type có thể rỗng (kéo-thả, một số máy Android) → vẫn thử decode; chỉ từ chối khi rõ ràng không phải ảnh
+  if (file.type && !file.type.startsWith('image/')) throw new Error('unreadable');
   if ('createImageBitmap' in window) {
     try {
-      return await createImageBitmap(file);
+      return await createImageBitmap(file, { imageOrientation: 'from-image' }); // xoay theo EXIF (ảnh điện thoại chụp dọc)
     } catch {
       /* thử cách cũ */
     }

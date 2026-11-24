@@ -19,7 +19,7 @@ import {
 } from '../customer/services';
 import type { AccessKey, AutoFacts, CustomerServices, ManualService, ServiceId, ServiceStatus } from '../customer/services';
 import { balancePanel, docsOf, empty, failed, loading, orderItem, requestItem } from './money';
-import { avatarEl, buildForm, config, db, errText, loadCustomerServices, loadCustomers, money, saveCustomerServices, str, when } from './shared';
+import { avatarEl, buildForm, db, errText, loadCustomerServices, loadCustomers, money, saveCustomerServices, str, when } from './shared';
 import type { Customer } from './shared';
 
 export const CUSTOMER_TABS = [
@@ -33,7 +33,7 @@ type TabId = (typeof CUSTOMER_TABS)[number][0];
 
 const accessLabel: Record<AccessKey, [string, string]> = {
   ads: ['Báo cáo quảng cáo', 'Khách xem chi tiêu, số dư từng TKQC và nạp ngân sách'],
-  courses: ['Khóa học', 'Khách xem danh sách khóa học và học bài đã mua'],
+  courses: ['Khóa học', 'Mục Khóa học luôn mở để khách tự mua/mở khóa; bật ở đây chỉ để ghi nhận khách được cấp khóa học'],
   keys: ['Key & máy', 'Khách xem key phần mềm, máy đã kích hoạt'],
   guides: ['Hướng dẫn sử dụng', 'Khách đọc các bài hướng dẫn'],
 };
@@ -47,6 +47,7 @@ export const renderCustomer = async (root: HTMLElement, uid: string, tab = 'dich
   let c: Customer | undefined;
   try {
     c = (await loadCustomers()).get(uid);
+    if (!c && /^[A-Za-z0-9_-]{6,128}$/.test(uid)) c = (await loadCustomers(true)).get(uid); // khách mới đăng ký sau khi mở trang
   } catch (err) {
     root.replaceChildren(failed(err, () => void renderCustomer(root, uid, tab)));
     return;
@@ -105,7 +106,11 @@ export const renderCustomer = async (root: HTMLElement, uid: string, tab = 'dich
       tabId === 'dich-vu'
         ? await servicesPanel(cust)
         : tabId === 'so-du'
-          ? await balancePanel(cust, () => void refreshHead())
+          ? await balancePanel(cust, () => {
+              // sau điều chỉnh: vẽ lại cả tab (sổ giao dịch mới + form sạch + nút mở lại) và số dư đầu trang
+              void refreshHead();
+              void renderCustomer(root, uid, 'so-du');
+            })
           : tabId === 'don-hang'
             ? await ordersPanel(cust)
             : tabId === 'tkqc'
@@ -175,11 +180,10 @@ const loadFacts = async (uid: string): Promise<AutoFacts> => {
     docsOf(query(collection(db, 'courseAccess'), where('uid', '==', uid))),
     docsOf(query(collection(db, 'keys'), where('uid', '==', uid))),
   ]);
-  const planOf = (productId: string) => config.catalog.find((p) => p.id === productId)?.planId ?? productId;
   return {
     paidOrders: orders
       .filter((o) => ['paid', 'processing', 'done'].includes(str(o, 'status')))
-      .map((o) => ({ type: str(o, 'type'), productId: planOf(str(o, 'productId')), name: str(o, 'name'), createdAt: (o.createdAt as { toDate?: () => Date })?.toDate?.() ?? null })),
+      .map((o) => ({ type: str(o, 'type'), productId: str(o, 'productId'), name: str(o, 'name'), createdAt: (o.createdAt as { toDate?: () => Date })?.toDate?.() ?? null })),
     adAccounts: ads.filter((a) => a.active !== false).map((a) => ({ label: str(a, 'label') || str(a, 'accountName'), service: str(a, 'service') })),
     courses: courses.length,
     keys: keys.filter((k) => str(k, 'status') === 'active').length,
@@ -261,7 +265,7 @@ const servicesView = (c: Customer, cs: CustomerServices, facts: AutoFacts, redra
         { name: 'status', label: 'Trạng thái', type: 'select', required: true, value: m?.status ?? 'active', options: SERVICE_STATUSES.map((s) => ({ value: s, label: statusName(s, 'vi') })) },
         { name: 'label', label: 'Tên hiện cho khách', required: true, maxlength: 120, value: m?.label || serviceName((m?.id ?? 'ads') as ServiceId, 'vi'), hint: 'Ví dụ: "Chạy ads K-Aura" — để khách nhận ra ngay.' },
         { name: 'since', label: 'Bắt đầu từ ngày', required: true, value: m?.since ?? todayVn(), placeholder: 'YYYY-MM-DD', hint: 'Dạng năm-tháng-ngày, ví dụ 2026-11-24.' },
-        { name: 'note', label: 'Ghi chú nội bộ (khách không thấy)', type: 'textarea', rows: 2, maxlength: 300, value: m?.note ?? '', wide: true },
+        { name: 'note', label: 'Ghi chú (khách không thấy trên web)', type: 'textarea', rows: 2, maxlength: 300, value: m?.note ?? '', wide: true },
       ],
       m ? 'Lưu thay đổi' : 'Thêm vào danh sách',
     );
@@ -292,6 +296,7 @@ const servicesView = (c: Customer, cs: CustomerServices, facts: AutoFacts, redra
       if (!isDay(since)) f.setError('since', 'Nhập ngày dạng 2026-11-24.');
       if (!label) f.setError('label', 'Nhập tên hiện cho khách.');
       if (!editing && cs.services.length >= 30) f.setError('id', 'Tối đa 30 dịch vụ gán tay cho một khách.');
+      if (cs.services.some((s) => s.id === id && s !== editing)) f.setError('id', 'Khách đã có dịch vụ này — bấm Sửa ở thẻ đó thay vì thêm mới.');
       if (f.focusFirstError()) return;
       f.submit.disabled = true;
       const before = cs.services;

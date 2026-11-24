@@ -52,6 +52,9 @@ describe('mergeServices / isOpen', () => {
     assert.equal(serviceOfOrder('product', 'ad-budget'), 'ad-budget');
     assert.equal(serviceOfOrder('course', 'c1'), 'training');
     assert.equal(serviceOfOrder('product', 'abc'), 'other');
+    assert.equal(serviceOfOrder('service', 'ai-starter-setup'), 'ai-starter');
+    assert.equal(serviceOfOrder('service', 'ai-sales-monthly'), 'ai-sales');
+    assert.equal(serviceOfOrder('service', 'training-workshop'), 'training');
   });
   test('isOpen: TKQC mở ads dù chưa cấp; guides chỉ theo quyền', () => {
     assert.equal(isOpen('ads', EMPTY_SERVICES, { ...EMPTY_FACTS, adAccounts: [{ label: 'x', service: 'ads' }] }), true);
