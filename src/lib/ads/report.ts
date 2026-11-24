@@ -41,6 +41,15 @@ export interface AdTopup {
   date: string;
   label: string;
   amount: number;
+  /** Ô số tiền đang trống trên trang tính (undefined với báo cáo cũ) */
+  blank?: boolean;
+}
+
+/** Khối ngân hàng bên phải tab trang tính */
+export interface AdBank {
+  name: string;
+  holder: string;
+  account: string;
 }
 
 export interface AdDay {
@@ -60,6 +69,9 @@ export interface AdReport {
   accountName: string;
   note: string;
   topups: AdTopup[];
+  /** Mọi ngày ở cột NGÀY của bảng chi tiêu, theo thứ tự trên trang tính (rỗng với báo cáo cũ) */
+  dayDates: string[];
+  bank: AdBank | null;
   days: AdDay[];
   totals: { topup: number; spend: number; balance: number; comment: number; inbox: number; data: number; cpd: number };
   updatedAt: Date | null;
@@ -112,7 +124,17 @@ export const parseAdReport = (id: string, d: DocumentData): AdReport => {
     tab: s(d, 'tab'),
     accountName: s(d, 'accountName'),
     note: s(d, 'note'),
-    topups: topups.map((x) => ({ date: s(x, 'date'), label: s(x, 'label'), amount: n(x, 'amount') })),
+    topups: topups.map((x) => ({
+      date: s(x, 'date'),
+      label: s(x, 'label'),
+      amount: n(x, 'amount'),
+      ...(typeof x.blank === 'boolean' ? { blank: x.blank as boolean } : {}),
+    })),
+    dayDates: (Array.isArray(d.dayDates) ? (d.dayDates as unknown[]) : []).filter((x): x is string => typeof x === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(x)),
+    bank:
+      d.bank && typeof d.bank === 'object' && /^\d{6,19}$/.test(s(d.bank as DocumentData, 'account'))
+        ? { name: s(d.bank as DocumentData, 'name'), holder: s(d.bank as DocumentData, 'holder'), account: s(d.bank as DocumentData, 'account') }
+        : null,
     days: days
       .map((x) => ({ date: s(x, 'date'), comment: n(x, 'comment'), inbox: n(x, 'inbox'), data: n(x, 'data'), cpd: n(x, 'cpd'), spend: n(x, 'spend') }))
       .filter((x) => /^\d{4}-\d{2}-\d{2}$/.test(x.date))

@@ -20,6 +20,7 @@ import { ensure, errors, isLoaded, on, reload, state } from "./store";
 import { openAdTopup, recentTopups } from "./ad-topup";
 import QRCode from "qrcode";
 import { buildVietQr } from "../vietqr";
+import { banks } from "../../data/banks";
 
 const T = {
   vi: {
@@ -237,6 +238,8 @@ const monthDays = (ym: string): string[] => {
 const todayVn = () => new Intl.DateTimeFormat("en-CA", { timeZone: "Asia/Ho_Chi_Minh" }).format(new Date());
 
 const topupTable = (r: AdReport) => {
+  // Báo cáo mới: hiện đúng từng dòng như trang tính (ô trống thì để trống, có "0 đ" thì ghi 0đ).
+  const exact = r.topups.some((t) => t.date && t.blank !== undefined);
   const labels = r.topups.filter((t) => !t.date);
   const byDate = new Map<string, number>();
   r.topups.filter((t) => t.date).forEach((t) => byDate.set(t.date, (byDate.get(t.date) ?? 0) + t.amount));
@@ -245,8 +248,13 @@ const topupTable = (r: AdReport) => {
     ...labels.map((t) =>
       h("tr", { class: t.amount < 0 ? "xl-red" : "xl-g1" }, td(t.label, "xl-label"), td(money(t.amount))),
     ),
-    // Ngày đã qua: có nạp thì ghi số tiền, không nạp ghi 0đ. Hôm nay và các ngày tới: chỉ ghi khi có nạp.
-    ...monthDays(r.month).map((d) => {
+    ...(exact
+      ? r.topups
+          .filter((t) => t.date)
+          .map((t) => h("tr", {}, td(dmy(t.date), "xl-date"), td(t.blank ? "" : money(t.amount))))
+      : []),
+    // Báo cáo cũ: ngày đã qua không nạp ghi 0đ; hôm nay và các ngày tới chỉ ghi khi có nạp.
+    ...(exact ? [] : monthDays(r.month)).map((d) => {
       const amt = byDate.get(d) ?? 0;
       const text = amt !== 0 ? money(amt) : d < today ? money(0) : "";
       return h("tr", {}, td(dmy(d), "xl-date"), td(text));
@@ -318,7 +326,7 @@ const daysTable = (r: AdReport) => {
       h(
         "tbody",
         {},
-        ...monthDays(r.month).map((date) => {
+        ...(r.dayDates.length ? r.dayDates : monthDays(r.month)).map((date) => {
           const d = r.days.find((x) => x.date === date);
           return h(
             "tr",
@@ -334,6 +342,13 @@ const daysTable = (r: AdReport) => {
       ),
     ),
   );
+};
+
+/** Tên ngân hàng trên trang tính ("MB BANK") → mã BIN VietQR. */
+const binOf = (name: string): string => {
+  const key = (x: string) => x.toUpperCase().replace(/NG[AÂ]N H[AÀ]NG|BANK|\s|-/g, "");
+  const k = key(name);
+  return banks.find((b) => key(b.short) === k || key(b.short).startsWith(k) || k.startsWith(key(b.short)))?.bin ?? "";
 };
 
 const sideBlock = (r: AdReport) => {
@@ -364,10 +379,21 @@ const sideBlock = (r: AdReport) => {
       ),
     ),
   );
-  if (!p) return h("div", { class: "xl-side" }, sum);
+  // Khối ngân hàng lấy đúng như trang tính (vd. MB BANK · TRAN VAN NHAT · 1112289999); báo cáo cũ dùng Cài đặt thanh toán.
+  const src = r.bank
+    ? {
+        name: r.bank.name,
+        holder: r.bank.holder,
+        account: r.bank.account,
+        bin: p && p.accountNumber === r.bank.account ? p.bankBin : binOf(r.bank.name),
+      }
+    : p
+      ? { name: p.bankName, holder: p.accountName, account: p.accountNumber, bin: p.bankBin }
+      : null;
+  if (!src) return h("div", { class: "xl-side" }, sum);
   const qr = h("div", { class: "xl-qr", role: "img", "aria-label": T.qrAlt });
   try {
-    const payload = buildVietQr({ bin: p.bankBin, account: p.accountNumber });
+    const payload = buildVietQr({ bin: src.bin, account: src.account });
     void QRCode.toString(payload, {
       type: "svg",
       errorCorrectionLevel: "M",
@@ -387,14 +413,9 @@ const sideBlock = (r: AdReport) => {
     h(
       "tbody",
       {},
-      h(
-        "tr",
-        { class: "xl-red" },
-        td(p.bankName.toUpperCase()),
-        td(p.accountName),
-      ),
-      h("tr", { class: "xl-red" }, td(T.account), td(p.accountNumber)),
-      h("tr", {}, td(T.qr, "xl-qrtitle", { colspan: 2 })),
+      h("tr", { class: "xl-bk" }, td(src.name.toUpperCase()), td(src.holder.toUpperCase())),
+      h("tr", { class: "xl-bk" }, td(T.account), td(src.account)),
+      h("tr", { class: "xl-bk" }, td(T.qr, "", { colspan: 2 })),
       h(
         "tr",
         {},
@@ -402,15 +423,17 @@ const sideBlock = (r: AdReport) => {
           "td",
           { colspan: 2, class: "xl-qrcell" },
           h(
-            "p",
-            { class: "xl-qrnote" },
-            T.scan,
-            h("br"),
-            h("strong", { text: p.accountName }),
-            h("br"),
-            h("strong", { text: p.accountNumber }),
+            "div",
+            { class: "xl-qrcard" },
+            h(
+              "div",
+              { class: "xl-qrcard-head" },
+              h("strong", { text: src.holder.toUpperCase() }),
+              h("span", { text: src.account }),
+            ),
+            qr,
+            h("div", { class: "xl-qrcard-foot", text: "VietQR · napas 247" }),
           ),
-          qr,
         ),
       ),
     ),

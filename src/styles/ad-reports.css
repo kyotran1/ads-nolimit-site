@@ -544,3 +544,49 @@ dialog.at-dialog {
 .at-item.is-rejected .at-status {
   color: var(--auth-danger);
 }
+
+/* Khối ngân hàng như trang tính: hàng nền xanh xám chữ trắng, mã QR trên nền tối */
+.xl-t tr.xl-bk > * {
+  background: #52667f;
+  color: #fff;
+  font-weight: 700;
+  white-space: normal;
+}
+.xl-qrcell {
+  background: #111;
+  padding: 0.9rem !important;
+}
+.xl-qrcard {
+  width: min(12.5rem, 100%);
+  margin-inline: auto;
+  border-radius: 10px;
+  overflow: hidden;
+  background: #fff;
+  box-shadow: 0 0 0 1px #c9a55a55;
+}
+.xl-qrcard-head {
+  display: grid;
+  gap: 0.1rem;
+  padding: 0.5rem 0.7rem;
+  background: #e8f2fc;
+  text-align: left;
+}
+.xl .xl-qrcard-head strong {
+  color: #1b3a6b;
+  font-size: 0.78rem;
+}
+.xl-qrcard-head span {
+  color: #111;
+  font-weight: 700;
+  font-size: 0.85rem;
+}
+.xl-qrcard .xl-qr {
+  width: 100%;
+  padding: 0.5rem 0.6rem 0.2rem;
+}
+.xl-qrcard-foot {
+  padding: 0.2rem 0 0.5rem;
+  color: #1b3a6b;
+  font-size: 0.72rem;
+  font-weight: 700;
+}
