@@ -45,6 +45,11 @@ print('ban kinh goc', radius, 'ti le khung tren maskable', round(k * s_side / 51
 mk = fit(sq, 512, k * side / 512, (255, 255, 255, 255))
 mk.convert('RGB').save('public/icon-maskable-512.png')
 
+# 4) Biểu tượng nhỏ trên thẻ trình duyệt (favicon): cùng hình, góc trong suốt
+fit(sq, 32).save('public/favicon-32.png'); fit(sq, 16).save('public/favicon-16.png')
+fit(sq, 32).save('brand/favicon-32.png')
+fit(sq, 256).save('public/favicon.ico', sizes=[(16, 16), (32, 32), (48, 48)])
+
 # Ảnh xem trước: trên nền hình nền tối và nền sáng, + iPhone bo góc, + Android hình tròn
 def rounded(img, radius_ratio):
     m = Image.new('L', img.size, 0)
