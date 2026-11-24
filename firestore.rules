@@ -5,7 +5,8 @@ rules_version = '2';
 //
 // Nguyên tắc: mặc định CẤM tất cả, chỉ mở đúng những gì liệt kê dưới đây.
 //
-//   users/{uid}          Hồ sơ khách (khách tự đọc/sửa của mình; quản trị viên đọc được).
+//   users/{uid}          Hồ sơ khách (+ avatar: ảnh đại diện data URL)
+//   customerServices/{uid} Dịch vụ khách đang dùng + quyền truy cập mục (chỉ quản trị viên ghi). (khách tự đọc/sửa của mình; quản trị viên đọc được).
 //   wallets/{uid}        Số dư (VNĐ, số nguyên). Khách CHỈ đọc; khách chỉ làm số dư GIẢM
 //                        trong một lần ghi mua hàng hợp lệ (đơn + giao dịch + ví cùng lúc).
 //                        Mọi lần cộng tiền do quản trị viên làm, luôn kèm một dòng sổ giao dịch.
@@ -111,9 +112,11 @@ service cloud.firestore {
     // ======================================================================
 
     function validProfile(d) {
-      return d.keys().hasOnly(['displayName', 'email', 'phone', 'company', 'industry', 'aiOfficeNews', 'createdAt', 'updatedAt'])
+      return d.keys().hasOnly(['displayName', 'email', 'phone', 'company', 'industry', 'aiOfficeNews', 'avatar', 'createdAt', 'updatedAt'])
         && d.keys().hasAll(['createdAt', 'updatedAt'])
         && optString(d, 'displayName', 120)
+        // ảnh đại diện: data URL ảnh đã thu nhỏ 128px (≤ 32 000 ký tự); '' = xóa ảnh
+        && (!('avatar' in d) || (d.avatar is string && d.avatar.size() <= 32000 && (d.avatar == '' || d.avatar.matches('^data:image/.*'))))
         // email (để chủ tìm khách) phải đúng email đăng nhập
         && (!('email' in d) || d.email == myEmail())
         && optString(d, 'phone', 20)
@@ -140,6 +143,38 @@ service cloud.firestore {
         && validProfile(request.resource.data)
         && request.resource.data.createdAt == resource.data.createdAt;
       allow delete: if isMe(uid) && walletEmpty(uid);
+    }
+
+    // ======================================================================
+    // customerServices/{uid} — dịch vụ khách đang dùng (chủ gán tay) + quyền truy cập các mục.
+    // CHỈ quản trị viên ghi; khách đọc của mình. Hình dạng từng phần tử của `services`
+    // (id / status / since) không kiểm được bằng rules (không lặp mảng) → web quản trị kiểm khi ghi,
+    // parseCustomerServices() bỏ phần tử sai khi đọc.
+    // ======================================================================
+
+    function validAccess(a) {
+      return a is map
+        && a.keys().hasOnly(['ads', 'courses', 'keys', 'guides'])
+        && (!('ads' in a) || a.ads is bool)
+        && (!('courses' in a) || a.courses is bool)
+        && (!('keys' in a) || a.keys is bool)
+        && (!('guides' in a) || a.guides is bool);
+    }
+
+    function validCustomerServices(d) {
+      return d.keys().hasOnly(['services', 'access', 'updatedAt', 'updatedBy'])
+        && d.keys().hasAll(['services', 'access', 'updatedAt', 'updatedBy'])
+        && d.services is list
+        && d.services.size() <= 30
+        && validAccess(d.access)
+        && d.updatedAt == request.time
+        && d.updatedBy == request.auth.uid;
+    }
+
+    match /customerServices/{uid} {
+      allow read: if isMe(uid) || isAdmin();
+      allow create, update: if isAdmin() && validCustomerServices(request.resource.data);
+      allow delete: if isAdmin();
     }
 
     // ======================================================================
