@@ -3064,6 +3064,8 @@ dialog.confirm-dialog {
 /* Mục vừa "Sắp ra mắt" vừa khóa: chỉ hiện khóa để chữ không xuống dòng */
 .side-link:has(.side-lock:not([hidden])) .side-soon {
   display: none;
+}
+
 /* ===== Quản trị › Khách hàng (V4.2): danh sách dạng dòng + trang chi tiết có tab ===== */
 .adm-rows {
   gap: 0.5rem;
@@ -3329,6 +3331,8 @@ dialog.confirm-dialog {
 }
 #cs-form {
   margin-top: 0.75rem;
+}
+
 /* Ảnh đại diện trong mục Hồ sơ */
 .p-avatar-row {
   display: flex;
