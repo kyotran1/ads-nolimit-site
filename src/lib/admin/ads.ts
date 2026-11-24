@@ -38,7 +38,7 @@ export const renderAdAccounts = async (root: HTMLElement) => {
         rows: 4,
         maxlength: 1500,
         placeholder: 'codong1@example.com\ncodong2@example.com',
-        hint: 'Cổ đông/nhân sự của khách. Mỗi người phải đã tạo tài khoản trên web.',
+        hint: 'Cổ đông/nhân sự của khách. Mỗi người phải đã tạo tài khoản trên web và đã xác minh email (bấm link trong thư xác minh, hoặc đăng nhập bằng Google) thì mới xem được.',
       },
       {
         name: 'tabPattern',
@@ -107,7 +107,7 @@ export const renderAdAccounts = async (root: HTMLElement) => {
       }
       // Người xem thêm: mỗi email phải là khách đã đăng ký. Đổi khách chính sang người từng là người xem thì
       // dòng cũ của người đó tự bỏ (người đó chỉ còn là khách chính).
-      const oldViewers = editing ? (viewerEmailsOf.get(editing.id) ?? []) : [];
+      const oldViewers = (editing ? (viewerEmailsOf.get(editing.id) ?? []) : []).map((e) => e.toLowerCase());
       const viewerText = f
         .value('viewers')
         .split(/[\s,;]+/)
@@ -156,9 +156,12 @@ export const renderAdAccounts = async (root: HTMLElement) => {
         },
         { merge: true },
       );
-      await loadCustomers(true); // số TKQC của từng khách (danh sách Khách hàng) đổi theo người chính / người xem thêm
       toast(editing ? 'Đã lưu thay đổi. Đang đồng bộ báo cáo cho khách…' : 'Đã thêm tài khoản quảng cáo. Đang đồng bộ số liệu…');
       fill(null);
+      // Đã lưu xong: nạp lại danh sách khách (số TKQC theo người chính / người xem thêm) và vẽ lại thẻ NGAY, không chờ đồng bộ —
+      // nếu không, bấm "Sửa" lúc này sẽ điền lại danh sách người xem cũ và lưu đè (thêm lại người vừa gỡ). Nạp lỗi cũng không chặn đồng bộ.
+      await loadCustomers(true).catch(() => {});
+      void drawList();
       // Báo cáo (adReports) mang uid của khách do Apps Script ghi lúc đồng bộ. Đổi khách mà không đồng bộ ngay thì
       // khách mới thấy "Chưa có báo cáo" và khách cũ vẫn đọc được báo cáo cho tới lần đồng bộ mỗi giờ → đồng bộ luôn.
       syncBtn.click();

@@ -787,10 +787,13 @@ service cloud.firestore {
     }
 
     // Người xem thêm: mình có trong memberUids của tài liệu (TKQC hoặc báo cáo). Tài liệu cũ chưa có
-    // memberUids → không khớp (chủ vẫn đọc qua ownsResource). Dùng riêng cho adAccounts/adReports/adTopups;
+    // memberUids → không khớp (chủ vẫn đọc qua ownsResource). Dùng cho đọc adAccounts/adReports (adTopups kiểm riêng trong newAdTopup);
     // KHÔNG đổi ownsResource() vì nhiều bộ sưu tập khác dùng.
+    // Phải đã xác minh email: quản trị thêm người xem bằng EMAIL, nên người lạ đăng ký trước bằng email của cổ đông
+    // (chưa xác minh được) không được hưởng quyền. Đăng nhập bằng Google luôn là đã xác minh.
     function isAdMember() {
-      return signedIn() && 'memberUids' in resource.data && request.auth.uid in resource.data.memberUids;
+      return signedIn() && request.auth.token.email_verified == true
+        && 'memberUids' in resource.data && request.auth.uid in resource.data.memberUids;
     }
 
     // 3 khóa người xem: hoặc không có khóa nào (tài liệu cũ), hoặc đủ cả 3 và nhất quán:
@@ -873,7 +876,7 @@ service cloud.firestore {
         && optString(d, 'name', 120)
         && d.actId is string && d.actId.matches('^act_[0-9]{5,20}$')
         && (acc.data.uid == request.auth.uid
-          || ('memberUids' in acc.data && request.auth.uid in acc.data.memberUids))
+          || (request.auth.token.email_verified == true && 'memberUids' in acc.data && request.auth.uid in acc.data.memberUids))
         && acc.data.active == true
         && reqString(d, 'accountLabel', 1, 160)
         && d.amount is int && d.amount % 1000 == 0

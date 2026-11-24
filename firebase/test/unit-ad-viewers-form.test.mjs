@@ -81,3 +81,9 @@ describe('roleInAccount', () => {
     assert.equal(roleInAccount({ uid: 'c', memberUids: 'v' }, 'v'), null);
   });
 });
+
+test('parseViewerEmails: cùng một chỗ sai nhập lặp nhiều lần chỉ báo một lỗi', () => {
+  const r = parseViewerEmails('sai\nsai\nchinh@x.com\nCHINH@x.com\nok@x.com', 'chinh@x.com');
+  assert.deepEqual(r.emails, ['ok@x.com']);
+  assert.equal(r.errors.length, 2);
+});

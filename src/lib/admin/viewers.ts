@@ -14,9 +14,9 @@ export const parseViewerEmails = (text: string, mainEmail: string): { emails: st
   for (const raw of text.split(/[\s,;]+/)) {
     const e = raw.trim().toLowerCase();
     if (!e || emails.includes(e)) continue;
-    if (!EMAIL.test(e)) errors.push(`"${raw.trim()}" không phải địa chỉ email.`);
-    else if (e === main) errors.push(`${e} là email khách chính, không cần nhập lại ở ô người xem thêm.`);
-    else emails.push(e);
+    const err = !EMAIL.test(e) ? `"${raw.trim()}" không phải địa chỉ email.` : e === main ? `${e} là email khách chính, không cần nhập lại ở ô người xem thêm.` : '';
+    if (!err) emails.push(e);
+    else if (!errors.includes(err)) errors.push(err); // nhập lặp cùng một chỗ sai chỉ báo một lần
   }
   if (emails.length > MAX_VIEWERS) errors.push(`Chỉ được thêm tối đa ${MAX_VIEWERS} người xem (đang nhập ${emails.length}).`);
   return { emails, errors };

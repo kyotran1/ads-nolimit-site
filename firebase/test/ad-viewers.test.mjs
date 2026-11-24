@@ -185,3 +185,31 @@ describe('adTopups — người xem thêm', () => {
     await assertSucceeds(getDoc(doc(as(XEM1), 'adTopups/ADSBK7Q3PX')));
   });
 });
+
+describe('người xem thêm phải xác minh email; ghi lệch và TKQC ẩn', () => {
+  const chuaXacMinh = () => env.authenticatedContext('xem1', { email: 'x1@e.com', email_verified: false }).firestore();
+  test('người xem thêm CHƯA xác minh email: không get, không list, không tạo lệnh nạp', async () => {
+    const db = chuaXacMinh();
+    await assertFails(getDoc(doc(db, 'adAccounts/act_11111')));
+    await assertFails(getDoc(doc(db, 'adReports/act_11111_2026-11')));
+    await assertFails(getDocs(query(collection(db, 'adAccounts'), where('memberUids', 'array-contains', 'xem1'))));
+    await assertFails(getDocs(query(collection(db, 'adReports'), where('memberUids', 'array-contains', 'xem1'))));
+    await assertFails(setDoc(doc(db, 'adTopups/ADSBK7Q3PX'), adTop()));
+  });
+  test('tài khoản chính chưa xác minh email vẫn đọc được như trước (không đổi hành vi cũ)', async () => {
+    const db = env.authenticatedContext('chinh', { email: 'chinh@example.com', email_verified: false }).firestore();
+    await assertSucceeds(getDoc(doc(db, 'adAccounts/act_11111')));
+    await assertSucceeds(getDocs(query(collection(db, 'adReports'), where('uid', '==', 'chinh'))));
+  });
+  test('quản trị chỉ đổi uid (để memberUids cũ) → từ chối; xóa lẻ một khóa → từ chối', async () => {
+    const db = as(OWNER);
+    await assertFails(updateDoc(doc(db, 'adAccounts/act_11111'), { uid: 'ngoai', customerEmail: 'ngoai@example.com', updatedAt: serverTimestamp(), updatedBy: 'owner' }));
+    await assertFails(setDoc(doc(db, 'adAccounts/act_11111'), without(config(), 'viewerEmails')));
+  });
+  test('TKQC đang ẩn (active = false): người xem thêm không tạo được lệnh nạp', async () => {
+    await env.withSecurityRulesDisabled(async (ctx) => {
+      await updateDoc(doc(ctx.firestore(), 'adAccounts/act_11111'), { active: false });
+    });
+    await assertFails(setDoc(doc(as(XEM1), 'adTopups/ADSBK7Q3PX'), adTop()));
+  });
+});
