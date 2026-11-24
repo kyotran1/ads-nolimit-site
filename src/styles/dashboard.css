@@ -2921,3 +2921,32 @@ dialog.confirm-dialog {
 .admin .panel-head + .panel-lead {
   margin-bottom: 1rem;
 }
+
+/* Ảnh đại diện trong mục Hồ sơ */
+.p-avatar-row {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 0.25rem 0 0.5rem;
+}
+.avatar--lg {
+  width: 5.5rem;
+  height: 5.5rem;
+  font-size: 2rem;
+}
+.p-avatar-text {
+  display: grid;
+  gap: 0.35rem;
+  min-width: 0;
+}
+.p-avatar-label {
+  font-weight: 700;
+}
+.p-avatar-actions {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+.p-avatar-text .field-error:empty {
+  display: none;
+}

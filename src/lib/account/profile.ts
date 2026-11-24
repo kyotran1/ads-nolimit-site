@@ -8,9 +8,11 @@ import { doc, getDoc, serverTimestamp, setDoc, updateDoc } from 'firebase/firest
 import type { DocumentData } from 'firebase/firestore/lite';
 import { clearOnInput, fieldError, focusFirstInvalid, say, setBusy } from '../auth/client';
 import { authErrorMessage, dataErrorMessage, m } from '../auth/messages';
-import { writeUserCache } from '../auth/user-cache';
+import { initialOf, nameOf, setProfileAvatar, writeUserCache } from '../auth/user-cache';
 import { byId } from '../ui/dom';
-import { me, register } from './ctx';
+import { fileToAvatarDataUrl } from '../ui/avatar-image';
+
+import { lang, me, register } from './ctx';
 import { db } from './store';
 
 const MAX_NAME = 60;
@@ -31,6 +33,88 @@ const pIndustry = byId<HTMLInputElement>('p-industry');
 const pNews = byId<HTMLInputElement>('p-news');
 const alertBox = byId('profile-alert');
 const statusBox = byId('profile-status');
+const avatarBox = byId('p-avatar');
+const avatarFile = byId<HTMLInputElement>('p-avatar-file');
+const avatarPick = byId<HTMLButtonElement>('p-avatar-pick');
+const avatarRemove = byId<HTMLButtonElement>('p-avatar-remove');
+const avatarErr = byId('p-avatar-err');
+
+const AV = {
+  vi: {
+    unreadable: 'Không đọc được ảnh. Chọn ảnh JPG hoặc PNG khác.',
+    tooLarge: 'Ảnh quá phức tạp để thu nhỏ. Chọn ảnh khác.',
+  },
+  en: { unreadable: 'Could not read that image. Choose another JPG or PNG.', tooLarge: 'That image is too complex to shrink. Choose another.' },
+}[lang];
+
+/* ---------- Ảnh đại diện (data URL nhỏ, lưu trong users/{uid}.avatar) ---------- */
+
+/** Ảnh đã lưu trong hồ sơ ('' = không có). */
+let savedAvatar = '';
+/** Ảnh đang chọn chờ lưu (null = chưa đổi; '' = xóa). */
+let pendingAvatar: string | null = null;
+
+export const avatarUrl = () => (pendingAvatar ?? savedAvatar) || '';
+
+const drawAvatar = () => {
+  const user = me();
+  const src = avatarUrl() || (user?.photoURL && /^https:\/\//.test(user.photoURL) ? user.photoURL : '');
+  avatarBox.replaceChildren(document.createTextNode(initialOf(user ? nameOf(user) : '?')));
+  if (src) {
+    const img = document.createElement('img');
+    img.alt = '';
+    img.referrerPolicy = 'no-referrer';
+    img.src = src;
+    avatarBox.replaceChildren(img);
+  }
+  avatarRemove.hidden = !avatarUrl();
+};
+
+/** Đặt ảnh đã lưu (từ hồ sơ hoặc sau khi ghi) và cập nhật menu/header. */
+const applySavedAvatar = (dataUrl: string) => {
+  savedAvatar = dataUrl;
+  pendingAvatar = null;
+  setProfileAvatar(dataUrl);
+  drawAvatar();
+};
+
+avatarPick.addEventListener('click', () => avatarFile.click());
+avatarFile.addEventListener('change', async () => {
+  const file = avatarFile.files?.[0];
+  avatarFile.value = '';
+  if (!file) return;
+  avatarErr.textContent = '';
+  avatarPick.disabled = true;
+  try {
+    pendingAvatar = await fileToAvatarDataUrl(file);
+    drawAvatar();
+  } catch (err) {
+    avatarErr.textContent = (err as Error)?.message === 'too-large' ? AV.tooLarge : AV.unreadable;
+  } finally {
+    avatarPick.disabled = false;
+  }
+});
+avatarRemove.addEventListener('click', () => {
+  pendingAvatar = '';
+  avatarErr.textContent = '';
+  drawAvatar();
+});
+
+/** Ghi riêng ảnh đại diện (dùng cho hộp thoại hoàn thiện hồ sơ). */
+export const saveAvatar = async (dataUrl: string) => {
+  const user = me();
+  if (!user) return;
+  const ref = doc(db, 'users', user.uid);
+  if (profileExists === null) profileExists = (await getDoc(ref)).exists();
+  if (profileExists) await updateDoc(ref, { avatar: dataUrl, updatedAt: serverTimestamp() });
+  else {
+    await setDoc(ref, { displayName: (user.displayName ?? '').slice(0, 120), email: user.email ?? '', avatar: dataUrl, createdAt: serverTimestamp(), updatedAt: serverTimestamp() });
+    profileExists = true;
+  }
+  applySavedAvatar(dataUrl);
+  writeUserCache(user);
+  onRenamed(user);
+};
 
 const str = (data: DocumentData, key: string) => (typeof data[key] === 'string' ? (data[key] as string) : '');
 export const clean = (value: string) => value.trim().replace(/\s+/g, ' ');
@@ -61,6 +145,13 @@ export const loadProfile = async (user: User, renamed?: (user: User) => void) =>
     pCompany.value = str(data, 'company');
     pIndustry.value = str(data, 'industry');
     pNews.checked = data.aiOfficeNews === true;
+    const av = /^data:image\//.test(str(data, 'avatar')) ? str(data, 'avatar') : '';
+    const changed = av !== savedAvatar;
+    applySavedAvatar(av);
+    if (changed) {
+      writeUserCache(user);
+      onRenamed(user); // menu trái + lời chào hiện ảnh từ hồ sơ
+    }
     // Lưu email đăng nhập vào hồ sơ (tạo hồ sơ tối thiểu nếu chưa có) để chủ tìm được khách.
     if (user.email && str(data, 'email') !== user.email) {
       if (profileExists) await updateDoc(ref, { email: user.email, updatedAt: serverTimestamp() });
@@ -130,9 +221,11 @@ form.addEventListener('submit', async (event) => {
       updatedAt: serverTimestamp(),
     };
     if (user.email) data.email = user.email;
+    if (pendingAvatar !== null) data.avatar = pendingAvatar;
     if (profileExists) await updateDoc(ref, data);
     else await setDoc(ref, { ...data, createdAt: serverTimestamp() });
     profileExists = true;
+    if (pendingAvatar !== null) applySavedAvatar(pendingAvatar);
   } catch (err) {
     setBusy(submit, false);
     say(alertBox, dataErrorMessage(err));

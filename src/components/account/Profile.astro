@@ -26,6 +26,10 @@ const copy = {
     profile: 'Thông tin của bạn',
     profileLead: 'Giúp ADS-Nolimit tư vấn đúng nhu cầu của bạn. Chỉ bạn và ADS-Nolimit xem được.',
     name: 'Tên hiển thị',
+    avatar: 'Ảnh đại diện',
+    avatarHint: 'JPG hoặc PNG. Ảnh được cắt vuông và thu nhỏ ngay trên máy bạn.',
+    pick: 'Chọn ảnh',
+    remove: 'Xóa ảnh',
     phone: 'Số điện thoại / Zalo',
     company: 'Công ty / cửa hàng',
     industry: 'Ngành hàng / lĩnh vực',
@@ -42,6 +46,10 @@ const copy = {
     profile: 'Your details',
     profileLead: 'Helps ADS-Nolimit advise you on what you actually need. Only you and ADS-Nolimit can see it.',
     name: 'Display name',
+    avatar: 'Profile photo',
+    avatarHint: 'JPG or PNG. Cropped square and resized on your device.',
+    pick: 'Choose photo',
+    remove: 'Remove photo',
     phone: 'Phone / Zalo / WhatsApp',
     company: 'Company or shop',
     industry: 'Industry',
@@ -64,6 +72,19 @@ const copy = {
       <p class="acc-panel-lead">{copy.profileLead}</p>
       <form id="profile-form" class="acc-form" novalidate>
         <div id="profile-alert" class="auth-alert" role="alert"></div>
+        <div class="p-avatar-row">
+          <div class="avatar avatar--lg" id="p-avatar" aria-hidden="true"></div>
+          <div class="p-avatar-text">
+            <p class="p-avatar-label">{copy.avatar}</p>
+            <p class="field-hint">{copy.avatarHint}</p>
+            <div class="p-avatar-actions">
+              <input id="p-avatar-file" type="file" accept="image/*" class="visually-hidden" tabindex="-1" />
+              <button type="button" class="btn btn-sm" id="p-avatar-pick">{copy.pick}</button>
+              <button type="button" class="btn btn-sm btn-ghost" id="p-avatar-remove" hidden>{copy.remove}</button>
+            </div>
+            <p class="field-error" id="p-avatar-err" role="alert"></p>
+          </div>
+        </div>
         <Field id="p-name" name="displayName" label={copy.name} autocomplete="name" maxlength={60} required />
         <div class="acc-form-row">
           <Field id="p-phone" name="phone" type="tel" label={copy.phone} optional={copy.optional} autocomplete="tel" inputmode="tel" maxlength={20} />
