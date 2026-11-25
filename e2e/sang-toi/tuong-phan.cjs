@@ -87,14 +87,22 @@ const AUDIT = () => {
       const s = getComputedStyle(n);
       const bc = parse(s.backgroundColor);
       const clipText = /text/.test(s.webkitBackgroundClip || s.backgroundClip);
-      // gradient dùng làm gạch chân/hiệu ứng nhỏ (kích thước 0% hoặc cao ≤ 3px) không phải nền chữ
-      const bs = (s.backgroundSize || '').split(/[ ,]+/);
-      const thin = /^0(%|px)?$/.test(bs[0]) || (bs[1] && /px$/.test(bs[1]) && parseFloat(bs[1]) <= 3);
-      // nền nhiều lớp kiểu "padding-box đặc + border-box gradient" (viền gradient): gradient chỉ nằm ở viền, không phải nền chữ
+      // Tách các lớp ảnh nền (cách nhau bởi dấu phẩy ngoài ngoặc); lớp đầu nằm trên cùng
+      const imgs = [];
+      { let depth = 0, cur = ''; for (const ch of s.backgroundImage) { if (ch === '(') depth++; if (ch === ')') depth--; if (ch === ',' && depth === 0) { imgs.push(cur.trim()); cur = ''; } else cur += ch; } if (cur.trim()) imgs.push(cur.trim()); }
+      const bsAll = (s.backgroundSize || '').split(/,\s*/);
       const clips = (s.backgroundClip || '').split(/,\s*/);
-      const borderOnly = clips.includes('padding-box') && clips.includes('border-box');
-      const stops = !clipText && !thin && !borderOnly && /gradient/.test(s.backgroundImage) ? stopsOf(s.backgroundImage) : [];
-      if (stops.length) layers.push({ opts: stops.concat(/transparent|rgba\([^)]*,\s*0\)/.test(s.backgroundImage) ? [[0, 0, 0, 0]] : []) });
+      const borderOnlyMix = clips.includes('padding-box') && clips.includes('border-box');
+      imgs.forEach((img, i) => {
+        if (!/gradient/.test(img) || clipText) return;
+        const bs = (bsAll[i % bsAll.length] || '').split(/\s+/);
+        // gradient làm gạch chân/hiệu ứng nhỏ (kích thước 0% hoặc cao ≤ 3px) không phải nền chữ
+        if (/^0(%|px)?$/.test(bs[0]) || (bs[1] && /px$/.test(bs[1]) && parseFloat(bs[1]) <= 3)) return;
+        // viền gradient: lớp border-box nằm sau lớp padding-box đặc
+        if (borderOnlyMix && clips[i % clips.length] === 'border-box') return;
+        const st = stopsOf(img);
+        if (st.length) layers.push({ opts: st.concat(/transparent|rgba\([^)]*,\s*0\)/.test(img) ? [[0, 0, 0, 0]] : []) });
+      });
       if (bc[3] > 0) { layers.push({ opts: [bc] }); if (bc[3] >= 0.995) { solid = true; break; } }
     }
     if (!solid) layers.push({ opts: [parse(getComputedStyle(document.documentElement).backgroundColor), [255, 255, 255, 1]].slice(0, 1) });

@@ -106,7 +106,7 @@
 
   --text: #0d1230;
   --text-2: #3f466b;
-  --text-3: #565d82;
+  --text-3: #50577c;
   --text-hi: #000;
   --skip-fg: #15130a;
 
@@ -116,11 +116,11 @@
   /* Chữ màu: bản đậm hơn để đọc được trên nền trắng */
   --violet-ink: #5a2fd0;
   --blue-ink: #2f3bd6;
-  --teal-ink: #0a7168;
+  --teal-ink: #08665e;
   --green-ink: #08703f;
-  --sun-ink: #805f00;
+  --sun-ink: #6f5200;
 
-  --grad-ink: linear-gradient(100deg, #5a2fd0 0%, #2f3bd6 38%, #0a7168 70%, #08703f 100%);
+  --grad-ink: linear-gradient(100deg, #5a2fd0 0%, #2f3bd6 38%, #08665e 70%, #08703f 100%);
   --card-bg: linear-gradient(180deg, rgb(255 255 255 / 0.9), rgb(255 255 255 / 0.6) 60%), var(--surface);
 
   --shadow-lg: 0 24px 48px -22px rgb(30 38 90 / 0.28);
@@ -132,7 +132,7 @@
 
 /* Vùng luôn tối trong giao diện sáng (màn hình thiết bị, sân khấu 3D: hình minh họa).
    Gắn class "keep-dark"; trả lại đúng bộ biến của giao diện tối cho mọi thứ bên trong. */
-:root[data-theme='light'] .keep-dark {
+:root[data-theme='light'] :is(.keep-dark, .course-cover, .course-hero) {
   color-scheme: dark;
   color: var(--text);
 

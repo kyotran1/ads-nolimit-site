@@ -54,6 +54,7 @@ const QUAN_TRI = ['tong-quan', 'nap-tien', 'don-hang', 'yeu-cau', 'khach-hang', 
       await page.screenshot({ path: path.join(SHOTS, `${ROLE}-${name.replace(/[\/]/g, '_')}-${w}.png`), fullPage: true });
       if (CONTRAST) for (const l of await auditPage(page)) { const k = `${l.sel} ${l.fg} on ${l.bg}`; const g = groups.get(k) || { l, pages: new Set() }; g.pages.add(name + '@' + w); groups.set(k, g); }
     };
+    const audit = async (pg, name) => { if (CONTRAST) for (const l of await auditPage(pg)) { const k = `${l.sel} ${l.fg} on ${l.bg}`; const g = groups.get(k) || { l, pages: new Set() }; g.pages.add(name + '@' + w); groups.set(k, g); } };
     const go = async (hash) => { await page.evaluate((h) => (location.hash = h), hash); await page.waitForTimeout(1600); };
 
     if (ROLE === 'khach') {
@@ -79,6 +80,7 @@ const QUAN_TRI = ['tong-quan', 'nap-tien', 'don-hang', 'yeu-cau', 'khach-hang', 
         await page.click('.at-form button[type=submit]').catch(() => {});
         await page.waitForSelector('.at-qr svg', { timeout: 8000 }).catch(() => {});
         await page.screenshot({ path: path.join(SHOTS, `${ROLE}-hop-nap-them-${w}.png`) });
+        await audit(page, 'hop-nap-them');
         await page.keyboard.press('Escape');
       }
       // Thông báo nổi: lưu hồ sơ
@@ -86,6 +88,7 @@ const QUAN_TRI = ['tong-quan', 'nap-tien', 'don-hang', 'yeu-cau', 'khach-hang', 
       await page.click('#profile-form button[type=submit]').catch(() => {});
       await page.waitForSelector('.toasts .toast, .toast', { timeout: 5000 }).catch(() => {});
       await page.screenshot({ path: path.join(SHOTS, `${ROLE}-thong-bao-noi-${w}.png`) });
+      await audit(page, 'thong-bao-noi');
       await ctx.close();
       // Thẻ mời cài ứng dụng
       const ctx2 = await setupContext(browser, { fake, viewport: { width: w, height: w > 600 ? 900 : 844 }, reducedMotion: 'reduce', serviceWorkers: 'block' });
@@ -96,6 +99,7 @@ const QUAN_TRI = ['tong-quan', 'nap-tien', 'don-hang', 'yeu-cau', 'khach-hang', 
       await p2.waitForTimeout(1500);
       await p2.addStyleTag({ content: NO_ANIM });
       await p2.screenshot({ path: path.join(SHOTS, `${ROLE}-the-cai-ung-dung-${w}.png`), fullPage: true });
+      await audit(p2, 'the-cai-ung-dung');
       await ctx2.close();
       continue;
     }

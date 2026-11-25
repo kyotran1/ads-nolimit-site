@@ -841,9 +841,9 @@
 /* ---------- Giao diện sáng: quầng màu nền nhạt hơn ---------- */
 :root[data-theme='light'] .auth-section {
   background:
-    radial-gradient(34rem 22rem at 50% 12rem, rgb(0 216 120 / 0.09), transparent 70%),
-    radial-gradient(40rem 26rem at 85% -6rem, rgb(72 0 168 / 0.12), transparent 70%),
-    radial-gradient(30rem 20rem at 8% 30%, rgb(24 0 240 / 0.06), transparent 70%);
+    radial-gradient(34rem 22rem at 50% 12rem, rgb(0 216 120 / 0.06), transparent 70%),
+    radial-gradient(40rem 26rem at 85% -6rem, rgb(72 0 168 / 0.08), transparent 70%),
+    radial-gradient(30rem 20rem at 8% 30%, rgb(24 0 240 / 0.04), transparent 70%);
 }
 :root[data-theme='light'] .account {
   background:
@@ -857,4 +857,10 @@
   box-shadow:
     0 0 0 1px rgb(0 216 120 / 0.1),
     0 30px 60px -36px rgb(30 38 90 / 0.3);
+}
+
+:root[data-theme='light'] {
+  --auth-danger: #b42318;
+  --auth-danger-line: rgb(180 35 24 / 0.4);
+  --auth-danger-bg: rgb(180 35 24 / 0.07);
 }

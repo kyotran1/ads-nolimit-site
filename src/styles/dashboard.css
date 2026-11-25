@@ -3486,11 +3486,74 @@ body:has(#dash) .site-header {
 :root[data-theme='light'] .welcome {
   border-color: rgb(90 47 208 / 0.22);
   background:
-    radial-gradient(60% 130% at 100% 0%, rgb(72 0 168 / 0.14), transparent 62%),
-    radial-gradient(55% 100% at 0% 100%, rgb(0 216 120 / 0.12), transparent 70%),
+    radial-gradient(60% 130% at 100% 0%, rgb(72 0 168 / 0.1), transparent 62%),
+    radial-gradient(55% 100% at 0% 100%, rgb(0 216 120 / 0.08), transparent 70%),
     linear-gradient(135deg, #ffffff, #f3f1ff 70%);
   box-shadow: 0 30px 60px -44px rgb(72 0 168 / 0.4);
 }
 :root[data-theme='light'] .welcome::before {
   background-image: radial-gradient(rgb(13 18 48 / 0.08) 1px, transparent 1px);
+}
+
+:root[data-theme='light'] .dash {
+  background:
+    radial-gradient(40rem 22rem at 8% -6rem, rgb(0 216 120 / 0.07), transparent 70%),
+    radial-gradient(48rem 28rem at 96% -10rem, rgb(72 0 168 / 0.1), transparent 70%);
+}
+:root[data-theme='light'] .ai-hero {
+  border-color: rgb(128 95 0 / 0.3);
+  background:
+    radial-gradient(65% 120% at 100% 0%, rgb(238 214 90 / 0.2), transparent 60%),
+    radial-gradient(60% 100% at 0% 100%, rgb(72 0 168 / 0.1), transparent 70%),
+    var(--surface);
+}
+/* Thẻ số dư: nền gradient tím → xanh luôn đậm; ở giao diện sáng đuôi xanh lá đậm hơn để chữ trắng đọc được */
+:root[data-theme='light'] .balance-card {
+  background:
+    radial-gradient(70% 120% at 100% 0%, rgb(255 255 255 / 0.1), transparent 55%),
+    linear-gradient(130deg, #3a10a0 0%, #1d18c8 38%, #0f5f78 72%, #07663f 100%);
+  box-shadow: 0 30px 60px -36px rgb(24 0 240 / 0.5);
+}
+:root[data-theme='light'] .balance-label,
+:root[data-theme='light'] .balance-meta,
+:root[data-theme='light'] .balance-use {
+  color: #fff;
+}
+:root[data-theme='light'] .toast {
+  background: var(--surface);
+  border-color: rgb(8 112 63 / 0.45);
+}
+:root[data-theme='light'] .at-item.is-pending .at-status {
+  color: #8a5a00;
+}
+:root[data-theme='light'] .at-item.is-approved .at-status {
+  color: #0a6a96;
+}
+/* Số bài học / số bước: nền gradient có đầu xanh lá sáng; ở giao diện sáng dùng tím đặc để chữ trắng đọc được */
+:root[data-theme='light'] .lesson-btn[aria-current='true'] .lesson-num,
+:root[data-theme='light'] .how-num {
+  background: var(--violet);
+}
+
+/* Ảnh bìa khóa học (chữ trắng đè lên): ở giao diện sáng dùng bản gradient đậm hơn, không lớp sáng */
+:root[data-theme='light'] .course-hero.cover--aurora {
+  background: linear-gradient(135deg, #3a0090, #1400c0 55%, #0f6a6a);
+}
+:root[data-theme='light'] .course-hero.cover--ocean {
+  background: linear-gradient(135deg, #1400c0, #0a5a92 55%, #0f6a6a);
+}
+:root[data-theme='light'] .course-hero.cover--sunset {
+  background: linear-gradient(135deg, #6a1890, #a02458 55%, #a55414);
+}
+:root[data-theme='light'] .course-hero.cover--forest {
+  background: linear-gradient(135deg, #0a3a3a, #0f6a6a 50%, #067a45);
+}
+:root[data-theme='light'] .course-hero.cover--violet {
+  background: linear-gradient(135deg, #24055a, #5522b8 60%, #7a5ad8);
+}
+:root[data-theme='light'] .course-hero.cover--gold {
+  background: linear-gradient(135deg, #4a3606, #6e5a0a 55%, #7a670c);
+}
+:root[data-theme='light'] .course-hero h2 {
+  color: #fff;
 }
