@@ -22,6 +22,9 @@ const solutions = solutionsNav.map((item) => ({ href: localize(item.href, lang),
 const main = mainNav.map((item) => ({ href: localize(item.href, lang), label: item.label[lang] }));
 const contactHref = localize('/lien-he/', lang);
 const inSolutions = solutions.some((item) => isCurrent(item.href));
+// Hàng dưới (Đăng nhập | Tạo tài khoản) không cần ở chính các trang tài khoản / đăng nhập / đăng ký.
+const accountPaths = ['/dang-nhap/', '/dang-ky/', '/quen-mat-khau/', '/tai-khoan/'].map((p) => localize(p, lang));
+const showRow2 = !accountPaths.includes(path);
 ---
 
 <header class="site-header">
@@ -78,6 +81,13 @@ const inSolutions = solutions.some((item) => isCurrent(item.href));
           <span>{s.menu}</span>
         </summary>
         <nav class="mobile-panel" aria-label={s.mobileNav}>
+          <p class="mobile-group">{s.account}</p>
+          <div class="mobile-acct">
+            <AccountLink lang={lang} variant="mobile" />
+            <a href={localize('/dang-ky/', lang)} class="btn mobile-signup">{s.signUp}</a>
+          </div>
+          <p class="mobile-group">{s.language}</p>
+          <LangSwitch lang={lang} size="lg" />
           <p class="mobile-group">{s.solutions}</p>
           <ul>
             {
@@ -105,15 +115,24 @@ const inSolutions = solutions.some((item) => isCurrent(item.href));
               <a href={contactHref} aria-current={isCurrent(contactHref) ? 'page' : undefined}>{s.contact}</a>
             </li>
           </ul>
-          <p class="mobile-group">{s.account}</p>
-          <AccountLink lang={lang} variant="mobile" />
-          <p class="mobile-group">{s.language}</p>
-          <LangSwitch lang={lang} size="lg" />
         </nav>
       </details>
     </div>
   </div>
 </header>
+{
+  /* Hàng dưới của thanh đầu trang (< 1080px): cùng nền với thanh đầu trang, không dính khi cuộn (trôi theo trang). */
+  showRow2 && (
+    <div class="header-row2">
+      <div class="container row2-inner">
+        <AccountLink lang={lang} variant="bar" />
+        <a href={localize('/dang-ky/', lang)} class="btn row2-signup">
+          {s.signUp}
+        </a>
+      </div>
+    </div>
+  )
+}
 
 <script>
   // Đóng menu/dropdown khi bấm ra ngoài hoặc nhấn Esc. Không có JS menu vẫn dùng được.
@@ -279,6 +298,7 @@ const inSolutions = solutions.some((item) => isCurrent(item.href));
     position: static;
   }
   .menu-toggle {
+    flex: none;
     display: inline-flex;
     align-items: center;
     gap: 0.4rem;
@@ -340,6 +360,57 @@ const inSolutions = solutions.some((item) => isCurrent(item.href));
     margin-top: 0.5rem;
   }
 
+  /* Tài khoản ở đầu menu: chưa đăng nhập → "Đăng nhập" | "Tạo tài khoản"; đã đăng nhập → ảnh + tên */
+  .mobile-acct {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.6rem;
+    margin-top: 0.5rem;
+  }
+  .mobile-signup {
+    min-height: 48px;
+  }
+  .mobile-acct:has(:global(.acct.is-in)) {
+    grid-template-columns: 1fr;
+  }
+  .mobile-acct :global(.acct.is-in) ~ .mobile-signup {
+    display: none;
+  }
+
+  /* Hàng dưới của thanh đầu trang (< 1080px): "Đăng nhập" | "Tạo tài khoản" */
+  .header-row2 {
+    position: relative;
+    z-index: 2;
+    padding: 0.6rem 0;
+    background: rgb(7 10 26 / 0.92);
+    border-bottom: 1px solid rgb(255 255 255 / 0.06);
+  }
+  .row2-inner {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.6rem;
+  }
+  .row2-signup {
+    min-height: 44px;
+    padding-inline: 0.75rem;
+    font-size: 0.9375rem;
+    white-space: nowrap;
+  }
+  .row2-inner:has(:global(.acct.is-in)) {
+    grid-template-columns: 1fr;
+  }
+  .row2-inner :global(.acct.is-in) ~ .row2-signup {
+    display: none;
+  }
+  @media (max-width: 359.98px) {
+    .row2-inner {
+      gap: 0.5rem;
+    }
+    .row2-signup {
+      padding-inline: 0.5rem;
+    }
+  }
+
   /* Điện thoại rất hẹp (≤ 379px): nút Menu chỉ còn icon, tên thương hiệu nhỏ lại. */
   @media (max-width: 379.98px) {
     .header-inner {
@@ -371,6 +442,9 @@ const inSolutions = solutions.some((item) => isCurrent(item.href));
   }
 
   @media (min-width: 1080px) {
+    .header-row2 {
+      display: none;
+    }
     .nav-desktop {
       display: block;
     }

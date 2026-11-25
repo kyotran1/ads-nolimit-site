@@ -1,7 +1,9 @@
 ---
 /**
  * Nút tài khoản ở header: "Đăng nhập" khi chưa đăng nhập, ảnh đại diện/chữ cái đầu + "Tài khoản" khi đã đăng nhập.
- * variant="desktop": nút cạnh nút "Tư vấn miễn phí" (màn hình rộng). variant="mobile": một dòng trong menu điện thoại.
+ * variant="desktop": nút cạnh nút "Tư vấn miễn phí" (màn hình rộng).
+ * variant="bar": nút ở hàng dưới của thanh đầu trang trên điện thoại / máy tính bảng (< 1080px), luôn thấy không cần mở menu.
+ * variant="mobile": mục đầu tiên trong menu điện thoại (chưa đăng nhập: nút lớn; đã đăng nhập: ảnh + tên).
  *
  * Không tải Firebase. Trạng thái đăng nhập đọc từ localStorage "adsnl-user" do các trang tài khoản ghi
  * (src/lib/auth/user-cache.ts). Không có JS hoặc localStorage bị chặn: luôn hiện "Đăng nhập", vẫn dùng được.
@@ -12,7 +14,7 @@ import type { Lang } from '../config/i18n';
 
 interface Props {
   lang: Lang;
-  variant: 'desktop' | 'mobile';
+  variant: 'desktop' | 'bar' | 'mobile';
 }
 const { lang, variant } = Astro.props;
 const s = t(lang);
@@ -31,7 +33,7 @@ const account = localize('/tai-khoan/', lang);
   <span class="acct-avatar" aria-hidden="true"><Icon name="user" /></span>
   <span class="acct-text">
     <span class="acct-label">{s.signIn}</span>
-    {variant === 'mobile' && <span class="acct-name"></span>}
+    {variant !== 'desktop' && <span class="acct-name"></span>}
   </span>
 </a>
 <script is:inline>
@@ -147,6 +149,63 @@ const account = localize('/tai-khoan/', lang);
     }
   }
 
+  /* Hàng dưới thanh đầu trang (điện thoại / máy tính bảng). Ẩn/hiện cả hàng do Header.astro lo. */
+  .acct--bar {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    min-width: 0;
+    min-height: 44px;
+    padding: 0 0.75rem;
+    border: 1px solid rgb(0 216 120 / 0.6);
+    border-radius: var(--r-sm);
+    background: rgb(0 216 120 / 0.08);
+    color: var(--text);
+    font-weight: 700;
+    font-size: 0.9375rem;
+    text-decoration: none;
+    white-space: nowrap;
+    transition:
+      background-color 0.15s ease,
+      border-color 0.15s ease;
+  }
+  .acct--bar:hover {
+    background: rgb(0 216 120 / 0.16);
+  }
+  .acct--bar .acct-avatar {
+    width: 1.625rem;
+    height: 1.625rem;
+  }
+  /* Đã đăng nhập: "Tài khoản · Tên khách" trên một dòng */
+  .acct--bar.is-in {
+    justify-content: flex-start;
+    border-color: var(--line-strong);
+    background: rgb(255 255 255 / 0.04);
+  }
+  .acct--bar .acct-text {
+    display: flex;
+    align-items: baseline;
+    gap: 0.4rem;
+    overflow: hidden;
+  }
+  .acct--bar .acct-name {
+    font-size: 0.8125rem;
+    font-weight: 500;
+  }
+  .acct--bar .acct-name::before {
+    content: '· ';
+  }
+  /* Điện thoại rất hẹp (< 360px): bỏ biểu tượng người cho chữ "Đăng nhập" đủ chỗ */
+  @media (max-width: 359.98px) {
+    .acct--bar {
+      padding-inline: 0.5rem;
+    }
+    .acct--bar:not(.is-in) .acct-avatar {
+      display: none;
+    }
+  }
+
   /* Trong menu điện thoại */
   .acct--mobile {
     display: flex;
@@ -161,6 +220,24 @@ const account = localize('/tai-khoan/', lang);
   .acct--mobile .acct-avatar {
     width: 2rem;
     height: 2rem;
+  }
+  /* Chưa đăng nhập: thành nút xanh, cạnh nút "Tạo tài khoản" (Header.astro) */
+  .acct--mobile:not(.is-in) {
+    justify-content: center;
+    gap: 0.5rem;
+    min-height: 48px;
+    padding: 0 1rem;
+    border: 0;
+    border-radius: var(--r-sm);
+    background: var(--green);
+    color: var(--on-green);
+  }
+  .acct--mobile:not(.is-in) .acct-avatar {
+    width: 1.5rem;
+    height: 1.5rem;
+    color: inherit;
+    background: transparent;
+    box-shadow: none;
   }
   .acct-name {
     font-size: 0.8125rem;
