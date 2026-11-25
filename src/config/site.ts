@@ -129,3 +129,12 @@ export const primaryChannel = {
   vi: { href: links.zalo, icon: 'zalo', label: 'Tư vấn miễn phí qua Zalo', short: 'Nhắn Zalo' },
   en: { href: links.telegram, icon: 'telegram', label: 'Message us on Telegram', short: 'Telegram' },
 } as const;
+
+/**
+ * Trợ lý AI trên web (khung chat góc dưới phải). `endpoint` là địa chỉ web app Apps Script "ADS-Nolimit Tro ly AI"
+ * (dạng https://script.google.com/macros/s/…/exec). Để '' thì web không hiện nút chat.
+ * Mã trạm: apps-script/tro-ly-ai/Code.gs · thiết kế: docs/superpowers/specs/2026-11-26-tro-ly-ai-design.md
+ */
+export const aiChat = {
+  endpoint: ((import.meta as { env?: Record<string, string | undefined> }).env?.PUBLIC_TRO_LY_ENDPOINT ?? '') as string,
+} as const;

@@ -12,6 +12,7 @@ import Footer from '../components/Footer.astro';
 import MobileContactBar from '../components/MobileContactBar.astro';
 import Analytics from '../components/Analytics.astro';
 import PwaHead from '../components/PwaHead.astro';
+import TroLyAi from '../components/TroLyAi.astro';
 import { langFromPath, t } from '../config/i18n';
 import type { Lang } from '../config/i18n';
 
@@ -51,6 +52,7 @@ const { lang = langFromPath(Astro.url.pathname), ...seo } = Astro.props;
     </main>
     <Footer lang={lang} />
     <MobileContactBar lang={lang} />
+    <TroLyAi lang={lang} />
 
     <script is:inline>
       // Hiện dần các khối khi cuộn tới. Không JS hoặc giảm chuyển động: mọi thứ hiện ngay.
