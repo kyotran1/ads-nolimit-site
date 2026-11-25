@@ -136,5 +136,7 @@ export const primaryChannel = {
  * Mã trạm: apps-script/tro-ly-ai/Code.gs · thiết kế: docs/superpowers/specs/2026-11-26-tro-ly-ai-design.md
  */
 export const aiChat = {
-  endpoint: ((import.meta as { env?: Record<string, string | undefined> }).env?.PUBLIC_TRO_LY_ENDPOINT ?? '') as string,
+  endpoint: ((import.meta as { env?: Record<string, string | undefined> }).env?.PUBLIC_TRO_LY_ENDPOINT ??
+    // Triển khai "Tro ly AI v1" (26/11/2026) của dự án Apps Script "ADS-Nolimit Tro ly AI"
+    'https://script.google.com/macros/s/AKfycby6Di59fHpAZYdCZlI7d2JUS4j4FJEdPSKctzoMfxTg3azwWEX9Vtd3Exymd_dMIfwNAA/exec') as string,
 } as const;
