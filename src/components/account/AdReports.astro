@@ -1,5 +1,5 @@
 ---
-/** Báo cáo quảng cáo: thẻ từng TKQC (số dư, chi tiêu, còn ~N ngày) + báo cáo tháng giống tab trang tính. Xử lý: src/lib/account/ads.ts */
+/** Báo cáo quảng cáo: thẻ từng TKQC (số dư, chi tiêu, còn ~N ngày) + báo cáo tháng giống tab trang tính. Xử lý: src/lib/account/reports.ts */
 import Icon from '../Icon.astro';
 import Empty from './Empty.astro';
 import type { Lang } from '../../config/i18n';
@@ -26,14 +26,14 @@ const copy = {
 ---
 
 <section class="view" data-view="ads" hidden>
-  <div class="auth-alert" role="alert" id="ads-alert"></div>
-  <div id="ads-list-view">
+  <div class="auth-alert" role="alert" id="rpt-alert"></div>
+  <div id="rpt-list-view">
     <p class="view-lead">{copy.lead}</p>
-    <ul class="ad-cards" id="ad-cards"></ul>
-    <Empty id="ads-empty" icon="chart" title={copy.emptyTitle} text={copy.emptyText} hidden />
+    <ul class="rpt-cards" id="rpt-cards"></ul>
+    <Empty id="rpt-empty" icon="chart" title={copy.emptyTitle} text={copy.emptyText} hidden />
   </div>
-  <div id="ads-report-view" hidden>
-    <a class="text-link ads-back" href="#" id="ads-back"><Icon name="arrow-left" />{copy.back}</a>
-    <div id="ads-report"></div>
+  <div id="rpt-view" hidden>
+    <a class="text-link rpt-back" href="#" id="rpt-back"><Icon name="arrow-left" />{copy.back}</a>
+    <div id="rpt-box"></div>
   </div>
 </section>

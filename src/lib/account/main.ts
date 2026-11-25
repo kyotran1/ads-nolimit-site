@@ -21,7 +21,7 @@ import { selectCard } from './services';
 import './courses';
 import './guides';
 import './keys';
-import './ads';
+import './reports';
 import { loadProfile } from './profile';
 import { isLeaving, renderSecurity, whenDeleted } from './security';
 import { gate, initLocks } from './locked';

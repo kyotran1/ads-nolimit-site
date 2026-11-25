@@ -10,7 +10,7 @@ import { byId, copyButton, h, icon } from '../ui/dom';
 import { db, errText, setAdmin } from './shared';
 import { renderCustomers, renderOrders, renderOverview, renderRequests, renderTopups } from './money';
 import { renderKeys } from './keys';
-import { renderAdAccounts } from './ads';
+import { renderAdAccounts } from './accounts';
 import { renderCustomer } from './customer';
 import { renderContent } from './content';
 import { renderSettings } from './settings';

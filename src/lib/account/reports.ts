@@ -17,7 +17,7 @@ import {
   when,
 } from "./ctx";
 import { ensure, errors, isLoaded, on, reload, state } from "./store";
-import { openAdTopup, recentTopups } from "./ad-topup";
+import { openAdTopup, recentTopups } from "./budget-topup";
 import QRCode from "qrcode";
 import { buildVietQr } from "../vietqr";
 import { banks } from "../../data/banks";
@@ -113,12 +113,12 @@ const T = {
   },
 }[lang];
 
-const listView = byId("ads-list-view");
-const reportView = byId("ads-report-view");
-const cards = byId("ad-cards");
-const empty = byId("ads-empty");
-const box = byId("ads-report");
-const alert = byId("ads-alert");
+const listView = byId("rpt-list-view");
+const reportView = byId("rpt-view");
+const cards = byId("rpt-cards");
+const empty = byId("rpt-empty");
+const box = byId("rpt-box");
+const alert = byId("rpt-alert");
 const num = (n: number) =>
   new Intl.NumberFormat(lang === "en" ? "en-US" : "vi-VN").format(n);
 
@@ -127,7 +127,7 @@ let month = "";
 const fact = (label: string, value: string, cls = "") =>
   h(
     "div",
-    { class: `ad-fact ${cls}` },
+    { class: `rpt-fact ${cls}` },
     h("dt", { text: label }),
     h("dd", { text: value }),
   );
@@ -138,13 +138,13 @@ const accountCard = (a: AdAccount) => {
   const link = h(
     "a",
     {
-      class: `ad-card${l?.low ? " is-low" : ""}`,
+      class: `rpt-card${l?.low ? " is-low" : ""}`,
       href: "#",
       "data-glow": true,
     },
     h(
       "div",
-      { class: "ad-card-head" },
+      { class: "rpt-card-head" },
       h(
         "span",
         { class: "icon-tile tone-violet", "aria-hidden": "true" },
@@ -152,30 +152,30 @@ const accountCard = (a: AdAccount) => {
       ),
       h(
         "div",
-        { class: "ad-card-name" },
+        { class: "rpt-card-name" },
         h("strong", { text: a.label || a.accountName }),
         h("span", { text: a.label ? a.accountName : T.service[a.service] }),
       ),
     ),
     h(
       "p",
-      { class: "ad-card-balance" },
+      { class: "rpt-card-balance" },
       h("small", { text: T.balance }),
       h("strong", { text: l ? money(l.balance) : "—" }),
     ),
     l?.low
-      ? h("p", { class: "ad-low" }, icon("bell"), h("span", { text: T.low }))
+      ? h("p", { class: "rpt-low" }, icon("bell"), h("span", { text: T.low }))
       : null,
     h(
       "dl",
-      { class: "ad-facts" },
+      { class: "rpt-facts" },
       fact(T.monthSpend(l ? monthLabel(l.month) : ""), l ? money(l.totalSpend) : "—"),
       fact(T.spendToday, l ? money(l.spendToday) : "—"),
       fact(T.spendYesterday, l ? money(l.spendYesterday) : "—"),
     ),
     h(
       "p",
-      { class: "ad-card-foot" },
+      { class: "rpt-card-foot" },
       h("span", {
         text: l?.updatedAt ? `${T.updated} ${when(l.updatedAt)}` : "",
       }),
@@ -648,7 +648,7 @@ const renderReport = (actId: string) => {
 
   const select = h(
     "select",
-    { class: "ad-month", "aria-label": T.month },
+    { class: "rpt-month", "aria-label": T.month },
     ...reports.map((x) =>
       h("option", { value: x.month, text: `${T.month} ${my(x.month)}` }),
     ),
@@ -663,7 +663,7 @@ const renderReport = (actId: string) => {
   const parts: (Node | null)[] = [
     h(
       "div",
-      { class: "ad-report-head" },
+      { class: "rpt-head" },
       h(
         "div",
         {},
@@ -680,13 +680,13 @@ const renderReport = (actId: string) => {
           : null,
     ),
     low
-      ? h("p", { class: "ad-low" }, icon("bell"), h("span", { text: T.low }))
+      ? h("p", { class: "rpt-low" }, icon("bell"), h("span", { text: T.low }))
       : null,
     r ? viewer(r, actId) : h("p", { class: "muted", text: T.noReport }),
     r
       ? h(
           "div",
-          { class: "ad-report-foot" },
+          { class: "rpt-foot" },
           h(
             "button",
             {
@@ -722,7 +722,7 @@ const render = () => {
   else renderList();
 };
 
-byId("ads-back").addEventListener("click", (e) => {
+byId("rpt-back").addEventListener("click", (e) => {
   e.preventDefault();
   go("ads");
 });
@@ -734,7 +734,7 @@ on(["adAccounts", "adReports", "payment", "adTopups"], () => {
 
 /** Banner đỏ ở Tổng quan khi có TKQC số dư thấp. */
 const renderBanner = () => {
-  const slot = document.getElementById("ov-ads-low");
+  const slot = document.getElementById("ov-low-balance");
   if (!slot) return;
   const low = state.adAccounts.filter((a) => a.latest?.low);
   slot.hidden = low.length === 0;

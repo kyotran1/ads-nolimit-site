@@ -41,14 +41,14 @@ const bannerMsg = 'Chưa có báo cáo';
   await emu.set('adReports/act_33333_2026-11', report('act_33333', C.u.uid, { memberUids: [C.u.uid] }));
 
   const open = async (X, hash = '') => { await signIn(X.page, X.u.email, 'pass-12345', '/tai-khoan/'); await X.page.waitForSelector('#acc-app:not([hidden])'); if (hash) { await X.page.evaluate((h) => (location.hash = h), hash); await X.page.waitForTimeout(1800); } };
-  const cardCount = (p) => p.locator('.ad-card').count();
+  const cardCount = (p) => p.locator('.rpt-card').count();
   const pageText = (p) => p.locator('main, body').first().innerText();
 
   console.log('— Người xem thêm —');
   await open(B, 'bao-cao-ads');
   await step('xem thêm: thấy đúng 1 thẻ TKQC (K-Aura), không thấy TKQC khác', async () => {
     eq(await cardCount(B.page), 1, 'số thẻ');
-    has(await B.page.locator('.ad-card').first().innerText(), 'K-Aura', 'thẻ');
+    has(await B.page.locator('.rpt-card').first().innerText(), 'K-Aura', 'thẻ');
     const t = await pageText(B.page);
     assert(!t.includes('Spa Cũ') && !t.includes('Riêng Ngoài'), 'lộ TKQC khác');
   });

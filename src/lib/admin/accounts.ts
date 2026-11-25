@@ -240,7 +240,7 @@ export const renderAdAccounts = async (root: HTMLElement) => {
             { class: `adm-item${l?.low ? ' is-low' : ''}` },
             h(
               'div',
-              { class: 'adm-ad-main' },
+              { class: 'adm-acc-main' },
               h('h3', { text: `${a.label || a.accountName}${a.active ? '' : ' (đang ẩn)'}` }),
               h('p', { class: 'muted small', text: `${a.id} · ${a.accountName} · ${serviceName(a.service)}` }),
               h('p', { class: 'small', text: `Khách: ${who(a.uid, a.customerEmail)}` }),
@@ -423,7 +423,7 @@ export const renderAdAccounts = async (root: HTMLElement) => {
             { class: `adm-item${canDecide ? ' is-low' : ''}` },
             h(
               'div',
-              { class: 'adm-ad-main' },
+              { class: 'adm-acc-main' },
               h('h3', { text: `${money(t.amount)} · ${t.code}` }),
               h('p', { class: 'small', text: `${t.accountLabel} (${t.actId}) · Ngân sách ${money(t.budget)} · phí ${t.feePercent}%` }),
               h('p', { class: 'small muted', text: `Khách: ${who(t.uid, t.email)} · tạo ${when(t.createdAt)} · ngày ghi ${dmy(t.day)}` }),

@@ -1,17 +1,17 @@
 /* Báo cáo quảng cáo (tài khoản #bao-cao-ads và quản trị #tai-khoan-quang-cao) */
 
-.ad-cards {
+.rpt-cards {
   list-style: none;
   display: grid;
   gap: 0.9rem;
   margin-top: 1rem;
 }
 @media (min-width: 860px) {
-  .ad-cards {
+  .rpt-cards {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }
-.ad-card {
+.rpt-card {
   display: grid;
   gap: 0.75rem;
   padding: 1.1rem 1.15rem;
@@ -22,58 +22,58 @@
   text-decoration: none;
   height: 100%;
 }
-.ad-card.is-low {
+.rpt-card.is-low {
   border-color: var(--auth-danger-line);
 }
-.ad-card-head {
+.rpt-card-head {
   display: flex;
   align-items: center;
   gap: 0.7rem;
   min-width: 0;
 }
-.ad-card-name {
+.rpt-card-name {
   display: grid;
   min-width: 0;
 }
-.ad-card-name strong {
+.rpt-card-name strong {
   font-size: 1.05rem;
   overflow-wrap: anywhere;
 }
-.ad-card-name span {
+.rpt-card-name span {
   color: var(--text-2);
   font-size: 0.85rem;
   overflow-wrap: anywhere;
 }
-.ad-card-balance {
+.rpt-card-balance {
   display: grid;
 }
-.ad-card-balance small {
+.rpt-card-balance small {
   color: var(--text-2);
   font-weight: 600;
 }
-.ad-card-balance strong {
+.rpt-card-balance strong {
   font-size: clamp(1.4rem, 1.1rem + 1vw, 1.9rem);
   font-weight: 800;
   letter-spacing: -0.02em;
   font-variant-numeric: tabular-nums;
 }
-.ad-facts {
+.rpt-facts {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 0.5rem;
 }
-.ad-fact dt {
+.rpt-fact dt {
   color: var(--text-2);
   font-size: 0.78rem;
   line-height: 1.3;
 }
-.ad-fact dd {
+.rpt-fact dd {
   margin: 0;
   font-weight: 700;
   font-variant-numeric: tabular-nums;
   overflow-wrap: anywhere;
 }
-.ad-card-foot {
+.rpt-card-foot {
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -82,7 +82,7 @@
   color: var(--text-3);
   font-size: 0.8rem;
 }
-.ad-low {
+.rpt-low {
   display: flex;
   align-items: center;
   gap: 0.45rem;
@@ -94,28 +94,28 @@
   font-weight: 700;
   font-size: 0.875rem;
 }
-.ad-low svg {
+.rpt-low svg {
   width: 1.05rem;
   height: 1.05rem;
   flex: none;
 }
-.ov-ads-low {
+.ov-low-balance {
   border-color: var(--auth-danger-line);
   background: var(--auth-danger-bg);
   margin-bottom: 1rem;
 }
-.ov-ads-low > svg {
+.ov-low-balance > svg {
   color: var(--auth-danger);
 }
 
 /* Báo cáo tháng */
-.ads-back {
+.rpt-back {
   display: inline-flex;
   align-items: center;
   gap: 0.35rem;
   margin-bottom: 0.75rem;
 }
-.ad-report-head {
+.rpt-head {
   display: flex;
   justify-content: space-between;
   align-items: flex-start;
@@ -123,7 +123,7 @@
   flex-wrap: wrap;
   margin-bottom: 1rem;
 }
-.ad-month {
+.rpt-month {
   min-height: 2.5rem;
   padding: 0.4rem 0.75rem;
   border-radius: var(--r-md);
@@ -132,10 +132,10 @@
   color: var(--text);
   font: inherit;
 }
-.ad-report-head + .ad-low {
+.rpt-head + .rpt-low {
   margin-bottom: 1rem;
 }
-.ad-report-foot {
+.rpt-foot {
   display: flex;
   align-items: center;
   gap: 1rem;
@@ -389,13 +389,13 @@
 .adm-item.is-low {
   border-color: var(--auth-danger-line);
 }
-.adm-ad-main {
+.adm-acc-main {
   display: grid;
   gap: 0.3rem;
   min-width: 0;
   overflow-wrap: anywhere;
 }
-.adm-ad-main h3 {
+.adm-acc-main h3 {
   font-size: 1.05rem;
 }
 .xl strong,
