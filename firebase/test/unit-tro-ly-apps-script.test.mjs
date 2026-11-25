@@ -49,7 +49,7 @@ describe('trạm trợ lý AI (Apps Script)', () => {
     const [c] = apiCalls(env);
     const p = JSON.parse(c.opts.payload);
     assert.equal(p.model, 'claude-haiku-5-5');
-    assert.equal(p.max_tokens, 700);
+    assert.equal(p.max_tokens, 2000);
     assert.equal(c.opts.headers['x-api-key'], 'sk-ant-THU');
     assert.equal(c.opts.headers['anthropic-version'], '2023-06-01');
     assert.match(p.system[0].text, /KIEN THUC VI/);
@@ -152,6 +152,13 @@ describe('trạm trợ lý AI (Apps Script)', () => {
       [{ throw: 'DNS error' }, 'error'],
     ];
     for (const [r, code] of cases) assert.equal(makeEnv({ api: () => r }).post(ask('hi')).code, code, JSON.stringify(r));
+  });
+  test('trả lời bị cắt vì chạm trần độ dài → cắt gọn ở dòng / câu trọn vẹn, thêm dấu …', () => {
+    const long = 'Dòng một đầy đủ.\n- Ý hai đầy đủ.\n- Ý ba đầy đủ nữa nhé.\nChi tiết: https://www.ads-nol';
+    const r = makeEnv({ api: () => ({ status: 200, body: { stop_reason: 'max_tokens', content: [{ type: 'text', text: long }] } }) }).post(ask('hi'));
+    assert.equal(r.reply, 'Dòng một đầy đủ.\n- Ý hai đầy đủ.\n- Ý ba đầy đủ nữa nhé.\n…');
+    const ok = makeEnv({ api: () => ({ status: 200, body: { stop_reason: 'end_turn', content: [{ type: 'text', text: long }] } }) }).post(ask('hi'));
+    assert.equal(ok.reply, long);
   });
   test('mã nguồn không chứa khóa API', () => {
     assert.ok(!/sk-ant-[A-Za-z0-9]/.test(SRC));

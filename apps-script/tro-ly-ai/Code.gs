@@ -19,7 +19,7 @@ var LIMITS = {
   perSession: 40, // mỗi trình duyệt, trong 6 giờ
   perMinute: 30, // toàn web, mỗi phút
   perDay: 1500, // toàn web, mỗi ngày
-  maxTokens: 700, // độ dài tối đa câu trả lời
+  maxTokens: 2000, // độ dài tối đa câu trả lời (tiếng Việt tốn nhiều token) (bị cắt thì trạm cắt gọn ở câu trọn vẹn gần nhất)
 };
 var CONTACT = { zalo: 'https://zalo.me/0888882823', zaloPhone: '0888 88 2823', hotline: '0989 542 610' };
 
@@ -90,6 +90,7 @@ function handle_(body) {
       .join('')
       .trim();
     if (!text) return { ok: false, code: 'error' };
+    if (data.stop_reason === 'max_tokens') text = trimCut_(text);
     return { ok: true, reply: text };
   }
   var msg = data && data.error && data.error.message ? String(data.error.message) : '';
@@ -98,6 +99,13 @@ function handle_(body) {
   if (status === 401 || status === 403) return { ok: false, code: 'setup' };
   if (/credit|balance|billing/i.test(msg)) return { ok: false, code: 'quota' };
   return { ok: false, code: 'error' };
+}
+
+/** Câu trả lời bị cắt vì chạm trần độ dài: bỏ phần dở dang, giữ tới dòng / câu trọn vẹn gần nhất. */
+function trimCut_(text) {
+  var cut = Math.max(text.lastIndexOf('\n'), text.lastIndexOf('. '), text.lastIndexOf('! '), text.lastIndexOf('? '));
+  if (cut < text.length * 0.5) return text + '…';
+  return text.slice(0, cut + 1).trim() + '\n…';
 }
 
 /** Kiểm tra và làm gọn yêu cầu từ web. */
@@ -214,7 +222,7 @@ function systemPrompt_(lang, page) {
     'Bạn là Trợ lý AI của ADS-Nolimit, trả lời khách trong khung chat trên website ads-nolimit.agency.',
     '',
     'Quy tắc:',
-    '1. Trả lời bằng đúng ngôn ngữ khách đang dùng (mặc định ' + (lang === 'en' ? 'tiếng Anh' : 'tiếng Việt') + '). Ngắn gọn: 2–6 câu hoặc vài gạch đầu dòng; chỉ dài hơn khi khách cần giải thích kỹ.',
+    '1. Trả lời bằng đúng ngôn ngữ khách đang dùng (mặc định ' + (lang === 'en' ? 'tiếng Anh' : 'tiếng Việt') + '). Ngắn gọn: thường dưới 120 từ (2–6 câu hoặc tối đa 5 gạch đầu dòng); chỉ dài hơn khi khách hỏi nhiều ý hoặc yêu cầu giải thích kỹ, và kể cả khi đó cũng không quá 220 từ — trả lời gọn từng ý, đủ tất cả các ý khách hỏi. Mỗi câu trả lời đưa tối đa một link trang web.',
     '2. Về dịch vụ, giá, chính sách, thời gian triển khai của ADS-Nolimit: CHỈ dùng phần Kiến thức bên dưới. Không tự đặt giá, giảm giá hay khuyến mãi; không cam kết kết quả kinh doanh (doanh số, số đơn, chuyển đổi); không cam kết tài khoản quảng cáo không bị khóa. Kiến thức không có thì nói chưa có thông tin đó và mời khách nhắn Zalo.',
     '3. Khách hỏi chuyện khác (kiến thức chung, quảng cáo, AI, kinh doanh, công nghệ…): cứ trả lời hữu ích và ngắn gọn; nếu hợp thì gợi ý dịch vụ liên quan của ADS-Nolimit, không ép mua.',
     '4. Không giúp lách chính sách Meta, Google, TikTok (cloaking, tài khoản giả, nội dung bị cấm, né kiểm duyệt) và không hướng dẫn việc phạm pháp.',
