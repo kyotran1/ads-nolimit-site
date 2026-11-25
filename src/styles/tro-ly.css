@@ -23,7 +23,7 @@
   background: var(--grad);
   color: #fff;
   cursor: pointer;
-  box-shadow: 0 14px 32px -10px rgb(24 0 240 / 0.6), 0 0 0 1px rgb(255 255 255 / 0.12) inset;
+  box-shadow: 0 14px 32px -10px rgb(24 0 240 / 0.6), 0 0 0 1px rgb(var(--ov) / 0.12) inset;
   transition: transform 0.18s ease;
 }
 .trl-fab:hover {

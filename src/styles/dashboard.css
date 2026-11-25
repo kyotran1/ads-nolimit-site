@@ -192,7 +192,7 @@ dialog .eyebrow {
 }
 .side-link:hover {
   color: var(--text);
-  background: rgb(255 255 255 / 0.05);
+  background: rgb(var(--ov) / 0.05);
 }
 .side-link[aria-current='page'] {
   color: #fff;
@@ -224,7 +224,7 @@ dialog .eyebrow {
   border-radius: 999px;
   border: 1px solid rgb(238 214 90 / 0.45);
   background: rgb(238 214 90 / 0.08);
-  color: var(--sun);
+  color: var(--sun-ink);
   font-size: 0.68rem;
   font-weight: 700;
   line-height: 1.6;
@@ -282,7 +282,7 @@ dialog .eyebrow {
 .side-support:hover,
 .side-signout:hover {
   color: var(--text);
-  background: rgb(255 255 255 / 0.05);
+  background: rgb(var(--ov) / 0.05);
 }
 .side-signout:hover {
   color: var(--auth-danger);
@@ -312,7 +312,7 @@ dialog .eyebrow {
     overflow-x: auto;
     overscroll-behavior-x: contain;
     scrollbar-width: none;
-    background: rgb(7 10 26 / 0.92);
+    background: rgb(var(--scrim) / 0.92);
     -webkit-backdrop-filter: blur(14px);
     backdrop-filter: blur(14px);
     border-block: 1px solid var(--line);
@@ -609,7 +609,7 @@ dialog .eyebrow {
   width: 1.3rem;
   height: 1.3rem;
   flex: none;
-  color: var(--sun);
+  color: var(--sun-ink);
 }
 .ov-pending p {
   flex: 1 1 12rem;
@@ -851,7 +851,7 @@ dialog .eyebrow {
   padding: 0.8rem 0.9rem;
   border-radius: var(--r-md);
   border: 1px solid var(--line);
-  background: rgb(7 10 26 / 0.55);
+  background: rgb(var(--scrim) / 0.55);
   color: var(--text);
   font: inherit;
   text-align: left;
@@ -863,7 +863,7 @@ dialog .eyebrow {
 }
 .row-btn:hover {
   border-color: var(--line-strong);
-  background: rgb(255 255 255 / 0.035);
+  background: rgb(var(--ov) / 0.035);
 }
 .row-btn[aria-pressed='true'] {
   border-color: rgb(165 140 255 / 0.6);
@@ -942,7 +942,7 @@ dialog .eyebrow {
 /* Trạng thái mới (V4) cho .badge của auth.css */
 .badge--pending,
 .badge--processing {
-  color: var(--sun);
+  color: var(--sun-ink);
   border-color: rgb(238 214 90 / 0.45);
   background: rgb(238 214 90 / 0.08);
 }
@@ -1024,7 +1024,7 @@ dialog .eyebrow {
   min-width: 1.35rem;
   padding: 0 0.35rem;
   border-radius: 999px;
-  background: rgb(255 255 255 / 0.1);
+  background: rgb(var(--ov) / 0.1);
   font-size: 0.75rem;
   text-align: center;
   font-variant-numeric: tabular-nums;
@@ -1044,7 +1044,7 @@ dialog .eyebrow {
   border: 1px dashed var(--line-strong);
   background:
     radial-gradient(50% 80% at 50% 0%, rgb(124 92 255 / 0.13), transparent 70%),
-    rgb(255 255 255 / 0.015);
+    rgb(var(--ov) / 0.015);
   text-align: center;
 }
 .empty-icon {
@@ -1101,7 +1101,7 @@ dialog .eyebrow {
   overflow: hidden;
   padding: clamp(1.25rem, 1rem + 1vw, 1.75rem);
   border-radius: var(--r-xl);
-  border: 1px solid rgb(255 255 255 / 0.16);
+  border: 1px solid rgb(var(--ov) / 0.16);
   background:
     radial-gradient(70% 120% at 100% 0%, rgb(255 255 255 / 0.14), transparent 55%),
     linear-gradient(130deg, #3a10a0 0%, #1d18c8 38%, #12707a 72%, #0a8a55 100%);
@@ -1113,7 +1113,7 @@ dialog .eyebrow {
   content: '';
   position: absolute;
   border-radius: 50%;
-  border: 1px solid rgb(255 255 255 / 0.14);
+  border: 1px solid rgb(var(--ov) / 0.14);
   pointer-events: none;
 }
 .balance-card::before {
@@ -1207,7 +1207,7 @@ dialog .eyebrow {
   font-size: 0.9375rem;
   border-radius: 12px;
   border: 1px solid var(--line-strong);
-  background: rgb(7 10 26 / 0.6);
+  background: rgb(var(--scrim) / 0.6);
   font-weight: 700;
   font-variant-numeric: tabular-nums;
   transition:
@@ -1256,7 +1256,7 @@ dialog .eyebrow {
   padding: 0.9rem 1rem;
   border-radius: var(--r-md);
   border: 1px solid var(--line);
-  background: rgb(255 255 255 / 0.03);
+  background: rgb(var(--ov) / 0.03);
 }
 .tp-sum span {
   display: block;
@@ -1340,7 +1340,7 @@ dialog .eyebrow {
   border-radius: 16px;
   background: #fff;
   box-shadow:
-    0 0 0 6px rgb(255 255 255 / 0.06),
+    0 0 0 6px rgb(var(--ov) / 0.06),
     0 22px 50px -22px rgb(46 232 154 / 0.6);
 }
 .qr-box svg {
@@ -1402,7 +1402,7 @@ dialog .eyebrow {
   padding: 0.3rem 0.65rem;
   border-radius: 9px;
   border: 1px solid var(--line-strong);
-  background: rgb(255 255 255 / 0.04);
+  background: rgb(var(--ov) / 0.04);
   color: var(--text-2);
   font: inherit;
   font-size: 0.8125rem;
@@ -1441,7 +1441,7 @@ dialog .eyebrow {
   height: 1.15rem;
   flex: none;
   margin-top: 0.15rem;
-  color: var(--sun);
+  color: var(--sun-ink);
 }
 .pay-note {
   margin-top: 0.6rem;
@@ -1671,7 +1671,7 @@ dialog .eyebrow {
   padding: 1rem;
   border-radius: var(--r-md);
   border: 1px solid var(--line-strong);
-  background: rgb(7 10 26 / 0.55);
+  background: rgb(var(--scrim) / 0.55);
 }
 .buy-head {
   display: flex;
@@ -1717,14 +1717,14 @@ dialog .eyebrow {
   height: 2.25rem;
   border-radius: 10px;
   border: 1px solid var(--line-strong);
-  background: rgb(255 255 255 / 0.04);
+  background: rgb(var(--ov) / 0.04);
   color: var(--text);
   cursor: pointer;
 }
 .stepper-btn:hover:not(:disabled),
 .icon-btn:hover {
   border-color: var(--text-3);
-  background: rgb(255 255 255 / 0.08);
+  background: rgb(var(--ov) / 0.08);
 }
 .stepper-btn:disabled {
   opacity: 0.4;
@@ -1764,7 +1764,7 @@ dialog .eyebrow {
   font-variant-numeric: tabular-nums;
 }
 .buy-hint {
-  color: var(--sun);
+  color: var(--sun-ink);
   font-size: 0.8125rem;
 }
 .buy-hint:empty {
@@ -1783,7 +1783,7 @@ dialog .eyebrow {
   padding: 0.75rem 0.9rem;
   border-radius: var(--r-md);
   border: 1px solid var(--line-strong);
-  background: rgb(255 255 255 / 0.03);
+  background: rgb(var(--ov) / 0.03);
   color: var(--text-2);
   font-size: 0.9rem;
 }
@@ -1965,7 +1965,7 @@ dialog.confirm-dialog {
   padding: 0.9rem 1rem;
   border-radius: var(--r-md);
   border: 1px solid var(--line);
-  background: rgb(7 10 26 / 0.6);
+  background: rgb(var(--scrim) / 0.6);
 }
 .sum-line {
   display: flex;
@@ -2105,7 +2105,7 @@ dialog.confirm-dialog {
   width: fit-content;
   padding: 0.15rem 0.6rem;
   border-radius: 999px;
-  background: rgb(7 10 26 / 0.6);
+  background: rgb(var(--scrim) / 0.6);
   -webkit-backdrop-filter: blur(6px);
   backdrop-filter: blur(6px);
   color: #fff;
@@ -2299,7 +2299,7 @@ dialog.confirm-dialog {
   cursor: pointer;
 }
 .lesson-btn:hover {
-  background: rgb(255 255 255 / 0.05);
+  background: rgb(var(--ov) / 0.05);
 }
 .lesson-btn[aria-current='true'] {
   background: rgb(124 92 255 / 0.18);
@@ -2314,7 +2314,7 @@ dialog.confirm-dialog {
   width: 1.75rem;
   height: 1.75rem;
   border-radius: 50%;
-  background: rgb(255 255 255 / 0.06);
+  background: rgb(var(--ov) / 0.06);
   font-size: 0.8rem;
   font-weight: 700;
 }
@@ -2410,7 +2410,7 @@ dialog.confirm-dialog {
 .guide-body code {
   padding: 0.1rem 0.35rem;
   border-radius: 6px;
-  background: rgb(255 255 255 / 0.08);
+  background: rgb(var(--ov) / 0.08);
   font-size: 0.9em;
 }
 
@@ -2494,7 +2494,7 @@ dialog.confirm-dialog {
   display: block;
   height: 0.55rem;
   border-radius: 4px;
-  background: rgb(255 255 255 / 0.09);
+  background: rgb(var(--ov) / 0.09);
 }
 .mock-line.w80 {
   width: 80%;
@@ -2599,7 +2599,7 @@ dialog.confirm-dialog {
   height: 0.45rem;
   margin-top: 0.4rem;
   border-radius: 999px;
-  background: rgb(255 255 255 / 0.08);
+  background: rgb(var(--ov) / 0.08);
   overflow: hidden;
 }
 .meter span {
@@ -2621,7 +2621,7 @@ dialog.confirm-dialog {
   padding: 0.55rem 0.75rem;
   border-radius: 10px;
   border: 1px solid var(--line);
-  background: rgb(255 255 255 / 0.03);
+  background: rgb(var(--ov) / 0.03);
 }
 .machine-list svg {
   width: 1.1rem;
@@ -2648,7 +2648,7 @@ dialog.confirm-dialog {
   display: flex;
   align-items: center;
   gap: 0.4rem;
-  color: var(--sun);
+  color: var(--sun-ink);
   font-size: 0.875rem;
 }
 .key-pending svg {
@@ -2667,10 +2667,10 @@ dialog.confirm-dialog {
   position: sticky;
   top: 0;
   z-index: 50;
-  background: rgb(7 10 26 / 0.88);
+  background: rgb(var(--scrim) / 0.88);
   -webkit-backdrop-filter: saturate(140%) blur(16px);
   backdrop-filter: saturate(140%) blur(16px);
-  border-bottom: 1px solid rgb(255 255 255 / 0.06);
+  border-bottom: 1px solid rgb(var(--ov) / 0.06);
 }
 .adm-top-inner {
   display: flex;
@@ -2702,7 +2702,7 @@ dialog.confirm-dialog {
   padding: 0 0.45rem;
   border-radius: 999px;
   border: 1px solid rgb(238 214 90 / 0.5);
-  color: var(--sun);
+  color: var(--sun-ink);
   font-size: 0.75rem;
   font-weight: 700;
 }
@@ -2727,7 +2727,7 @@ dialog.confirm-dialog {
   padding: 1rem;
   border-radius: var(--r-md);
   border: 1px solid var(--line-strong);
-  background: rgb(255 255 255 / 0.03);
+  background: rgb(var(--ov) / 0.03);
   font-size: 0.9375rem;
 }
 .adm-howto ol {
@@ -2740,7 +2740,7 @@ dialog.confirm-dialog {
 .adm-denied code {
   padding: 0.05rem 0.35rem;
   border-radius: 6px;
-  background: rgb(255 255 255 / 0.08);
+  background: rgb(var(--ov) / 0.08);
   font-size: 0.9em;
   overflow-wrap: anywhere;
 }
@@ -2764,7 +2764,7 @@ dialog.confirm-dialog {
   padding: 0.55rem 0.9rem;
   border-radius: 12px;
   border: 1px solid var(--line-strong);
-  background: rgb(7 10 26 / 0.8);
+  background: rgb(var(--scrim) / 0.8);
   color: var(--text);
   font: inherit;
 }
@@ -2837,7 +2837,7 @@ dialog.confirm-dialog {
   padding: 0.4rem 0.7rem;
   border-radius: 10px;
   border: 1px solid var(--line-strong);
-  background: rgb(7 10 26 / 0.8);
+  background: rgb(var(--scrim) / 0.8);
   color: var(--text);
   font: inherit;
   font-size: 0.9rem;
@@ -2853,7 +2853,7 @@ dialog.confirm-dialog {
   padding: 0.6rem 0.8rem;
   border-radius: 10px;
   border: 1px solid var(--line);
-  background: rgb(255 255 255 / 0.03);
+  background: rgb(var(--ov) / 0.03);
   color: var(--text-2);
   font-size: 0.9375rem;
 }
@@ -2920,7 +2920,7 @@ dialog.confirm-dialog {
   padding: 0.6rem 0.8rem;
   border-radius: 10px;
   border: 1px solid var(--line);
-  background: rgb(255 255 255 / 0.02);
+  background: rgb(var(--ov) / 0.02);
 }
 .adm-lesson-title {
   font-weight: 600;
@@ -3121,7 +3121,7 @@ dialog.confirm-dialog {
 .adm-row:hover,
 .adm-row:focus-visible {
   border-color: var(--line-strong);
-  background: rgb(255 255 255 / 0.04);
+  background: rgb(var(--ov) / 0.04);
 }
 .adm-row .avatar {
   grid-area: avatar;
@@ -3302,7 +3302,7 @@ dialog.confirm-dialog {
   padding: 0.85rem 1rem;
   border-radius: var(--r-md);
   border: 1px solid var(--line);
-  background: rgb(255 255 255 / 0.03);
+  background: rgb(var(--ov) / 0.03);
 }
 .cs-card.is-ended {
   opacity: 0.65;
@@ -3347,7 +3347,7 @@ dialog.confirm-dialog {
   padding: 0.7rem 0.9rem;
   border-radius: var(--r-md);
   border: 1px solid var(--line);
-  background: rgb(255 255 255 / 0.03);
+  background: rgb(var(--ov) / 0.03);
   cursor: pointer;
 }
 .cs-switch input {
@@ -3479,5 +3479,5 @@ dialog.ob-dialog {
 /* Trang Tài khoản có bảng báo cáo nền sáng: thanh đầu trang nền đặc để chữ trong bảng
    không hiện mờ phía sau khi cuộn (25/11/2026 — thấy trên app Cốc Cốc của Chủ tịch). */
 body:has(#dash) .site-header {
-  background: rgb(7 10 26);
+  background: rgb(var(--scrim));
 }

@@ -52,10 +52,10 @@ const items: { href: string; icon: IconName; label: string; main?: boolean; exte
     grid-template-columns: repeat(3, minmax(0, 1fr));
     gap: 8px;
     padding: 8px 12px calc(8px + env(safe-area-inset-bottom, 0px));
-    background: rgb(7 10 26 / 0.92);
+    background: rgb(var(--scrim) / 0.92);
     backdrop-filter: saturate(140%) blur(14px);
     -webkit-backdrop-filter: saturate(140%) blur(14px);
-    border-top: 1px solid rgb(255 255 255 / 0.07);
+    border-top: 1px solid rgb(var(--ov) / 0.07);
   }
 
   .contact-bar a {
@@ -68,7 +68,7 @@ const items: { href: string; icon: IconName; label: string; main?: boolean; exte
     padding-inline: 4px;
     border-radius: var(--r-sm);
     border: 1px solid var(--line-strong);
-    background: rgb(255 255 255 / 0.03);
+    background: rgb(var(--ov) / 0.03);
     color: var(--text);
     font-weight: 700;
     font-size: 0.875rem;

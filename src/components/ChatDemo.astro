@@ -517,7 +517,7 @@ const clockTime = clock ?? messages.find((m) => m.time)?.time;
     overflow: hidden;
     box-shadow:
       var(--shadow-glow),
-      inset 0 1px 0 rgb(255 255 255 / 0.05);
+      inset 0 1px 0 rgb(var(--ov) / 0.05);
   }
 
   /* ---------- Header ---------- */
@@ -595,7 +595,7 @@ const clockTime = clock ?? messages.find((m) => m.time)?.time;
     flex: none;
     padding: 0.2rem 0.55rem;
     border-radius: 999px;
-    background: rgb(7 10 26 / 0.7);
+    background: rgb(var(--scrim) / 0.7);
     border: 1px solid var(--line);
     font-size: 0.8125rem;
     font-weight: 600;
@@ -631,7 +631,7 @@ const clockTime = clock ?? messages.find((m) => m.time)?.time;
     border-radius: 999px;
     border: 1px solid rgb(238 214 90 / 0.45);
     background: rgb(238 214 90 / 0.08);
-    color: var(--sun);
+    color: var(--sun-ink);
     font-size: 0.75rem;
     font-weight: 700;
     line-height: 1.6;
@@ -768,7 +768,7 @@ const clockTime = clock ?? messages.find((m) => m.time)?.time;
     min-height: 3.25rem;
     padding: 0.45rem 0.75rem;
     border-top: 1px solid var(--line);
-    background: rgb(7 10 26 / 0.65);
+    background: rgb(var(--scrim) / 0.65);
   }
   .chat-strip > * {
     grid-area: 1 / 1;
@@ -800,7 +800,7 @@ const clockTime = clock ?? messages.find((m) => m.time)?.time;
     height: 2.5rem;
     border-radius: 50%;
     border: 1px solid var(--line-strong);
-    background: rgb(255 255 255 / 0.04);
+    background: rgb(var(--ov) / 0.04);
     color: var(--text);
     cursor: pointer;
     transition:
@@ -808,7 +808,7 @@ const clockTime = clock ?? messages.find((m) => m.time)?.time;
       border-color 0.15s ease;
   }
   .cc-btn:hover {
-    background: rgb(255 255 255 / 0.1);
+    background: rgb(var(--ov) / 0.1);
     border-color: var(--text-3);
   }
   .cc-btn :global(svg) {
@@ -896,7 +896,7 @@ const clockTime = clock ?? messages.find((m) => m.time)?.time;
     flex: 1;
     height: 4px;
     border-radius: 4px;
-    background: rgb(255 255 255 / 0.1);
+    background: rgb(var(--ov) / 0.1);
     overflow: hidden;
   }
   .cc-fill {

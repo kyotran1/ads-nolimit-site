@@ -69,6 +69,17 @@ const inSolutions = solutions.some((item) => isCurrent(item.href));
 
     <div class="header-actions">
       <LangSwitch lang={lang} />
+      <button
+        type="button"
+        class="theme-toggle"
+        aria-label={s.themeToLight}
+        title={s.themeToLight}
+        data-label-to-light={s.themeToLight}
+        data-label-to-dark={s.themeToDark}
+      >
+        <Icon name="sun" class="theme-ic theme-ic-sun" />
+        <Icon name="moon" class="theme-ic theme-ic-moon" />
+      </button>
       <AccountLink lang={lang} variant="desktop" />
       <a href={contactHref} class="btn btn-primary btn-sm header-cta">{s.headerCta}</a>
 
@@ -116,6 +127,31 @@ const inSolutions = solutions.some((item) => isCurrent(item.href));
 </header>
 
 <script>
+  // Nút sáng/tối: đổi thuộc tính data-theme trên <html>, nhớ lựa chọn (khóa adsnl-theme), đổi màu thanh trình duyệt,
+  // rồi phát sự kiện 'adsnl-theme' trên window để phần khác (vd khung trợ lý AI) biết. Lỗi localStorage → vẫn đổi được, chỉ không nhớ.
+  const toggle = document.querySelector<HTMLButtonElement>('.theme-toggle');
+  const syncToggle = () => {
+    if (!toggle) return;
+    const light = document.documentElement.getAttribute('data-theme') === 'light';
+    const label = (light ? toggle.dataset.labelToDark : toggle.dataset.labelToLight) ?? '';
+    toggle.setAttribute('aria-label', label);
+    toggle.setAttribute('title', label);
+  };
+  syncToggle();
+  toggle?.addEventListener('click', () => {
+    const next = document.documentElement.getAttribute('data-theme') === 'light' ? 'dark' : 'light';
+    if (next === 'light') document.documentElement.setAttribute('data-theme', 'light');
+    else document.documentElement.removeAttribute('data-theme');
+    try {
+      localStorage.setItem('adsnl-theme', next);
+    } catch {
+      /* bị chặn: chỉ không nhớ được lựa chọn */
+    }
+    document.querySelector('meta[name="theme-color"]')?.setAttribute('content', next === 'light' ? '#f6f7fb' : '#070a1a');
+    syncToggle();
+    window.dispatchEvent(new CustomEvent('adsnl-theme', { detail: { theme: next } }));
+  });
+
   // Đóng menu/dropdown khi bấm ra ngoài hoặc nhấn Esc. Không có JS menu vẫn dùng được.
   const menus = document.querySelectorAll<HTMLDetailsElement>('details[data-dismissable]');
   document.addEventListener('click', (event) => {
@@ -139,10 +175,10 @@ const inSolutions = solutions.some((item) => isCurrent(item.href));
     position: sticky;
     top: 0;
     z-index: 50;
-    background: rgb(7 10 26 / 0.82);
+    background: rgb(var(--scrim) / 0.82);
     backdrop-filter: saturate(140%) blur(16px);
     -webkit-backdrop-filter: saturate(140%) blur(16px);
-    border-bottom: 1px solid rgb(255 255 255 / 0.06);
+    border-bottom: 1px solid rgb(var(--ov) / 0.06);
   }
 
   .header-inner {
@@ -207,7 +243,7 @@ const inSolutions = solutions.some((item) => isCurrent(item.href));
   }
   .nav-link:hover {
     color: var(--text);
-    background: rgb(255 255 255 / 0.05);
+    background: rgb(var(--ov) / 0.05);
   }
   .nav-link.is-current {
     color: var(--text);
@@ -259,7 +295,7 @@ const inSolutions = solutions.some((item) => isCurrent(item.href));
   }
   .dd-panel a:hover,
   .dd-panel a[aria-current='page'] {
-    background: rgb(255 255 255 / 0.06);
+    background: rgb(var(--ov) / 0.06);
   }
   .dd-panel a[aria-current='page'] {
     box-shadow: inset 2px 0 0 var(--green);
@@ -273,6 +309,42 @@ const inSolutions = solutions.some((item) => isCurrent(item.href));
 
   .header-cta {
     display: none;
+  }
+
+  .theme-toggle {
+    display: inline-grid;
+    place-items: center;
+    flex: none;
+    width: 40px;
+    height: 40px;
+    padding: 0;
+    border: 1px solid var(--line-strong);
+    border-radius: var(--r-sm);
+    background: transparent;
+    color: var(--text-2);
+    cursor: pointer;
+    transition:
+      color 0.15s ease,
+      background-color 0.15s ease;
+  }
+  .theme-toggle:hover {
+    color: var(--text);
+    background: rgb(var(--ov) / 0.05);
+  }
+  .theme-toggle :global(.theme-ic) {
+    grid-area: 1 / 1;
+    width: 1.2rem;
+    height: 1.2rem;
+  }
+  /* Đang tối: hiện mặt trời (bấm để sáng). Đang sáng: hiện mặt trăng (bấm để tối). */
+  .theme-toggle :global(.theme-ic-moon) {
+    display: none;
+  }
+  :global(:root[data-theme='light']) .theme-toggle :global(.theme-ic-sun) {
+    display: none;
+  }
+  :global(:root[data-theme='light']) .theme-toggle :global(.theme-ic-moon) {
+    display: block;
   }
 
   .nav-mobile {
@@ -340,17 +412,8 @@ const inSolutions = solutions.some((item) => isCurrent(item.href));
     margin-top: 0.5rem;
   }
 
-  /* Điện thoại rất hẹp (≤ 379px): nút Menu chỉ còn icon, tên thương hiệu nhỏ lại. */
-  @media (max-width: 379.98px) {
-    .header-inner {
-      gap: 0.4rem;
-    }
-    .brand-mark {
-      width: 38px;
-    }
-    .brand-name {
-      font-size: 1rem;
-    }
+  /* Điện thoại (≤ 479px): có thêm nút sáng/tối nên nút Menu chỉ còn icon (nhãn đọc màn hình vẫn có). */
+  @media (max-width: 479.98px) {
     .menu-toggle {
       padding: 0 0.7rem;
     }
@@ -361,6 +424,29 @@ const inSolutions = solutions.some((item) => isCurrent(item.href));
       overflow: hidden;
       clip: rect(0 0 0 0);
       white-space: nowrap;
+    }
+  }
+
+  /* Điện thoại rất hẹp (≤ 379px): tên thương hiệu nhỏ lại, các nút sát hơn. */
+  @media (max-width: 379.98px) {
+    .header-inner {
+      gap: 0.4rem;
+    }
+    .brand-mark {
+      width: 38px;
+    }
+    .brand-name {
+      font-size: 1rem;
+    }
+    .header-actions {
+      gap: 0.35rem;
+    }
+  }
+
+  /* Cực hẹp (≤ 339px, vd 320px): bớt bề rộng ô chuyển ngôn ngữ để thanh đầu trang không tràn. */
+  @media (max-width: 339.98px) {
+    .header-actions :global(.ls-item) {
+      min-width: 28px;
     }
   }
 
