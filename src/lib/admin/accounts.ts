@@ -9,6 +9,7 @@ import { AD_TOPUP_DEFAULTS, dmy, parseAdAccount, parseAdBudgetTopup, parseAdTopu
 import type { AdAccount, AdBudgetTopup } from '../ads/report';
 import { buildForm, config, customerByEmail, db, errText, loadCustomers, me, money, parseVnd, when, who } from './shared';
 import { MAX_VIEWERS, buildMembers, parseViewerEmails, readStrings } from './viewers';
+import { bulkDeletable, canDeleteAdTopup } from './topup-delete';
 
 const vn = (n: number) => new Intl.NumberFormat('vi-VN').format(n);
 
@@ -351,12 +352,45 @@ export const renderAdAccounts = async (root: HTMLElement) => {
         : t.status === 'cancelled'
           ? 'Khách đã hủy'
           : `Từ chối${t.reason ? `: ${t.reason}` : ''}`;
+  /* Dọn lệnh thử: xóa hẳn mọi lệnh đã từ chối / khách đã hủy (không gồm lệnh đang chờ, không gồm lệnh đã có tiền). */
+  let junk: AdBudgetTopup[] = [];
+  const clearBtn = h('button', { type: 'button', class: 'btn btn-sm btn-ghost', hidden: true, 'data-clear-topups': 'ad' }, icon('x'), 'Xóa hết lệnh đã từ chối và đã hủy') as HTMLButtonElement;
+  clearBtn.addEventListener('click', async () => {
+    const todo = junk.slice();
+    if (!todo.length) return;
+    const c = await confirmDialog({
+      title: `Xóa hẳn ${todo.length} lệnh đã từ chối và đã hủy?`,
+      body: ['Các lệnh này biến mất khỏi danh sách của anh và khỏi lịch sử của khách. Không khôi phục được.', 'Lệnh đang chờ chuyển khoản và lệnh đã nhận tiền được giữ nguyên.'],
+      confirm: `Xóa ${todo.length} lệnh`,
+      cancel: 'Giữ lại',
+      danger: true,
+    });
+    if (!c.ok) return;
+    clearBtn.disabled = true;
+    let done = 0;
+    let lastErr: unknown = null;
+    for (const t of todo) {
+      try {
+        await deleteDoc(doc(db, 'adTopups', t.code));
+        done += 1;
+      } catch (err) {
+        lastErr = err;
+      }
+    }
+    clearBtn.disabled = false;
+    if (lastErr) toast(`Đã xóa ${done}/${todo.length} lệnh. Lệnh còn lại chưa xóa được: ${errText(lastErr)}`, 'error');
+    else toast(`Đã xóa ${done} lệnh.`);
+    void drawOrders();
+  });
   const drawOrders = async () => {
     orders.replaceChildren(h('p', { class: 'muted', text: 'Đang tải…' }));
     try {
       await loadCustomers();
       const snap = await getDocs(collection(db, 'adTopups'));
       const all = snap.docs.map((x) => parseAdBudgetTopup(x.id, x.data()));
+      junk = all.filter((t) => bulkDeletable(t.status) && canDeleteAdTopup(t));
+      clearBtn.hidden = junk.length === 0;
+      clearBtn.lastChild!.textContent = `Xóa hết lệnh đã từ chối và đã hủy (${junk.length})`;
       const rank = (t: AdBudgetTopup) => (t.sepayNote && t.status !== 'approved' && t.status !== 'rejected' ? 0 : t.status === 'pending' ? 0 : t.status === 'approved' && !t.written ? 1 : 2);
       all.sort((a, b) => rank(a) - rank(b) || (b.createdAt?.getTime() ?? 0) - (a.createdAt?.getTime() ?? 0));
       const list = all.filter((t, i) => rank(t) < 2 || i < 30);
@@ -400,6 +434,33 @@ export const renderAdAccounts = async (root: HTMLElement) => {
               no.disabled = false;
             }
           });
+          const canDelete = canDeleteAdTopup(t);
+          const del = h('button', { type: 'button', class: 'btn btn-sm btn-ghost', text: 'Xóa', 'data-del-topup': t.code });
+          del.addEventListener('click', async () => {
+            const c = await confirmDialog({
+              title: `Xóa hẳn lệnh ${t.code}?`,
+              body: [
+                h('p', { text: `${money(t.amount)} · ${t.accountLabel} · khách ${who(t.uid, t.email)}.` }),
+                h('p', { text: 'Lệnh biến mất khỏi danh sách của anh và khỏi lịch sử của khách. Không khôi phục được.' }),
+                t.status === 'pending'
+                  ? h('p', {}, h('strong', { text: 'Lệnh này đang chờ chuyển khoản: ' }), 'nếu khách vẫn chuyển tiền theo mã này, hệ thống sẽ không tự nhận ra. Lệnh của khách thật thì nên bấm Từ chối.')
+                  : null,
+              ].filter((x): x is HTMLElement => x !== null),
+              confirm: 'Xóa lệnh',
+              cancel: 'Giữ lại',
+              danger: true,
+            });
+            if (!c.ok) return;
+            del.disabled = true;
+            try {
+              await deleteDoc(doc(db, 'adTopups', t.code));
+              toast(`Đã xóa lệnh ${t.code}.`);
+              void drawOrders();
+            } catch (err) {
+              toast(errText(err), 'error');
+              del.disabled = false;
+            }
+          });
           no.addEventListener('click', async () => {
             const c = await confirmDialog({
               title: `Từ chối lệnh ${t.code}?`,
@@ -429,7 +490,7 @@ export const renderAdAccounts = async (root: HTMLElement) => {
               h('p', { class: 'small muted', text: `Khách: ${who(t.uid, t.email)} · tạo ${when(t.createdAt)} · ngày ghi ${dmy(t.day)}` }),
               h('p', { class: 'small', text: `${tState(t)}${t.status === 'approved' && t.decidedBy === 'sepay' ? ' · tự xác nhận qua SePay' : ''}` }),
             ),
-            canDecide ? h('div', { class: 'adm-actions' }, h('label', { class: 'small' }, 'Ngày ghi ', day), ok, no) : null,
+            canDecide || canDelete ? h('div', { class: 'adm-actions' }, ...(canDecide ? [h('label', { class: 'small' }, 'Ngày ghi ', day), ok, no] : []), canDelete ? del : null) : null,
           );
         }),
       );
@@ -441,7 +502,7 @@ export const renderAdAccounts = async (root: HTMLElement) => {
 
   root.replaceChildren(
     h('p', { class: 'view-lead', text: 'Gắn tài khoản quảng cáo với khách để khách xem báo cáo chi tiêu, số dư và nhận cảnh báo số dư thấp. Số liệu lấy từ trang tính "BC ADS - META API (BOT 3)": chi tiêu do bot 3 nhập từ Meta, tiền nạp anh nhập ở cột B/C.' }),
-    h('section', {}, h('div', { class: 'panel-head' }, h('h2', { class: 'sub-title', text: 'Lệnh nạp ngân sách' }), refreshOrders), h('p', { class: 'muted small', text: 'Khách tạo lệnh trong Báo cáo quảng cáo. Tiền về MB Bank đúng số tiền và nội dung → SePay báo, hệ thống tự xác nhận và cộng ngân sách (đã trừ phí) vào cột nạp đúng ngày. Lệnh chuyển sai số tiền hiện ghi chú "SePay: …" để anh tự bấm "Đã nhận tiền" hoặc "Từ chối".' }), orderStatus, orders),
+    h('section', {}, h('div', { class: 'panel-head' }, h('h2', { class: 'sub-title', text: 'Lệnh nạp ngân sách' }), h('div', { class: 'adm-actions' }, clearBtn, refreshOrders)), h('p', { class: 'muted small', text: 'Khách tạo lệnh trong Báo cáo quảng cáo. Tiền về MB Bank đúng số tiền và nội dung → SePay báo, hệ thống tự xác nhận và cộng ngân sách (đã trừ phí) vào cột nạp đúng ngày. Lệnh chuyển sai số tiền hiện ghi chú "SePay: …" để anh tự bấm "Đã nhận tiền" hoặc "Từ chối".' }), orderStatus, orders),
     h('section', {}, h('div', { class: 'panel-head' }, h('h2', { class: 'sub-title', text: 'Tất cả tài khoản quảng cáo' }), syncBtn), syncStatus, list),
     h('section', { class: 'panel' }, formTitle, f.form),
     h('section', { class: 'panel' }, h('h2', { text: 'Cài đặt nạp ngân sách' }), sf.form),

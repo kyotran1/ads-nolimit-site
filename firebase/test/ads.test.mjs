@@ -217,6 +217,33 @@ describe('adTopups — đọc, hủy, duyệt', () => {
   });
 });
 
+describe('adTopups — quản trị xóa lệnh (25/11/2026)', () => {
+  test('quản trị xóa được lệnh đang chờ, đã hủy, đã từ chối', async () => {
+    await seedAdTop({ code: 'ADSBXXXXX1', status: 'pending' });
+    await seedAdTop({ code: 'ADSBXXXXX2', status: 'cancelled' });
+    await seedAdTop({ code: 'ADSBXXXXX3', status: 'rejected', reason: 'thử' });
+    for (const c of ['ADSBXXXXX1', 'ADSBXXXXX2', 'ADSBXXXXX3']) await assertSucceeds(deleteDoc(doc(as(OWNER), `adTopups/${c}`)));
+  });
+  test('không xóa được lệnh đã nhận tiền (kể cả chưa ghi trang tính)', async () => {
+    await seedAdTop({ code: 'ADSBXXXXX4', status: 'approved' });
+    await seedAdTop({ code: 'ADSBXXXXX5', status: 'approved', written: true });
+    await assertFails(deleteDoc(doc(as(OWNER), 'adTopups/ADSBXXXXX4')));
+    await assertFails(deleteDoc(doc(as(OWNER), 'adTopups/ADSBXXXXX5')));
+  });
+  test('không xóa được lệnh hệ thống đã thấy tiền về hoặc đã đụng trang tính, dù chưa duyệt', async () => {
+    await seedAdTop({ code: 'ADSBXXXXX6', status: 'pending', sepayId: '123', paidAmount: 5000000 });
+    await seedAdTop({ code: 'ADSBXXXXX7', status: 'cancelled', paidAmount: 11000000 });
+    await seedAdTop({ code: 'ADSBXXXXX8', status: 'cancelled', written: false });
+    for (const c of ['ADSBXXXXX6', 'ADSBXXXXX7', 'ADSBXXXXX8']) await assertFails(deleteDoc(doc(as(OWNER), `adTopups/${c}`)));
+  });
+  test('khách (kể cả chủ lệnh) và người lạ không xóa được', async () => {
+    await seedAdTop({ status: 'rejected', reason: 'x' });
+    await assertFails(deleteDoc(doc(as(ALICE), 'adTopups/ADSBK7Q3PX')));
+    await assertFails(deleteDoc(doc(as(BOB), 'adTopups/ADSBK7Q3PX')));
+    await assertFails(deleteDoc(doc(env.unauthenticatedContext().firestore(), 'adTopups/ADSBK7Q3PX')));
+  });
+});
+
 describe('settings/adTopup', () => {
   test('khách đọc, không ghi; quản trị ghi đúng dạng', async () => {
     await assertSucceeds(setDoc(doc(as(OWNER), 'settings/adTopup'), settings()));

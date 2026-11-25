@@ -373,7 +373,8 @@ service cloud.firestore {
       allow read: if ownsResource() || isAdmin();
       allow create: if newTopup(code);
       allow update: if customerCancelsTopup() || adminApprovesTopup(code) || adminRejectsTopup();
-      allow delete: if false;
+      // Xóa lệnh (25/11/2026): chỉ quản trị, chỉ lệnh chưa cộng số dư (đang chờ, khách đã hủy, đã từ chối).
+      allow delete: if isAdmin() && resource.data.status in ['pending', 'cancelled', 'rejected'];
     }
 
     // ======================================================================
@@ -923,11 +924,21 @@ service cloud.firestore {
         && reqString(request.resource.data, 'reason', 1, 300);
     }
 
+    // Xóa lệnh (25/11/2026): chỉ quản trị, chỉ lệnh CHƯA có tiền — đang chờ, khách đã hủy, đã từ chối.
+    // Lệnh đã nhận tiền, đã thấy tiền về (SePay) hoặc đã đụng tới trang tính thì giữ để đối chiếu.
+    function adminDeletesAdTopup() {
+      return isAdmin()
+        && resource.data.status in ['pending', 'cancelled', 'rejected']
+        && !('written' in resource.data)
+        && !('sepayId' in resource.data)
+        && !('paidAmount' in resource.data);
+    }
+
     match /adTopups/{code} {
       allow read: if ownsResource() || isAdmin();
       allow create: if newAdTopup(code);
       allow update: if customerCancelsAdTopup() || adminApprovesAdTopup() || adminRejectsAdTopup();
-      allow delete: if false;
+      allow delete: if adminDeletesAdTopup();
     }
 
     // Mọi đường dẫn khác: cấm.

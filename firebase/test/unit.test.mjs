@@ -1,6 +1,7 @@
 // Test đơn vị thuần (không cần emulator): services.ts, avatar-image.ts. Chạy: npm run test:unit
 import { test, describe } from 'node:test';
 import assert from 'node:assert/strict';
+import { canDeleteAdTopup, canDeleteWalletTopup, bulkDeletable } from '../../src/lib/admin/topup-delete.ts';
 import { parseCustomerServices, mergeServices, activeServiceCount, isOpen, serviceOfOrder, EMPTY_FACTS, EMPTY_SERVICES } from '../../src/lib/customer/services.ts';
 import { cropSquare } from '../../src/lib/ui/avatar-image.ts';
 
@@ -77,4 +78,28 @@ describe('activeServiceCount (số dịch vụ ở danh sách khách phải kh�
     assert.equal(activeServiceCount(cs, { ...EMPTY_FACTS, adAccounts: [{ label: 'A', service: 'ads' }] }), 1);
   });
   test('không có gì → 0', () => assert.equal(activeServiceCount(EMPTY_SERVICES, EMPTY_FACTS), 0));
+});
+
+describe('xóa lệnh nạp: lệnh nào được hiện nút Xóa (phải khớp luật Firestore)', () => {
+  const t = (x) => ({ status: 'pending', written: false, hasWritten: false, paidAmount: 0, sepayId: '', ...x });
+  test('lệnh nạp ngân sách: chờ / đã hủy / đã từ chối → xóa được', () => {
+    for (const status of ['pending', 'cancelled', 'rejected']) assert.equal(canDeleteAdTopup(t({ status })), true, status);
+  });
+  test('lệnh nạp ngân sách: đã nhận tiền, đã thấy tiền về, đã đụng trang tính → không xóa được', () => {
+    assert.equal(canDeleteAdTopup(t({ status: 'approved' })), false);
+    assert.equal(canDeleteAdTopup(t({ paidAmount: 5000000 })), false);
+    assert.equal(canDeleteAdTopup(t({ sepayId: '123' })), false);
+    assert.equal(canDeleteAdTopup(t({ status: 'cancelled', hasWritten: true })), false);
+    assert.equal(canDeleteAdTopup(t({ status: 'lạ' })), false);
+  });
+  test('lệnh nạp ví: chờ / đã hủy / đã từ chối → xóa được; đã duyệt hoặc trạng thái lạ → không', () => {
+    for (const s of ['pending', 'cancelled', 'rejected']) assert.equal(canDeleteWalletTopup(s), true, s);
+    for (const s of ['approved', '', 'x']) assert.equal(canDeleteWalletTopup(s), false, s);
+  });
+  test('dọn cả loạt chỉ lấy lệnh đã từ chối và đã hủy, không lấy lệnh đang chờ', () => {
+    assert.equal(bulkDeletable('rejected'), true);
+    assert.equal(bulkDeletable('cancelled'), true);
+    assert.equal(bulkDeletable('pending'), false);
+    assert.equal(bulkDeletable('approved'), false);
+  });
 });

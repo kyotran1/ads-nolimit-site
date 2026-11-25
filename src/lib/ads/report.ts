@@ -219,6 +219,10 @@ export interface AdBudgetTopup {
   /** Ghi chú khi SePay thấy tiền nhưng không tự duyệt được (sai số tiền…) */
   sepayNote: string;
   paidAmount: number;
+  /** Mã giao dịch SePay đã khớp (rỗng nếu chưa thấy tiền về) */
+  sepayId: string;
+  /** Tài liệu đã có trường `written` (Apps Script đã đụng tới trang tính), dù true hay false */
+  hasWritten: boolean;
   createdAt: Date | null;
   decidedAt: Date | null;
   writtenAt: Date | null;
@@ -244,6 +248,8 @@ export const parseAdBudgetTopup = (code: string, d: DocumentData): AdBudgetTopup
   decidedBy: s(d, 'decidedBy'),
   sepayNote: s(d, 'sepayNote'),
   paidAmount: n(d, 'paidAmount'),
+  sepayId: d.sepayId == null ? '' : String(d.sepayId),
+  hasWritten: 'written' in d,
   createdAt: toDate(d.createdAt),
   decidedAt: toDate(d.decidedAt),
   writtenAt: toDate(d.writtenAt),

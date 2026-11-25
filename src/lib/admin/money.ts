@@ -3,7 +3,7 @@
  * Yêu cầu dịch vụ (trạng thái), Khách hàng (tìm, xem số dư & sổ giao dịch, điều chỉnh số dư).
  * Mọi thao tác cộng/trừ tiền chạy trong MỘT transaction (src/lib/ledger/ops.ts), luật Firestore kiểm tra lại.
  */
-import { collection, doc, getCount, getDocs, query, serverTimestamp, updateDoc, where, getAggregate, sum } from 'firebase/firestore/lite';
+import { collection, deleteDoc, doc, getCount, getDocs, query, serverTimestamp, updateDoc, where, getAggregate, sum } from 'firebase/firestore/lite';
 import type { DocumentData, Query } from 'firebase/firestore/lite';
 import { byId, confirmDialog, copyButton, h, icon, toast } from '../ui/dom';
 import {
@@ -27,6 +27,7 @@ import {
   who,
 } from './shared';
 import type { Customer } from './shared';
+import { bulkDeletable, canDeleteWalletTopup } from './topup-delete';
 
 const copyLabels = { copy: 'Chép', copied: 'Đã chép', failed: 'Lỗi' };
 
@@ -88,6 +89,43 @@ let topupSearch = '';
 export const renderTopups = async (root: HTMLElement) => {
   const list = h('div', { class: 'adm-list' }, loading());
   const search = h('input', { type: 'search', class: 'adm-search', placeholder: 'Tìm mã ADSN…, email, tên', value: topupSearch, 'aria-label': 'Tìm lệnh nạp' });
+  /* Dọn lệnh thử: xóa hẳn mọi lệnh đã từ chối / khách đã hủy (không gồm lệnh đang chờ, không gồm lệnh đã duyệt). */
+  const clearTopups = h('button', { type: 'button', class: 'btn btn-sm btn-ghost', 'data-clear-topups': 'wallet' }, icon('x'), 'Xóa hết lệnh đã từ chối và đã hủy') as HTMLButtonElement;
+  clearTopups.addEventListener('click', async () => {
+    clearTopups.disabled = true;
+    try {
+      const todo = (await docsOf(query(collection(db, 'topups'), where('status', 'in', ['rejected', 'cancelled'])))).filter((t) => bulkDeletable(str(t, 'status')));
+      if (!todo.length) {
+        toast('Không có lệnh đã từ chối hoặc đã hủy nào.');
+        return;
+      }
+      const ok = await confirmDialog({
+        title: `Xóa hẳn ${todo.length} lệnh đã từ chối và đã hủy?`,
+        body: ['Các lệnh này biến mất khỏi danh sách của anh và khỏi lịch sử của khách. Không khôi phục được.', 'Lệnh đang chờ duyệt và lệnh đã duyệt được giữ nguyên. Số dư và sổ giao dịch không đổi.'],
+        confirm: `Xóa ${todo.length} lệnh`,
+        cancel: 'Giữ lại',
+        danger: true,
+      });
+      if (!ok.ok) return;
+      let done = 0;
+      let lastErr: unknown = null;
+      for (const t of todo) {
+        try {
+          await deleteDoc(doc(db, 'topups', t.id));
+          done += 1;
+        } catch (err) {
+          lastErr = err;
+        }
+      }
+      if (lastErr) toast(`Đã xóa ${done}/${todo.length} lệnh. Lệnh còn lại chưa xóa được: ${errText(lastErr)}`, 'error');
+      else toast(`Đã xóa ${done} lệnh.`);
+      void renderTopups(root);
+    } catch (err) {
+      toast(errText(err), 'error');
+    } finally {
+      clearTopups.disabled = false;
+    }
+  });
   root.replaceChildren(
     h('p', { class: 'view-lead', text: 'Đối chiếu sao kê ngân hàng: đúng mã nội dung và đủ số tiền thì bấm Duyệt. Số dư khách được cộng ngay, kèm một dòng trong sổ giao dịch.' }),
     h(
@@ -108,6 +146,7 @@ export const renderTopups = async (root: HTMLElement) => {
         },
       ),
       search,
+      clearTopups,
     ),
     list,
   );
@@ -184,6 +223,35 @@ const topupItem = (t: DocumentData & { id: string }, root: HTMLElement) => {
       }
     });
     actions.append(reject);
+  }
+  if (canDeleteWalletTopup(status)) {
+    const del = h('button', { type: 'button', class: 'btn btn-sm btn-ghost', text: 'Xóa', 'data-del-topup': t.id });
+    del.addEventListener('click', async () => {
+      const ok = await confirmDialog({
+        title: `Xóa hẳn lệnh nạp ${t.id}?`,
+        body: [
+          h('p', { text: `${money(num(t, 'amount'))} · khách ${who(str(t, 'uid'), str(t, 'email'))}.` }),
+          h('p', { text: 'Lệnh biến mất khỏi danh sách của anh và khỏi lịch sử của khách. Không khôi phục được. Số dư và sổ giao dịch không đổi.' }),
+          ...(status === 'pending'
+            ? [h('p', {}, h('strong', { text: 'Lệnh này đang chờ duyệt: ' }), 'nếu khách vẫn chuyển tiền theo mã này, anh sẽ không còn lệnh để duyệt. Lệnh của khách thật thì nên bấm Từ chối.')]
+            : []),
+        ],
+        confirm: 'Xóa lệnh',
+        cancel: 'Giữ lại',
+        danger: true,
+      });
+      if (!ok.ok) return;
+      del.disabled = true;
+      try {
+        await deleteDoc(doc(db, 'topups', t.id));
+        toast(`Đã xóa lệnh ${t.id}.`);
+        void renderTopups(root);
+      } catch (err) {
+        toast(errText(err), 'error');
+        del.disabled = false;
+      }
+    });
+    actions.append(del);
   }
   return h(
     'article',

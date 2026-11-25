@@ -576,6 +576,30 @@ describe('lệnh nạp tiền', () => {
 });
 
 // =====================================================================
+describe('lệnh nạp ví — quản trị xóa lệnh (25/11/2026)', () => {
+  test('quản trị xóa được lệnh đang chờ, đã hủy, đã từ chối; ví và sổ không đổi', async () => {
+    await seed((db) => setDoc(doc(db, 'topups/ADSNDDDDDD'), { uid: 'alice', email: ALICE.email, amount: 300_000, code: 'ADSNDDDDDD', status: 'rejected', reason: 'thử', lang: 'vi', createdAt: T0 }));
+    const before = await balanceOf('alice');
+    for (const c of ['ADSNAAAAAA', 'ADSNCCCCCC', 'ADSNDDDDDD']) await assertSucceeds(deleteDoc(doc(as(OWNER), `topups/${c}`)));
+    assert.equal(await peek('topups/ADSNAAAAAA'), null);
+    assert.equal(await balanceOf('alice'), before);
+  });
+  test('không xóa được lệnh đã duyệt (đã cộng số dư)', async () => {
+    await assertSucceeds(opsFor(OWNER).approveTopup('owner', 'ADSNAAAAAA'));
+    await assertFails(deleteDoc(doc(as(OWNER), 'topups/ADSNAAAAAA')));
+    assert.equal((await peek('topups/ADSNAAAAAA')).status, 'approved');
+  });
+  test('khách (kể cả chủ lệnh) và người chưa đăng nhập không xóa được', async () => {
+    await assertFails(deleteDoc(doc(as(ALICE), 'topups/ADSNCCCCCC')));
+    await assertFails(deleteDoc(doc(as(BOB), 'topups/ADSNAAAAAA')));
+    await assertFails(deleteDoc(doc(anon(), 'topups/ADSNAAAAAA')));
+  });
+  test('sổ giao dịch: quản trị cũng không xóa được', async () => {
+    await assertSucceeds(opsFor(OWNER).approveTopup('owner', 'ADSNAAAAAA'));
+    await assertFails(deleteDoc(doc(as(OWNER), 'transactions/topup_ADSNAAAAAA')));
+  });
+});
+
 describe('hoàn tiền & trạng thái đơn (quản trị viên)', () => {
   test('hoàn tiền (code website): đơn refunded, ví cộng lại đúng, có dòng sổ refund_<mã đơn>', async () => {
     const r = await assertSucceeds(opsFor(OWNER).refundOrder('owner', 'order-bob', 'Khách đổi ý'));
