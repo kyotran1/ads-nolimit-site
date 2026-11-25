@@ -107,12 +107,20 @@ const segs = [
 ];
 const loop = segs.map((d, i) => (i === 0 ? d : d.replace(/^M[\d.,]+\s*/, ''))).join(' ');
 
+/** Màu chữ của thẻ bước (ngoài sân khấu) theo giao diện: cùng giá trị ở tối, đậm hơn ở sáng. */
+const inkOf: Record<string, string> = {
+  '#8592ff': 'var(--blue-ink)',
+  '#a58cff': 'var(--violet-ink)',
+  '#2ee89a': 'var(--green-ink)',
+  '#eed65a': 'var(--sun-ink)',
+  '#3fd0c2': 'var(--teal-ink)',
+};
 const boxStyle = (b: { x: number; y: number; w: number; d: number; h: number; z?: number; tone: string }) =>
   `--x:${b.x}px;--y:${b.y}px;--w:${b.w}px;--d:${b.d}px;--h:${b.h}px;--z:${b.z ?? 0}px;--tone:${b.tone}`;
 ---
 
 <figure class="s3d" data-s3d data-label-running={copy.running} data-label-again={copy.again} data-label-run={copy.run} data-label-sway-pause={copy.swayPause} data-label-sway-play={copy.swayPlay}>
-  <div class="s3d-stage" data-stage>
+  <div class="s3d-stage keep-dark" data-stage>
     <div class="s3d-chips" aria-hidden="true">
       <span class="s3d-chip"><Icon name="spark" />{copy.chip}</span>
       <span class="s3d-chip s3d-chip--hint">
@@ -226,7 +234,7 @@ const boxStyle = (b: { x: number; y: number; w: number; d: number; h: number; z?
     </div>
   </div>
 
-  <div class="s3d-caption" aria-live="polite" data-caption>
+  <div class="s3d-caption keep-dark" aria-live="polite" data-caption>
     <span class="cap-time" data-cap-time></span>
     <strong class="cap-title" data-cap-title></strong>
     <span class="cap-text" data-cap-text>{copy.idle}</span>
@@ -236,7 +244,7 @@ const boxStyle = (b: { x: number; y: number; w: number; d: number; h: number; z?
     {
       copy.steps.map((st, i) => (
         <li>
-          <button type="button" class="step" data-step={i} aria-pressed="false" data-glow style={`--tone:${stations[i].tone}`}>
+          <button type="button" class="step" data-step={i} aria-pressed="false" data-glow style={`--tone:${inkOf[stations[i].tone] ?? stations[i].tone}`}>
             <span class="step-num">{i + 1}</span>
             <span class="step-body">
               <span class="step-name">

@@ -134,4 +134,11 @@ const mailto = `mailto:${contact.email}?subject=${encodeURIComponent(copy.subjec
   .office-fine :global(a) {
     color: var(--text-2);
   }
+
+  :global(:root[data-theme='light']) .office-inner {
+    background:
+      radial-gradient(70% 140% at 100% 0%, rgb(238 214 90 / 0.14), transparent 55%),
+      radial-gradient(60% 120% at 0% 100%, rgb(72 0 168 / 0.12), transparent 60%),
+      var(--surface);
+  }
 </style>

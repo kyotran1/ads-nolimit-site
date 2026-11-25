@@ -209,4 +209,10 @@ const loopPath =
     font-weight: 600;
     color: var(--tone);
   }
+
+  :global(:root[data-theme='light']) .loop-card {
+    background:
+      radial-gradient(120% 80% at 50% 0%, rgb(72 0 168 / 0.1), transparent 60%),
+      var(--bg-raise);
+  }
 </style>

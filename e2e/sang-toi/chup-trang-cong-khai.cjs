@@ -37,12 +37,26 @@ const slug = (p) => (p === '/' ? 'home' : p.replace(/^\/|\/$/g, '').replace(/\//
     });
     if (theme === 'sang') await ctx.addInitScript(() => { try { localStorage.setItem('adsnl-theme', 'light'); } catch (e) {} });
     await ctx.route('**/*', (r) => (r.request().url().startsWith(BASE) ? r.continue() : r.abort()));
-    const page = await ctx.newPage();
     for (const p of pages) {
-      await page.goto(BASE + p, { waitUntil: 'load' });
+      for (let lan = 0; lan < 6; lan++) {
+      const page = await ctx.newPage();
+      try {
+      await page.goto(BASE + p, { waitUntil: 'commit' });
+      await page.waitForLoadState('load');
       await page.addStyleTag({ content: '*,*::before,*::after{animation:none!important;transition:none!important;caret-color:transparent!important}' });
-      await page.waitForTimeout(250);
+      // cuộn hết trang để ảnh nạp lười (loading="lazy") hiện đủ trước khi chụp
+      await page.waitForTimeout(400); // chờ script chuyển hướng (trang tài khoản/quản trị khi chưa đăng nhập)
+      await page.waitForLoadState('load');
+      await page.evaluate(async () => {
+        for (let y = 0; y < document.body.scrollHeight; y += 600) { window.scrollTo(0, y); await new Promise((r) => setTimeout(r, 40)); }
+        window.scrollTo(0, 0);
+      });
+      await page.waitForTimeout(300);
       await page.screenshot({ path: path.join(out, `${slug(p)}-${w}.png`), fullPage: true });
+          await page.close();
+          break;
+      } catch (e) { await page.close(); if (lan === 5) throw e; } // trang chuyển hướng giữa chừng: chụp lại
+      }
     }
     await ctx.close();
   }

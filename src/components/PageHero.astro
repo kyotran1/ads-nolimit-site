@@ -76,4 +76,11 @@ const { title, lead, kicker } = Astro.props;
       flex: 1 1 100%;
     }
   }
+
+  /* Giao diện sáng: quầng tím nhạt hơn */
+  :global(:root[data-theme='light']) .page-hero {
+    background:
+      radial-gradient(55% 120% at 92% -30%, rgb(72 0 168 / 0.14), transparent 62%),
+      radial-gradient(40% 80% at 70% -40%, rgb(24 0 240 / 0.07), transparent 60%);
+  }
 </style>
