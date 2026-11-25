@@ -144,6 +144,10 @@ export const mergeServices = (cs: CustomerServices, auto: AutoFacts, lang: Lang)
   return out.sort((a, b) => rank[a.status] - rank[b.status] || b.since.localeCompare(a.since));
 };
 
+/** Số dịch vụ chưa kết thúc sau khi gộp gán tay + tự động — dùng cho danh sách khách ở Quản trị để khớp trang chi tiết. */
+export const activeServiceCount = (cs: CustomerServices, auto: AutoFacts): number =>
+  mergeServices(cs, auto, 'vi').filter((c) => c.status !== 'ended').length;
+
 const gotoOf = (id: ServiceId): SectionId | null =>
   id === 'ads' || id === 'agency-account' || id === 'ad-budget' ? 'ads' : id === 'training' ? 'courses' : null;
 

@@ -1,7 +1,7 @@
 // Test đơn vị thuần (không cần emulator): services.ts, avatar-image.ts. Chạy: npm run test:unit
 import { test, describe } from 'node:test';
 import assert from 'node:assert/strict';
-import { parseCustomerServices, mergeServices, isOpen, serviceOfOrder, EMPTY_FACTS, EMPTY_SERVICES } from '../../src/lib/customer/services.ts';
+import { parseCustomerServices, mergeServices, activeServiceCount, isOpen, serviceOfOrder, EMPTY_FACTS, EMPTY_SERVICES } from '../../src/lib/customer/services.ts';
 import { cropSquare } from '../../src/lib/ui/avatar-image.ts';
 
 describe('cropSquare', () => {
@@ -62,4 +62,19 @@ describe('mergeServices / isOpen', () => {
     assert.equal(isOpen('guides', EMPTY_SERVICES, { ...EMPTY_FACTS, keys: 3 }), false);
     assert.equal(isOpen('guides', { ...EMPTY_SERVICES, access: { ads: false, courses: false, keys: false, guides: true } }, EMPTY_FACTS), true);
   });
+});
+
+describe('activeServiceCount (số dịch vụ ở danh sách khách phải khớp trang chi tiết)', () => {
+  const manual = parseCustomerServices({ services: [{ id: 'ad-budget', label: 'Nạp ngân sách quảng cáo', status: 'active', since: '2026-11-24', note: '', source: 'manual' }], access: {} });
+  test('1 gán tay + TKQC (dịch vụ khác id) → 2', () => {
+    assert.equal(activeServiceCount(manual, { ...EMPTY_FACTS, adAccounts: [{ label: 'A', service: 'ads' }, { label: 'B', service: 'ads' }] }), 2);
+  });
+  test('chỉ có TKQC → 1 (nhiều TKQC cùng loại vẫn là một dịch vụ)', () => {
+    assert.equal(activeServiceCount(EMPTY_SERVICES, { ...EMPTY_FACTS, adAccounts: [{ label: 'A', service: 'ads' }, { label: 'B', service: 'ads' }] }), 1);
+  });
+  test('gán tay trùng id với TKQC → không đếm đôi; dịch vụ đã kết thúc không đếm', () => {
+    const cs = parseCustomerServices({ services: [{ id: 'ads', label: '', status: 'active', since: '2026-11-01', note: '', source: 'manual' }, { id: 'web', label: '', status: 'ended', since: '2026-10-01', note: '', source: 'manual' }], access: {} });
+    assert.equal(activeServiceCount(cs, { ...EMPTY_FACTS, adAccounts: [{ label: 'A', service: 'ads' }] }), 1);
+  });
+  test('không có gì → 0', () => assert.equal(activeServiceCount(EMPTY_SERVICES, EMPTY_FACTS), 0));
 });

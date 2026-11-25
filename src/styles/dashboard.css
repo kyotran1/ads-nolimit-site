@@ -3475,3 +3475,9 @@ dialog.ob-dialog {
     justify-content: flex-end;
   }
 }
+
+/* Trang Tài khoản có bảng báo cáo nền sáng: thanh đầu trang nền đặc để chữ trong bảng
+   không hiện mờ phía sau khi cuộn (25/11/2026 — thấy trên app Cốc Cốc của Chủ tịch). */
+body:has(#dash) .site-header {
+  background: rgb(7 10 26);
+}

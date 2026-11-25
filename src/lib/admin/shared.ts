@@ -27,7 +27,7 @@ import { formatVnd } from '../money';
 import { h, toDate } from '../ui/dom';
 import type { Bank } from '../../data/banks';
 import type { ProductDoc } from '../../data/catalog';
-import { parseCustomerServices } from '../customer/services';
+import { EMPTY_FACTS, EMPTY_SERVICES, activeServiceCount, parseCustomerServices } from '../customer/services';
 import { readStrings } from './viewers';
 import type { CustomerServices } from '../customer/services';
 
@@ -114,9 +114,15 @@ export interface Customer {
   balance: number;
   /** Số dịch vụ chủ gán tay đang dùng/tạm dừng (customerServices) */
   servicesCount: number;
+  /** Dịch vụ gán tay (customerServices) — giữ lại để đếm lại khi sửa */
+  manual: CustomerServices;
+  /** TKQC đang hoạt động mà khách là thành viên (chính hoặc xem thêm) */
+  adList: { label: string; service: string }[];
   /** Số TKQC đã gắn (adAccounts) */
   adAccounts: number;
 }
+
+const countServices = (c: Customer) => activeServiceCount(c.manual, { ...EMPTY_FACTS, adAccounts: c.adList });
 
 let customers: Map<string, Customer> | null = null;
 let loadingCustomers: Promise<Map<string, Customer>> | null = null;
@@ -132,7 +138,7 @@ export const loadCustomers = (force = false): Promise<Map<string, Customer>> => 
   ])
     .then(([users, wallets, services, ads]) => {
       const map = new Map<string, Customer>();
-      const blank = (uid: string): Customer => ({ uid, name: '', email: '', phone: '', company: '', avatar: '', createdAt: 0, balance: 0, servicesCount: 0, adAccounts: 0 });
+      const blank = (uid: string): Customer => ({ uid, name: '', email: '', phone: '', company: '', avatar: '', createdAt: 0, balance: 0, servicesCount: 0, adAccounts: 0, manual: EMPTY_SERVICES, adList: [] });
       users.docs.forEach((u) => {
         const d = u.data();
         const avatar = str(d, 'avatar');
@@ -153,7 +159,7 @@ export const loadCustomers = (force = false): Promise<Map<string, Customer>> => 
       });
       services.docs.forEach((x) => {
         const c = map.get(x.id);
-        if (c) c.servicesCount = parseCustomerServices(x.data()).services.filter((s) => s.status !== 'ended').length;
+        if (c) c.manual = parseCustomerServices(x.data());
       });
       ads.docs.forEach((x) => {
         const d = x.data();
@@ -161,9 +167,13 @@ export const loadCustomers = (force = false): Promise<Map<string, Customer>> => 
         // đếm theo mọi thành viên (chính + người xem thêm); tài liệu cũ chưa có memberUids → chỉ theo uid
         new Set([str(d, 'uid'), ...readStrings(d.memberUids)]).forEach((u) => {
           const c = map.get(u);
-          if (c) c.adAccounts += 1;
+          if (!c) return;
+          c.adAccounts += 1;
+          c.adList.push({ label: str(d, 'label') || str(d, 'accountName'), service: str(d, 'service') });
         });
       });
+      // Số dịch vụ = gán tay + tự động từ TKQC, gộp như trang chi tiết (đơn hàng / khóa học / key không tải ở danh sách).
+      map.forEach((c) => (c.servicesCount = countServices(c)));
       customers = map;
       return map;
     })
@@ -193,7 +203,10 @@ export const saveCustomerServices = async (uid: string, cs: CustomerServices) =>
     updatedBy: me(),
   });
   const c = customers?.get(uid);
-  if (c) c.servicesCount = cs.services.filter((s) => s.status !== 'ended').length;
+  if (c) {
+    c.manual = cs;
+    c.servicesCount = countServices(c);
+  }
 };
 
 /** Ảnh tròn: ảnh khách tải lên nếu có, không thì chữ cái đầu. */

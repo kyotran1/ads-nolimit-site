@@ -462,7 +462,7 @@ export const renderCustomers = async (root: HTMLElement, force = false) => {
 };
 
 const customerRow = (c: Customer) => {
-  const services = c.servicesCount ? `${c.servicesCount} dịch vụ` : c.adAccounts ? `${c.adAccounts} TKQC` : 'Chưa gán dịch vụ';
+  const services = [c.servicesCount ? `${c.servicesCount} dịch vụ` : '', c.adAccounts ? `${c.adAccounts} TKQC` : ''].filter(Boolean).join(' · ') || 'Chưa gán dịch vụ';
   return h(
     'a',
     { class: 'adm-row', href: `#khach-hang/${c.uid}` },
