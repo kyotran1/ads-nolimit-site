@@ -157,6 +157,12 @@ const showRow2 = !accountPaths.includes(path);
     toggle.setAttribute('title', label);
   };
   syncToggle();
+  // Sau khi đổi thuộc tính data-theme: màu thanh trình duyệt, nhãn nút, sự kiện cho phần khác.
+  const applyTheme = (theme: 'light' | 'dark') => {
+    document.querySelector('meta[name="theme-color"]')?.setAttribute('content', theme === 'light' ? '#f6f7fb' : '#070a1a');
+    syncToggle();
+    window.dispatchEvent(new CustomEvent('adsnl-theme', { detail: { theme } }));
+  };
   toggle?.addEventListener('click', () => {
     const next = document.documentElement.getAttribute('data-theme') === 'light' ? 'dark' : 'light';
     if (next === 'light') document.documentElement.setAttribute('data-theme', 'light');
@@ -166,9 +172,30 @@ const showRow2 = !accountPaths.includes(path);
     } catch {
       /* bị chặn: chỉ không nhớ được lựa chọn */
     }
-    document.querySelector('meta[name="theme-color"]')?.setAttribute('content', next === 'light' ? '#f6f7fb' : '#070a1a');
-    syncToggle();
-    window.dispatchEvent(new CustomEvent('adsnl-theme', { detail: { theme: next } }));
+    applyTheme(next);
+  });
+
+  // Đồng bộ khi khách đổi giao diện ở tab khác, hoặc bấm Quay lại (trang lấy từ bộ nhớ đệm bfcache còn giao diện cũ).
+  const readSaved = (): 'light' | 'dark' => {
+    try {
+      return localStorage.getItem('adsnl-theme') === 'light' ? 'light' : 'dark';
+    } catch {
+      return document.documentElement.getAttribute('data-theme') === 'light' ? 'light' : 'dark';
+    }
+  };
+  const resync = () => {
+    const saved = readSaved();
+    const now = document.documentElement.getAttribute('data-theme') === 'light' ? 'light' : 'dark';
+    if (saved === now) return;
+    if (saved === 'light') document.documentElement.setAttribute('data-theme', 'light');
+    else document.documentElement.removeAttribute('data-theme');
+    applyTheme(saved);
+  };
+  window.addEventListener('storage', (e) => {
+    if (!e.key || e.key === 'adsnl-theme') resync();
+  });
+  window.addEventListener('pageshow', (e) => {
+    if (e.persisted) resync();
   });
 
   // Đóng menu/dropdown khi bấm ra ngoài hoặc nhấn Esc. Không có JS menu vẫn dùng được.
@@ -442,8 +469,8 @@ const showRow2 = !accountPaths.includes(path);
   .mobile-signup {
     min-height: 48px;
   }
-  .mobile-acct:has(:global(.acct.is-in)) {
-    grid-template-columns: 1fr;
+  .mobile-acct :global(.acct.is-in) {
+    grid-column: 1 / -1;
   }
   .mobile-acct :global(.acct.is-in) ~ .mobile-signup {
     display: none;
@@ -468,8 +495,8 @@ const showRow2 = !accountPaths.includes(path);
     font-size: 0.9375rem;
     white-space: nowrap;
   }
-  .row2-inner:has(:global(.acct.is-in)) {
-    grid-template-columns: 1fr;
+  .row2-inner :global(.acct.is-in) {
+    grid-column: 1 / -1;
   }
   .row2-inner :global(.acct.is-in) ~ .row2-signup {
     display: none;
@@ -498,7 +525,7 @@ const showRow2 = !accountPaths.includes(path);
     }
   }
 
-  /* Điện thoại rất hẹp (≤ 379px): tên thương hiệu nhỏ lại, các nút sát hơn. */
+  /* Điện thoại hẹp (< 380px): tên thương hiệu nhỏ lại, các nút sát hơn. */
   @media (max-width: 379.98px) {
     .header-inner {
       gap: 0.4rem;
@@ -512,10 +539,7 @@ const showRow2 = !accountPaths.includes(path);
     .header-actions {
       gap: 0.35rem;
     }
-  }
-
-  /* Điện thoại hẹp (< 380px): hàng trên chỉ còn logo | sáng/tối | Menu; VI/EN nằm ở mục thứ hai trong Menu. */
-  @media (max-width: 379.98px) {
+    /* Hàng trên chỉ còn logo | sáng/tối | Menu; VI/EN nằm ở mục thứ hai trong Menu. */
     .header-actions > :global(.lang-switch) {
       display: none;
     }

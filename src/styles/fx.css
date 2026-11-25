@@ -267,3 +267,15 @@
 .site-header .nav-desktop .dd .dd-panel a[aria-current='page']:is(:hover, :focus-visible) {
   box-shadow: inset 2px 0 0 var(--green);
 }
+
+/* Giao diện sáng: chữ khi rê chuột / chọn bằng bàn phím không được thành trắng (nền sáng). */
+:root[data-theme='light'] .btn:not(.btn-primary, .btn-sun, .btn-ghost):is(:hover, :focus-visible),
+:root[data-theme='light'] .site-header .nav-list .nav-link:is(:hover, :focus-visible),
+:root[data-theme='light'] .site-header .nav-list .dd[open] > .nav-link,
+:root[data-theme='light'] .site-header .nav-desktop .dd .dd-panel a:is(:hover, :focus-visible) {
+  color: var(--text-hi);
+}
+:root[data-theme='light'] .text-link:is(:hover, :focus-visible) {
+  color: var(--green-ink);
+  text-shadow: none;
+}

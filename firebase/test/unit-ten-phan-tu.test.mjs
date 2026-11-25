@@ -12,7 +12,7 @@ const walk = (d) => readdirSync(d, { withFileTypes: true }).flatMap((e) => (e.is
 const files = walk(SRC).filter((f) => /\.(astro|ts|css)$/.test(f));
 
 // Từ "trông giống quảng cáo" đứng thành một phần riêng trong tên có gạch nối: ad-card, ov-ads-low, top-banner-ad, sponsor-box…
-const RISKY = /(?<![\w-])(?:[a-z0-9]+-)*(?:ad|ads|adv|advert|advertisement|adsense|sponsor|sponsored|banner-ad|quangcao)(?:-[a-z0-9]+)*(?![\w-])/g;
+const RISKY = /(?<![\w-])(?:[a-z0-9]+-)*(?:ad|ads|adv|advert|advertisement|adsense|sponsor|sponsored|banner|banner-ad|quangcao)(?:-[a-z0-9]+)*(?![\w-])/g;
 // Được phép: tên thương hiệu / dự án Firebase, giá trị dữ liệu (không phải class hay id), #neo của trang.
 const ALLOWED = new Set(['ads-nolimit', 'ads-nolimit-web', 'ad-budget', 'ad-reports', 'bao-cao-ads', 'ads', 'ad', 'adv', 'sponsor', 'sponsored', 'advert', 'advertisement']);
 

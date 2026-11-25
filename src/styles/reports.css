@@ -276,7 +276,7 @@
   font-family: Arial, 'Helvetica Neue', Helvetica, sans-serif;
   font-variant-numeric: tabular-nums;
 }
-.xl-banner {
+.xl-note {
   padding: 0.55rem 0.75rem;
   margin-bottom: 0.6rem;
   border: 2px solid var(--xl-line);
@@ -402,7 +402,7 @@
 .xl p {
   color: #000;
 }
-.xl .xl-banner p {
+.xl .xl-note p {
   color: #ffff00;
 }
 .xv-bar button {

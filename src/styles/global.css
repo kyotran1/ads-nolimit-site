@@ -43,6 +43,7 @@
   --lime: #a8a800;
   /* Biến thể sáng hơn để làm chữ trên nền tối (đạt AA) */
   --violet-ink: #a58cff;
+  --focus: #eed65a; /* viền khi chọn bằng bàn phím */
   --blue-ink: #8592ff;
   --teal-ink: #3fd0c2;
   --green-ink: #2ee89a;
@@ -115,6 +116,7 @@
 
   /* Chữ màu: bản đậm hơn để đọc được trên nền trắng */
   --violet-ink: #5a2fd0;
+  --focus: #5a2fd0;
   --blue-ink: #2f3bd6;
   --teal-ink: #08665e;
   --green-ink: #08703f;
@@ -148,6 +150,7 @@
   --ov: 255 255 255;
   --scrim: 7 10 26;
   --violet-ink: #a58cff;
+  --focus: #eed65a; /* viền khi chọn bằng bàn phím */
   --blue-ink: #8592ff;
   --teal-ink: #3fd0c2;
   --green-ink: #2ee89a;
@@ -285,7 +288,7 @@ ol {
 }
 
 :focus-visible {
-  outline: 3px solid var(--sun);
+  outline: 3px solid var(--focus);
   outline-offset: 3px;
   border-radius: 4px;
 }

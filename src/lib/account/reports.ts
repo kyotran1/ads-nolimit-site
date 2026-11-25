@@ -220,7 +220,7 @@ const banner = (note: string) => {
   if (!lines.length) return null;
   return h(
     "div",
-    { class: "xl-banner" },
+    { class: "xl-note" },
     ...lines.map((line) => {
       const m = /^(.*?)(ADS-NOLIMIT\.AGENCY)(.*)$/i.exec(line);
       return m

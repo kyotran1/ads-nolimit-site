@@ -1101,7 +1101,7 @@ dialog .eyebrow {
   overflow: hidden;
   padding: clamp(1.25rem, 1rem + 1vw, 1.75rem);
   border-radius: var(--r-xl);
-  border: 1px solid rgb(var(--ov) / 0.16);
+  border: 1px solid rgb(255 255 255 / 0.16); /* thẻ luôn nền tối → viền trắng ở cả hai giao diện */
   background:
     radial-gradient(70% 120% at 100% 0%, rgb(255 255 255 / 0.14), transparent 55%),
     linear-gradient(130deg, #3a10a0 0%, #1d18c8 38%, #12707a 72%, #0a8a55 100%);
@@ -1113,7 +1113,7 @@ dialog .eyebrow {
   content: '';
   position: absolute;
   border-radius: 50%;
-  border: 1px solid rgb(var(--ov) / 0.14);
+  border: 1px solid rgb(255 255 255 / 0.14);
   pointer-events: none;
 }
 .balance-card::before {
@@ -1227,7 +1227,7 @@ dialog .eyebrow {
     0 10px 26px -14px rgb(0 216 120 / 0.9);
 }
 .amount-chip input:focus-visible + span {
-  outline: 3px solid var(--sun);
+  outline: 3px solid var(--focus);
   outline-offset: 2px;
 }
 .money-input {
@@ -1541,7 +1541,7 @@ dialog .eyebrow {
   border-color: var(--line-strong);
 }
 .pick-card:focus-visible {
-  outline: 3px solid var(--sun);
+  outline: 3px solid var(--focus);
   outline-offset: 2px;
 }
 .pick-card[aria-checked='true'] {
@@ -3528,6 +3528,9 @@ body:has(#dash) .site-header {
 }
 :root[data-theme='light'] .at-item.is-approved .at-status {
   color: #0a6a96;
+}
+:root[data-theme='light'] .at-item.is-written .at-status {
+  color: var(--green-ink);
 }
 /* Số bài học / số bước: nền gradient có đầu xanh lá sáng; ở giao diện sáng dùng tím đặc để chữ trắng đọc được */
 :root[data-theme='light'] .lesson-btn[aria-current='true'] .lesson-num,
