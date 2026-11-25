@@ -1,5 +1,5 @@
 // Thanh đầu trang 2 hàng trên điện thoại / máy tính bảng (< 1080px):
-//   hàng trên: logo | VI/EN | (Tư vấn miễn phí ≥ 560px) | Menu
+//   hàng trên: logo | VI/EN (≥ 380px) | sáng/tối | (Tư vấn miễn phí ≥ 560px) | Menu
 //   hàng dưới: "Đăng nhập" | "Tạo tài khoản" (đã đăng nhập: "Tài khoản · tên"), ngay dưới thanh dính, trôi theo trang khi cuộn.
 // Menu điện thoại: mục Tài khoản đầu tiên, Ngôn ngữ thứ hai. Trang đăng nhập / đăng ký / quên mật khẩu / tài khoản: không có hàng dưới.
 // Chạy: bash e2e/pwa/serve.sh 4350 <dist>; node e2e/nut-dang-nhap/e2e-nut-dang-nhap.cjs [port=4350] [thư mục ảnh]
@@ -16,7 +16,7 @@ const measure = () => {
   const vis = (e) => e && getComputedStyle(e).display !== 'none' && e.getClientRects().length > 0;
   const inner = document.querySelector('.header-inner');
   const ib = inner.getBoundingClientRect();
-  const kids = [...inner.querySelectorAll('.brand, .header-actions > .lang-switch, .menu-toggle, .header-cta, .acct--desktop')].filter(vis);
+  const kids = [...inner.querySelectorAll('.brand, .header-actions > .lang-switch, .theme-toggle, .menu-toggle, .header-cta, .acct--desktop')].filter(vis);
   const over = kids.filter((e) => { const b = e.getBoundingClientRect(); return b.right > ib.right + 0.5 || b.left < ib.left - 0.5; }).map((e) => e.className);
   const boxes = kids.map((e) => ({ c: e.className, b: e.getBoundingClientRect() }));
   const overlap = [];
@@ -32,7 +32,8 @@ const measure = () => {
   const r = {
     over, overlap, pageOverflow: document.documentElement.scrollWidth > innerWidth,
     hasRow2: !!row2, row2Shown: vis(row2) && row2.getBoundingClientRect().height > 20,
-    menuW: mt.width, menuH: mt.height, brandW: document.querySelector('.brand').getBoundingClientRect().width,
+    menuW: mt.width, menuH: mt.height,
+    themeW: document.querySelector('.theme-toggle').getBoundingClientRect().width, themeH: document.querySelector('.theme-toggle').getBoundingClientRect().height, brandW: document.querySelector('.brand').getBoundingClientRect().width,
     hdrH: hdr.height, hdrBottom: hdr.bottom, langInBar: vis(inner.querySelector('.header-actions > .lang-switch')),
   };
   if (bar) {
@@ -60,7 +61,8 @@ const measure = () => {
         const tag = `${who} ${w}px ${path}`;
         ok(!r.over.length && !r.overlap.length && !r.pageOverflow, `${tag}: hàng trên không tràn/chồng ${[...r.over, ...r.overlap].join(', ')}`);
         ok((w >= 1080 || (r.menuW >= 44 && r.menuH >= 44)) && r.brandW >= 120, `${tag}: nút Menu ${r.menuW}×${r.menuH}, logo ${Math.round(r.brandW)}px`);
-        ok(r.langInBar, `${tag}: VI/EN vẫn ở hàng trên`);
+        ok(w < 380 ? !r.langInBar : r.langInBar, `${tag}: VI/EN ${w < 380 ? 'chuyển vào Menu (máy hẹp)' : 'ở hàng trên'}`);
+        ok(r.themeW >= 40 && r.themeH >= 40, `${tag}: nút sáng/tối ${r.themeW}×${r.themeH}`);
         if (w < 1080) {
           ok(r.row2Shown && r.barInHeader, `${tag}: hàng dưới hiện trong thanh đầu trang (cao ${Math.round(r.hdrH)}px)`);
           const want = signedIn ? (en ? 'Account' : 'Tài khoản') : (en ? 'Sign in' : 'Đăng nhập');

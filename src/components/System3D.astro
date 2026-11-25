@@ -107,12 +107,20 @@ const segs = [
 ];
 const loop = segs.map((d, i) => (i === 0 ? d : d.replace(/^M[\d.,]+\s*/, ''))).join(' ');
 
+/** Màu chữ của thẻ bước (ngoài sân khấu) theo giao diện: cùng giá trị ở tối, đậm hơn ở sáng. */
+const inkOf: Record<string, string> = {
+  '#8592ff': 'var(--blue-ink)',
+  '#a58cff': 'var(--violet-ink)',
+  '#2ee89a': 'var(--green-ink)',
+  '#eed65a': 'var(--sun-ink)',
+  '#3fd0c2': 'var(--teal-ink)',
+};
 const boxStyle = (b: { x: number; y: number; w: number; d: number; h: number; z?: number; tone: string }) =>
   `--x:${b.x}px;--y:${b.y}px;--w:${b.w}px;--d:${b.d}px;--h:${b.h}px;--z:${b.z ?? 0}px;--tone:${b.tone}`;
 ---
 
 <figure class="s3d" data-s3d data-label-running={copy.running} data-label-again={copy.again} data-label-run={copy.run} data-label-sway-pause={copy.swayPause} data-label-sway-play={copy.swayPlay}>
-  <div class="s3d-stage" data-stage>
+  <div class="s3d-stage keep-dark" data-stage>
     <div class="s3d-chips" aria-hidden="true">
       <span class="s3d-chip"><Icon name="spark" />{copy.chip}</span>
       <span class="s3d-chip s3d-chip--hint">
@@ -226,7 +234,7 @@ const boxStyle = (b: { x: number; y: number; w: number; d: number; h: number; z?
     </div>
   </div>
 
-  <div class="s3d-caption" aria-live="polite" data-caption>
+  <div class="s3d-caption keep-dark" aria-live="polite" data-caption>
     <span class="cap-time" data-cap-time></span>
     <strong class="cap-title" data-cap-title></strong>
     <span class="cap-text" data-cap-text>{copy.idle}</span>
@@ -236,7 +244,7 @@ const boxStyle = (b: { x: number; y: number; w: number; d: number; h: number; z?
     {
       copy.steps.map((st, i) => (
         <li>
-          <button type="button" class="step" data-step={i} aria-pressed="false" data-glow style={`--tone:${stations[i].tone}`}>
+          <button type="button" class="step" data-step={i} aria-pressed="false" data-glow style={`--tone:${inkOf[stations[i].tone] ?? stations[i].tone}`}>
             <span class="step-num">{i + 1}</span>
             <span class="step-body">
               <span class="step-name">
@@ -510,7 +518,7 @@ const boxStyle = (b: { x: number; y: number; w: number; d: number; h: number; z?
       #060a1f;
     box-shadow:
       var(--shadow-glow),
-      inset 0 1px 0 rgb(255 255 255 / 0.05);
+      inset 0 1px 0 rgb(var(--ov) / 0.05);
     perspective: 1600px;
     perspective-origin: 50% 38%;
     cursor: grab;
@@ -701,7 +709,7 @@ const boxStyle = (b: { x: number; y: number; w: number; d: number; h: number; z?
     width: 46px;
     height: 46px;
     border-radius: 12px;
-    background: rgb(7 10 26 / 0.55);
+    background: rgb(var(--scrim) / 0.55);
     border: 1px solid color-mix(in srgb, var(--tone) 50%, transparent);
     color: var(--tone);
   }
@@ -762,7 +770,7 @@ const boxStyle = (b: { x: number; y: number; w: number; d: number; h: number; z?
     gap: 6px;
     padding: 4px 10px 4px 5px;
     border-radius: 999px;
-    border: 1px solid rgb(255 255 255 / 0.14);
+    border: 1px solid rgb(var(--ov) / 0.14);
     background: rgb(10 15 39 / 0.88);
     color: var(--text);
     font-size: 13px;
@@ -836,7 +844,7 @@ const boxStyle = (b: { x: number; y: number; w: number; d: number; h: number; z?
     padding: 0.3rem 0.75rem;
     border-radius: 999px;
     border: 1px solid var(--line-strong);
-    background: rgb(7 10 26 / 0.75);
+    background: rgb(var(--scrim) / 0.75);
     color: var(--text-2);
     font-size: 0.8125rem;
     font-weight: 600;
@@ -844,7 +852,7 @@ const boxStyle = (b: { x: number; y: number; w: number; d: number; h: number; z?
   .s3d-chip :global(svg) {
     width: 0.9rem;
     height: 0.9rem;
-    color: var(--sun);
+    color: var(--sun-ink);
   }
   .hint-swipe {
     display: none;
@@ -869,7 +877,7 @@ const boxStyle = (b: { x: number; y: number; w: number; d: number; h: number; z?
     padding: 0.8rem 1rem;
     border-radius: var(--r-md);
     border: 1px solid var(--line-strong);
-    background: rgb(7 10 26 / 0.82);
+    background: rgb(var(--scrim) / 0.82);
     backdrop-filter: blur(6px);
     pointer-events: none;
   }
@@ -904,7 +912,7 @@ const boxStyle = (b: { x: number; y: number; w: number; d: number; h: number; z?
     padding: 0.35rem;
     border-radius: 999px;
     border: 1px solid var(--line-strong);
-    background: rgb(7 10 26 / 0.85);
+    background: rgb(var(--scrim) / 0.85);
     backdrop-filter: blur(6px);
     cursor: default;
   }
@@ -932,11 +940,11 @@ const boxStyle = (b: { x: number; y: number; w: number; d: number; h: number; z?
       color 0.15s ease;
   }
   .ctl:hover {
-    background: rgb(255 255 255 / 0.07);
+    background: rgb(var(--ov) / 0.07);
     color: var(--text);
   }
   .ctl[aria-pressed='true'] {
-    background: rgb(255 255 255 / 0.1);
+    background: rgb(var(--ov) / 0.1);
     color: var(--text);
   }
   .ctl--run {

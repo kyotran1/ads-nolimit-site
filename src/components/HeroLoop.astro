@@ -186,7 +186,7 @@ const loopPath =
     align-items: start;
     padding: 0.7rem 0.85rem;
     border-radius: var(--r-md);
-    background: rgb(7 10 26 / 0.6);
+    background: rgb(var(--scrim) / 0.6);
     border: 1px solid var(--line);
     border-left: 3px solid var(--tone);
     font-size: 0.9375rem;
@@ -208,5 +208,11 @@ const loopPath =
     font-size: 0.8125rem;
     font-weight: 600;
     color: var(--tone);
+  }
+
+  :global(:root[data-theme='light']) .loop-card {
+    background:
+      radial-gradient(120% 80% at 50% 0%, rgb(72 0 168 / 0.1), transparent 60%),
+      var(--bg-raise);
   }
 </style>
