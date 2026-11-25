@@ -15,6 +15,7 @@ import PricingSummary from '../components/PricingSummary.astro';
 import Faq from '../components/Faq.astro';
 import CtaBand from '../components/CtaBand.astro';
 import PartnerStrip from '../components/PartnerStrip.astro';
+import NewsBadge from '../components/NewsBadge.astro';
 import Icon from '../components/Icon.astro';
 import type { IconName } from '../components/Icon.astro';
 import { site, links } from '../config/site';
@@ -291,6 +292,7 @@ const faq = getFaq(lang);
   <section class="hero">
     <div class="container hero-grid">
       <div class="hero-copy">
+        <NewsBadge lang={lang} />
         <h1>{copy.h1}</h1>
         <p class="lead hero-lead">{copy.lead}</p>
         <div class="btn-row btn-row--stack-mobile">

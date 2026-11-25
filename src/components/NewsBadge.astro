@@ -1,0 +1,75 @@
+---
+/**
+ * Nhãn "Mới" phía trên tiêu đề trang chủ (tham khảo aitranslator.vn, Chủ tịch duyệt 26/11/2026).
+ * Có trợ lý AI → nhãn mở khung chat; chưa có → giới thiệu báo cáo quảng cáo cập nhật mỗi giờ.
+ * Đổi tin mới: sửa `news` bên dưới.
+ */
+import Icon from './Icon.astro';
+import { aiChat } from '../config/site';
+import { localize } from '../config/i18n';
+import type { Lang } from '../config/i18n';
+
+interface Props {
+  lang: Lang;
+}
+const { lang } = Astro.props;
+const tag = lang === 'en' ? 'New' : 'Mới';
+const news = aiChat.endpoint
+  ? { text: lang === 'en' ? 'Ask our AI assistant anything, 24/7' : 'Hỏi trợ lý AI của ADS-Nolimit bất cứ lúc nào', href: '#', chat: true }
+  : {
+      text: lang === 'en' ? 'Ad reports updated every hour in your account' : 'Báo cáo quảng cáo cập nhật mỗi giờ ngay trong tài khoản',
+      href: localize('/quang-cao/', lang),
+      chat: false,
+    };
+---
+
+<a class="news-pill" href={news.href} data-open-tro-ly={news.chat ? '' : undefined}>
+  <span class="news-tag">{tag}</span>
+  <span class="news-text">{news.text}</span>
+  <Icon name="arrow" />
+</a>
+
+<style>
+  .news-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.625rem;
+    max-width: 100%;
+    margin-bottom: 1.25rem;
+    padding: 0.3125rem 0.875rem 0.3125rem 0.3125rem;
+    border: 1px solid var(--line-strong);
+    border-radius: 999px;
+    background: var(--surface);
+    color: var(--text);
+    font-size: 0.875rem;
+    font-weight: 600;
+    line-height: 1.35;
+    text-decoration: none;
+    transition: border-color 0.2s ease;
+  }
+  .news-pill:hover {
+    border-color: var(--teal-ink);
+  }
+  .news-pill:focus-visible {
+    outline: 3px solid var(--green);
+    outline-offset: 3px;
+  }
+  .news-tag {
+    flex: none;
+    padding: 0.1875rem 0.625rem;
+    border-radius: 999px;
+    background: var(--grad);
+    color: #fff;
+    font-size: 0.75rem;
+    font-weight: 800;
+  }
+  .news-text {
+    min-width: 0;
+  }
+  .news-pill :global(svg) {
+    flex: none;
+    width: 1rem;
+    height: 1rem;
+    color: var(--text-2);
+  }
+</style>
