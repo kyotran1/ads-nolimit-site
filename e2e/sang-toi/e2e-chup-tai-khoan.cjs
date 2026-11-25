@@ -1,6 +1,11 @@
 // Chụp trang Tài khoản (khách) hoặc Quản trị (chủ) khi đã đăng nhập (đăng nhập giả + emulator Firestore).
 // Biến môi trường: WEB_PORT, EMU_PORT, SHOTS_DIR, THEME=toi|sang, ROLE=khach|quan-tri
 // Chạy trong: firebase emulators:exec --only firestore --project demo-ads-nolimit "node e2e/sang-toi/e2e-chup-tai-khoan.cjs"
+// Cố định thời gian lúc gieo dữ liệu (để hai lần chạy cho cùng chữ ngày giờ) và số ngẫu nhiên trong trình duyệt (mã lệnh nạp, mã QR).
+const RealDate = Date;
+const FIXED = RealDate.parse('2026-11-26T05:00:00Z');
+global.Date = class extends RealDate { constructor(...a) { if (a.length) super(...a); else super(FIXED); } static now() { return FIXED; } };
+const SEED_RANDOM = `(function(){ var s = 123456789; var r = function(){ s |= 0; s = s + 0x6D2B79F5 | 0; var t = Math.imul(s ^ s >>> 15, 1 | s); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; }; Math.random = r; if (window.crypto && crypto.getRandomValues) crypto.getRandomValues = function(a){ for (var i = 0; i < a.length; i++) a[i] = Math.floor(r() * 256); return a; }; })();`;
 const H = '../pwa/';
 const { SHOTS, setupContext, chromium, emu, signIn, watchConsole } = require(H + 'harness.cjs');
 const { seedGlobal, seedCustomer } = require(H + 'seed.cjs');
@@ -43,6 +48,7 @@ const QUAN_TRI = ['tong-quan', 'nap-tien', 'don-hang', 'yeu-cau', 'khach-hang', 
 
   for (const w of [1440, 390]) {
     const ctx = await setupContext(browser, { fake, viewport: { width: w, height: w > 600 ? 900 : 844 }, deviceScaleFactor: 1, reducedMotion: 'reduce', serviceWorkers: 'block' });
+    await ctx.addInitScript(SEED_RANDOM);
     await ctx.addInitScript(`try{ ${THEME === 'sang' && ROLE === 'khach' ? "localStorage.setItem('adsnl-theme','light');" : ''} ${THEME === 'sang' && ROLE === 'quan-tri' ? "localStorage.setItem('adsnl-theme','light');" : ''} }catch(e){}`);
     await ctx.route('**/script.google.com/**', (r) => r.fulfill({ contentType: 'application/json', body: '{"ok":true,"soTk":0}' }));
     const page = await ctx.newPage();
@@ -87,11 +93,13 @@ const QUAN_TRI = ['tong-quan', 'nap-tien', 'don-hang', 'yeu-cau', 'khach-hang', 
       await go('ho-so');
       await page.click('#profile-form button[type=submit]').catch(() => {});
       await page.waitForSelector('.toasts .toast, .toast', { timeout: 5000 }).catch(() => {});
+      await page.waitForTimeout(900); // chờ thông báo hiện hết cỡ
       await page.screenshot({ path: path.join(SHOTS, `${ROLE}-thong-bao-noi-${w}.png`) });
       await audit(page, 'thong-bao-noi');
       await ctx.close();
       // Thẻ mời cài ứng dụng
       const ctx2 = await setupContext(browser, { fake, viewport: { width: w, height: w > 600 ? 900 : 844 }, reducedMotion: 'reduce', serviceWorkers: 'block' });
+      await ctx2.addInitScript(SEED_RANDOM);
       await ctx2.addInitScript(INSTALL + `try{ ${THEME === 'sang' ? "localStorage.setItem('adsnl-theme','light');" : ''} }catch(e){}`);
       const p2 = await ctx2.newPage();
       await signIn(p2, lan.email, 'pass-12345', '/tai-khoan/');
@@ -108,6 +116,7 @@ const QUAN_TRI = ['tong-quan', 'nap-tien', 'don-hang', 'yeu-cau', 'khach-hang', 
     await page.goto(`http://127.0.0.1:${process.env.WEB_PORT}/quan-tri/`);
     await page.waitForSelector('#adm-app:not([hidden])', { timeout: 15000 });
     await page.waitForTimeout(1500);
+    console.log('QUAN-TRI data-theme =', await page.evaluate(() => document.documentElement.getAttribute('data-theme')), '| khóa localStorage =', await page.evaluate(() => localStorage.getItem('adsnl-theme')), '| nền body =', await page.evaluate(() => getComputedStyle(document.body).backgroundColor));
     for (const h of QUAN_TRI) { await go(h); await shot(h); }
     if (logs.length) console.log('console:', logs.slice(0, 5));
     await ctx.close();
