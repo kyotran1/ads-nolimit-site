@@ -6,7 +6,7 @@
 const { chromium } = require('playwright');
 const PORT = process.argv[2] || '4350';
 const SHOTS = process.argv[3] || '/tmp/claude-0/nut-dang-nhap';
-const BASE = `http://127.0.0.1:${PORT}`;
+const BASE = process.env.BASE || `http://127.0.0.1:${PORT}`; // BASE=https://www.ads-nolimit.agency để kiểm trên web thật
 require('fs').mkdirSync(SHOTS, { recursive: true });
 let pass = 0, fail = 0;
 const ok = (c, m) => { if (c) { pass++; console.log('ĐẠT  ', m); } else { fail++; console.log('KHÔNG', m); } };
