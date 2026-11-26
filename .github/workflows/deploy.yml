@@ -37,6 +37,7 @@ jobs:
         run: npm run build
         env:
           ASTRO_TELEMETRY_DISABLED: '1'
+          PUBLIC_FB_LOGIN: test   # off | test | on — xem src/config/auth-providers.ts
 
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v4
