@@ -183,8 +183,17 @@ function loiGraph_(r) {
  * Sai key → bỏ qua (không làm gì, không báo chi tiết). Luôn trả về đối tượng, không ném lỗi.
  */
 function xuLyMeta_(payload) {
-  const khoa = tbProp_('GAS_KEY');
-  if (!khoa || !payload || payload.key !== khoa) return { ok: false, loi: 'sai khoa' };
+  const khoa = String(tbProp_('GAS_KEY') || '').trim(); // bỏ khoảng trắng/xuống dòng lỡ dán thừa
+  if (!khoa || !payload || String(payload.key || '').trim() !== khoa) {
+    // Chỉ ghi ĐỘ DÀI để dò lệch khóa, không bao giờ ghi giá trị khóa
+    const lenGui = String((payload && payload.key) || '').length;
+    console.warn('xuLyMeta_: sai khoa (do dai khoa gui sang=' + lenGui + ', do dai GAS_KEY=' + khoa.length + ')');
+    ghiChanDoan_({ loi: 'sai khoa', doDaiKhoaGuiSang: lenGui, doDaiGasKey: khoa.length });
+    return { ok: false, loi: 'sai khoa' };
+  }
+  const soSuKien = (Array.isArray(payload.body && payload.body.entry) ? payload.body.entry : []).length;
+  console.log('xuLyMeta_: nhan ' + soSuKien + ' entry');
+  ghiChanDoan_({ ok: true, entry: soSuKien, kieu: moTaSuKien_(payload.body) });
   const body = payload.body || {};
   const kq = { ok: true, noi: 0, bo: 0, mau: [] };
   const cache = CacheService.getScriptCache();
@@ -220,12 +229,38 @@ function xuLyMeta_(payload) {
         if (cache.get(dau)) return;
         cache.put(dau, '1', 3600);
         if (noiMessenger_(psid, ma)) kq.noi++; else kq.bo++;
+        ghiChanDoan_({ ok: true, entry: 1, ketQuaNoi: kq.noi ? 'da noi' : 'khong noi duoc (xem tin page tra loi)' });
       } catch (err) {
         console.error('xuLyMeta_: ' + err);
       }
     });
   });
   return kq;
+}
+
+/** Ghi lần nhận webhook gần nhất vào bộ nhớ đệm (6 giờ) để xem bằng xemChanDoanMeta(). KHÔNG ghi khóa, PSID hay nội dung tin. */
+function ghiChanDoan_(o) {
+  try {
+    o.luc = new Date().toISOString();
+    CacheService.getScriptCache().put('meta_chan_doan', JSON.stringify(o), 21600);
+  } catch (e) { /* bỏ qua */ }
+}
+
+/** Mô tả loại sự kiện (postback / message / referral / changes), không kèm nội dung. */
+function moTaSuKien_(body) {
+  const out = [];
+  (Array.isArray(body && body.entry) ? body.entry : []).forEach(function (en) {
+    if (Array.isArray(en && en.changes)) out.push('changes:' + en.changes.length);
+    (Array.isArray(en && en.messaging) ? en.messaging : []).forEach(function (ev) {
+      out.push(ev.postback ? 'postback' + (ev.postback.referral ? '+ref' : '') : ev.referral ? 'referral' : ev.message ? (ev.message.is_echo ? 'echo' : 'message' + (trichMaNoi_(ev) ? '+ma' : '')) : 'khac');
+    });
+  });
+  return out.join(',');
+}
+
+/** Chạy tay: xem lần nhận webhook Meta gần nhất (thời điểm, đúng/sai khóa, loại sự kiện, kết quả nối). */
+function xemChanDoanMeta() {
+  Logger.log(CacheService.getScriptCache().get('meta_chan_doan') || 'Chua nhan webhook nao trong 6 gio qua');
 }
 
 /** Đổi mã lấy PSID: ghi notifyPrivate + notifyLinks, xóa mã, chào lại. Trả về true khi nối được. */
@@ -272,7 +307,7 @@ function daNoi_(psid) {
 /** Tin trả lời trong 24 giờ sau tin của khách (messaging_type RESPONSE). Lỗi chỉ ghi nhật ký. */
 function traLoiMessenger_(psid, text) {
   const r = goiGraph_(tbProp_('PAGE_ID') + '/messages', { recipient: { id: psid }, messaging_type: 'RESPONSE', message: { text: text } });
-  if (!r.ok) console.error('Khong tra loi duoc Messenger: ' + loiGraph_(r));
+  if (!r.ok) { console.error('Khong tra loi duoc Messenger: ' + loiGraph_(r)); ghiChanDoan_({ loi: 'khong tra loi duoc', graph: loiGraph_(r) }); }
   return r.ok;
 }
 
