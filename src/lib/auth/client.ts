@@ -7,6 +7,7 @@ import { getApp, getApps, initializeApp } from 'firebase/app';
 import { FacebookAuthProvider, getAuth, GoogleAuthProvider } from 'firebase/auth';
 import type { ActionCodeSettings, User } from 'firebase/auth';
 import { firebaseConfig } from '../../config/firebase';
+import { isPhoneUA } from './facebook';
 import { errorCode, m, pageLang } from './messages';
 import type { MessageKey } from './messages';
 
@@ -34,13 +35,14 @@ export const googleProvider = (): GoogleAuthProvider => {
   return provider;
 };
 
-/* ---------- Đăng nhập Facebook (chỉ dùng khi authProviders.facebook bật; không dùng Facebook JS SDK) ---------- */
+/* ---------- Đăng nhập Facebook (chỉ dùng khi mã Facebook có trong bản build; không dùng Facebook JS SDK) ---------- */
 
 export const facebookProvider = (): FacebookAuthProvider => {
   const provider = new FacebookAuthProvider();
   provider.addScope('email');
   provider.addScope('public_profile');
-  provider.setCustomParameters({ display: 'popup' });
+  // display=popup chỉ hợp cho máy tính; trên điện thoại để Facebook tự chọn giao diện.
+  if (!isPhoneUA(navigator.userAgent, navigator.maxTouchPoints || 0)) provider.setCustomParameters({ display: 'popup' });
   return provider;
 };
 

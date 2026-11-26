@@ -16,6 +16,9 @@ interface Props {
   lang: Lang;
 }
 const { lang } = Astro.props;
+// Mã Facebook có trong bản build (on hoặc test); ở chế độ test các phần Facebook ẩn cho tới khi khách bật ?fbtest=1.
+const fbTest = authProviders.facebookTest;
+const fbBuilt = authProviders.facebook || fbTest;
 const href = {
   signUp: localize('/dang-ky/', lang),
   forgot: localize('/quen-mat-khau/', lang),
@@ -77,7 +80,7 @@ const copy = {
 
     <p class="auth-divider">{copy.or}</p>
     {
-      authProviders.facebook ? (
+      fbBuilt ? (
         <div class="auth-providers" id="signin-providers">
           <div class="auth-provider">
             <GoogleButton id="signin-google" label={copy.google} />
@@ -85,7 +88,7 @@ const copy = {
               {googleNoteMessage(lang)}
             </p>
           </div>
-          <div class="auth-provider">
+          <div class="auth-provider" data-fb-test={fbTest ? '' : undefined} hidden={fbTest}>
             <FacebookButton id="signin-facebook" label={copy.facebook} />
           </div>
         </div>
@@ -93,7 +96,16 @@ const copy = {
         <GoogleButton id="signin-google" label={copy.google} />
       )
     }
-    <p class="auth-note" set:html={authProviders.facebook ? copy.socialNote : copy.googleNote} />
+    {
+      fbTest ? (
+        <>
+          <p class="auth-note" data-note-off set:html={copy.googleNote} />
+          <p class="auth-note" data-note-on hidden set:html={copy.socialNote} />
+        </>
+      ) : (
+        <p class="auth-note" set:html={authProviders.facebook ? copy.socialNote : copy.googleNote} />
+      )
+    }
 
     <p class="auth-switch">
       {copy.noAccount} <a href={href.signUp} data-keep-next>{copy.signUp}</a>

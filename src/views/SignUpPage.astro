@@ -16,6 +16,9 @@ interface Props {
   lang: Lang;
 }
 const { lang } = Astro.props;
+// Mã Facebook có trong bản build (on hoặc test); ở chế độ test các phần Facebook ẩn cho tới khi khách bật ?fbtest=1.
+const fbTest = authProviders.facebookTest;
+const fbBuilt = authProviders.facebook || fbTest;
 const href = {
   signIn: localize('/dang-nhap/', lang),
   privacy: localize('/chinh-sach-bao-mat/', lang),
@@ -112,7 +115,7 @@ const copy = {
 
     <p class="auth-divider">{copy.or}</p>
     {
-      authProviders.facebook ? (
+      fbBuilt ? (
         <div class="auth-providers" id="signup-providers">
           <div class="auth-provider">
             <GoogleButton id="signup-google" label={copy.google} />
@@ -120,7 +123,7 @@ const copy = {
               {googleNoteMessage(lang)}
             </p>
           </div>
-          <div class="auth-provider">
+          <div class="auth-provider" data-fb-test={fbTest ? '' : undefined} hidden={fbTest}>
             <FacebookButton id="signup-facebook" label={copy.facebook} />
           </div>
         </div>
