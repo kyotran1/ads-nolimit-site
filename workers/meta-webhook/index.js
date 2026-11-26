@@ -87,7 +87,12 @@ export default {
       headers: { 'content-type': 'text/plain;charset=utf-8' },
       body: JSON.stringify({ key: env.GAS_KEY, body }),
       redirect: 'follow',
-    }).catch(() => {});
+    })
+      .then((res) => {
+        // Chỉ ghi mã trạng thái, KHÔNG ghi nội dung tin / thân phản hồi
+        if (res.status !== 200) console.log('forward status', res.status);
+      })
+      .catch((e) => console.log('forward error', String(e)));
     if (ctx && typeof ctx.waitUntil === 'function') ctx.waitUntil(forward);
 
     return text('EVENT_RECEIVED', 200);

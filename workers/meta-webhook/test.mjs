@@ -81,6 +81,31 @@ describe('POST /meta (sự kiện Messenger)', () => {
     assert.equal(r.status, 200);
     await Promise.all(waits);
   });
+  test('N4: lỗi chuyển tiếp ghi "forward error" (không chứa nội dung tin); trạng thái khác 200 ghi mã, không ghi thân', async () => {
+    const logs = [];
+    const realLog = console.log;
+    console.log = (...a) => logs.push(a.map(String).join(' '));
+    try {
+      globalThis.fetch = async () => { throw new Error('mang hong'); };
+      await run(post(raw, { 'x-hub-signature-256': sign(raw) }));
+      await Promise.all(waits);
+      waits = [];
+      globalThis.fetch = async () => new Response('NOI-AB12CD34EF noi dung bi mat', { status: 502 });
+      await run(post(raw, { 'x-hub-signature-256': sign(raw) }));
+      await Promise.all(waits);
+      globalThis.fetch = async () => new Response('{}', { status: 200 });
+      waits = [];
+      await run(post(raw, { 'x-hub-signature-256': sign(raw) }));
+      await Promise.all(waits);
+    } finally {
+      console.log = realLog;
+    }
+    assert.equal(logs.length, 2);
+    assert.match(logs[0], /^forward error .*mang hong/);
+    assert.equal(logs[1], 'forward status 502');
+    assert.equal(logs.join('\n').includes('NOI-'), false);
+    assert.equal(logs.join('\n').includes(ENV.GAS_KEY), false);
+  });
   test('không có header chữ ký → 401, không chuyển tiếp', async () => {
     const r = await run(post(raw));
     assert.equal(r.status, 401);
