@@ -6,7 +6,9 @@ import AuthShell from '../components/auth/AuthShell.astro';
 import Field from '../components/auth/Field.astro';
 import PasswordInput from '../components/auth/PasswordInput.astro';
 import GoogleButton from '../components/auth/GoogleButton.astro';
-import { contact, links } from '../config/site';
+import FacebookButton from '../components/auth/FacebookButton.astro';
+import { authProviders, contact, links } from '../config/site';
+import { googleNoteMessage } from '../lib/auth/facebook';
 import { localize } from '../config/i18n';
 import type { Lang } from '../config/i18n';
 
@@ -14,6 +16,9 @@ interface Props {
   lang: Lang;
 }
 const { lang } = Astro.props;
+// Mã Facebook có trong bản build (on hoặc test); ở chế độ test các phần Facebook ẩn cho tới khi khách bật ?fbtest=1.
+const fbTest = authProviders.facebookTest;
+const fbBuilt = authProviders.facebook || fbTest;
 const href = {
   signUp: localize('/dang-ky/', lang),
   forgot: localize('/quen-mat-khau/', lang),
@@ -33,7 +38,9 @@ const copy = {
     submit: 'Đăng nhập',
     or: 'hoặc',
     google: 'Đăng nhập với Google',
+    facebook: 'Tiếp tục với Facebook',
     googleNote: `Lần đầu đăng nhập với Google sẽ tạo tài khoản mới. Khi tiếp tục, bạn đồng ý với <a href="${href.privacy}">Chính sách bảo mật</a> của ADS-Nolimit.`,
+    socialNote: `Lần đầu đăng nhập với Google hoặc Facebook sẽ tạo tài khoản mới. Khi tiếp tục, bạn đồng ý với <a href="${href.privacy}">Chính sách bảo mật</a> của ADS-Nolimit.`,
     noAccount: 'Chưa có tài khoản?',
     signUp: 'Tạo tài khoản',
     help: `Cần hỗ trợ đăng nhập? Nhắn <a href="${links.zalo}" rel="noopener">Zalo ${contact.zaloPhone}</a> hoặc email <a href="${links.email}">${contact.email}</a>.`,
@@ -50,7 +57,9 @@ const copy = {
     submit: 'Sign in',
     or: 'or',
     google: 'Sign in with Google',
+    facebook: 'Continue with Facebook',
     googleNote: `Signing in with Google for the first time creates a new account. By continuing, you agree to the ADS-Nolimit <a href="${href.privacy}">privacy policy</a>.`,
+    socialNote: `Signing in with Google or Facebook for the first time creates a new account. By continuing, you agree to the ADS-Nolimit <a href="${href.privacy}">privacy policy</a>.`,
     noAccount: 'No account yet?',
     signUp: 'Create account',
     help: `Trouble signing in? Message us on <a href="${links.telegram}" rel="noopener">Telegram</a> or email <a href="${links.email}">${contact.email}</a>.`,
@@ -70,8 +79,33 @@ const copy = {
     </form>
 
     <p class="auth-divider">{copy.or}</p>
-    <GoogleButton id="signin-google" label={copy.google} />
-    <p class="auth-note" set:html={copy.googleNote} />
+    {
+      fbBuilt ? (
+        <div class="auth-providers" id="signin-providers">
+          <div class="auth-provider">
+            <GoogleButton id="signin-google" label={copy.google} />
+            <p class="auth-inapp-note" data-google-note hidden>
+              {googleNoteMessage(lang)}
+            </p>
+          </div>
+          <div class="auth-provider" data-fb-test={fbTest ? '' : undefined} hidden={fbTest}>
+            <FacebookButton id="signin-facebook" label={copy.facebook} />
+          </div>
+        </div>
+      ) : (
+        <GoogleButton id="signin-google" label={copy.google} />
+      )
+    }
+    {
+      fbTest ? (
+        <>
+          <p class="auth-note" data-note-off set:html={copy.googleNote} />
+          <p class="auth-note" data-note-on hidden set:html={copy.socialNote} />
+        </>
+      ) : (
+        <p class="auth-note" set:html={authProviders.facebook ? copy.socialNote : copy.googleNote} />
+      )
+    }
 
     <p class="auth-switch">
       {copy.noAccount} <a href={href.signUp} data-keep-next>{copy.signUp}</a>

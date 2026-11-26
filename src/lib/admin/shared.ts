@@ -224,7 +224,7 @@ export const avatarEl = (c: { name: string; email: string; avatar: string }, cls
 export const who = (uid: string, fallbackEmail = '') => {
   const c = customers?.get(uid);
   const email = c?.email || fallbackEmail;
-  return [c?.name, email].filter(Boolean).join(' · ') || uid;
+  return [c?.name, c && !email ? 'Chưa có email' : email].filter(Boolean).join(' · ') || uid;
 };
 
 /* ---------- Ô nhập dựng nhanh ---------- */

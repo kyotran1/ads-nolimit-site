@@ -89,7 +89,12 @@ clearOnInput(form);
 form.addEventListener('submit', async (event) => {
   event.preventDefault();
   const user = me();
-  if (!user?.email) return;
+  if (!user) return;
+  if (!user.email) {
+    // Khách Facebook chưa có email: không tạo lệnh nạp âm thầm, nhắc thêm email ở khung đầu trang.
+    say(alertBox, m('needEmailTopup'), { kind: 'info' });
+    return;
+  }
   say(alertBox, '');
   if (state.payment === null) {
     renderPaymentGate();

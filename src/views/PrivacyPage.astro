@@ -2,7 +2,7 @@
 /** Trang Chính sách bảo mật (/chinh-sach-bao-mat/ và /en/privacy/). */
 import BaseLayout from '../layouts/BaseLayout.astro';
 import PageHero from '../components/PageHero.astro';
-import { contact, links } from '../config/site';
+import { authProviders, contact, links } from '../config/site';
 import { analytics } from '../config/analytics';
 import type { Lang } from '../config/i18n';
 import { localize } from '../config/i18n';
@@ -13,7 +13,8 @@ interface Props {
 const { lang } = Astro.props;
 
 /** Ngày cập nhật — sửa khi chính sách thay đổi (cả hai ngôn ngữ). */
-const updated = { vi: '20/11/2026', en: '20 November 2026' };
+const updated = { vi: '26/11/2026', en: '26 November 2026' };
+const deletionPage = localize('/xoa-du-lieu/', lang);
 const accountPage = { vi: localize('/tai-khoan/', 'vi'), en: localize('/tai-khoan/', 'en') };
 const termsPage = { vi: localize('/dieu-khoan/', 'vi'), en: localize('/dieu-khoan/', 'en') };
 ---
@@ -99,6 +100,27 @@ const termsPage = { vi: localize('/dieu-khoan/', 'vi'), en: localize('/dieu-khoa
                 Trình duyệt của bạn lưu phiên đăng nhập (do Firebase quản lý) và một ghi nhớ nhỏ gồm tên hiển thị, chữ cái
                 đầu và ảnh đại diện để hiện nút "Tài khoản" ở đầu trang. Chúng được xóa khi bạn đăng xuất hoặc xóa tài khoản,
                 và không dùng để theo dõi bạn.
+              </li>
+            </ul>
+
+            <h3 id="facebook">Đăng nhập bằng Facebook (nếu bạn chọn)</h3>
+            <ul>
+              <li>
+                Khi bạn bấm "Tiếp tục với Facebook", cửa sổ đăng nhập của Facebook mở ra qua Firebase Authentication (Google). ADS-Nolimit
+                không dùng bộ mã Facebook (Facebook SDK) trên website.
+              </li>
+              <li>
+                ADS-Nolimit chỉ nhận <strong>tên, email, ảnh đại diện và mã định danh Facebook dành riêng cho ứng dụng (app-scoped ID)</strong> của tài khoản Facebook bạn dùng để đăng nhập. Chúng tôi không đăng bài,
+                không đọc danh sách bạn bè, tin nhắn hay thông tin nào khác trên Facebook của bạn.
+              </li>
+              <li>
+                Nếu Facebook không chia sẻ email (tài khoản đăng ký bằng số điện thoại), bạn có thể tự thêm email ở trang Tài khoản. Email từ
+                Facebook cần được xác minh trước khi dùng cho những việc cần xác nhận danh tính, như được cấp quyền xem báo cáo.
+              </li>
+              <li>
+                {authProviders.facebook && (<Fragment>Bạn có thể nối hoặc bỏ nối Facebook ở <a href={accountPage.vi}>Tài khoản → Bảo mật</a>, và gỡ</Fragment>)}
+                {!authProviders.facebook && 'Bạn có thể gỡ'} ADS-Nolimit khỏi Facebook trong
+                Cài đặt → Ứng dụng và trang web. Cách xóa tài khoản và dữ liệu: <a href={deletionPage}>Hướng dẫn xóa dữ liệu</a>.
               </li>
             </ul>
 
@@ -270,6 +292,27 @@ const termsPage = { vi: localize('/dieu-khoan/', 'vi'), en: localize('/dieu-khoa
                 Your browser keeps your sign-in session (managed by Firebase) and a small note with your display name,
                 initial and profile photo so the header can show an "Account" button. Both are removed when you sign out or
                 delete your account, and they are not used to track you.
+              </li>
+            </ul>
+
+            <h3 id="facebook">Signing in with Facebook (if you choose it)</h3>
+            <ul>
+              <li>
+                When you press "Continue with Facebook", the Facebook sign-in window opens through Firebase Authentication (Google).
+                ADS-Nolimit does not load the Facebook SDK on the website.
+              </li>
+              <li>
+                ADS-Nolimit only receives the <strong>name, email, profile picture and the app-scoped Facebook ID</strong> of the Facebook account you sign in with. We do not
+                post, read your friends list, your messages or anything else on your Facebook.
+              </li>
+              <li>
+                If Facebook does not share an email (accounts signed up with a phone number), you can add one on the Account page. An email
+                from Facebook must be verified before it is used for things that need identity confirmation, such as report access.
+              </li>
+              <li>
+                {authProviders.facebook && (<Fragment>You can link or unlink Facebook in <a href={accountPage.en}>Account → Security</a>, and remove</Fragment>)}
+                {!authProviders.facebook && 'You can remove'} ADS-Nolimit from Facebook under
+                Settings → Apps and websites. How to delete your account and data: <a href={deletionPage}>Data deletion instructions</a>.
               </li>
             </ul>
 

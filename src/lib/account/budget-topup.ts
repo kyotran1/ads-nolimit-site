@@ -12,7 +12,7 @@ import { randomChars } from '../ledger/ops';
 import { groupDigits } from '../money';
 import { buildVietQr } from '../vietqr';
 import { copyButton, h, icon, toast } from '../ui/dom';
-import { dataErrorMessage } from '../auth/messages';
+import { dataErrorMessage, m } from '../auth/messages';
 import { nameOf } from '../auth/user-cache';
 import { lang, me, money, when } from './ctx';
 import { db, ensure, reload, state } from './store';
@@ -352,7 +352,11 @@ export const openAdTopup = async (a: AdAccount, show?: AdBudgetTopup) => {
     form.addEventListener('submit', async (e) => {
       e.preventDefault();
       const user = me();
-      if (!user?.email) return;
+      if (!user) return;
+      if (!user.email) {
+        toast(m('needEmail'), 'error'); // khách Facebook chưa có email: nhắc thêm email thay vì im lặng
+        return;
+      }
       const v = amount();
       let msg = '';
       if (!Number.isFinite(v)) msg = T.errRequired;

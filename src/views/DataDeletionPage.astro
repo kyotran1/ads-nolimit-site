@@ -1,0 +1,162 @@
+---
+/**
+ * Hướng dẫn xóa dữ liệu (/xoa-du-lieu/ và /en/data-deletion/). Meta (Facebook) bắt buộc có địa chỉ trang này
+ * khi bật đăng nhập bằng Facebook ("Data deletion instructions URL"). Chữ hai ngôn ngữ, xưng "bạn".
+ */
+import BaseLayout from '../layouts/BaseLayout.astro';
+import PageHero from '../components/PageHero.astro';
+import { contact, links } from '../config/site';
+import type { Lang } from '../config/i18n';
+import { localize } from '../config/i18n';
+
+interface Props {
+  lang: Lang;
+}
+const { lang } = Astro.props;
+
+const updated = { vi: '26/11/2026', en: '26 November 2026' };
+const privacyPage = localize('/chinh-sach-bao-mat/', lang);
+const accountSecurity = lang === 'en' ? `${localize('/tai-khoan/', 'en')}#security` : `${localize('/tai-khoan/', 'vi')}#bao-mat`;
+---
+
+{
+  lang === 'vi' ? (
+    <BaseLayout
+      title="Hướng dẫn xóa dữ liệu | ADS-Nolimit"
+      description="Cách xóa tài khoản và dữ liệu ADS-Nolimit của bạn, kể cả khi bạn đăng nhập bằng Facebook, và cách gỡ ứng dụng ADS-Nolimit khỏi Facebook."
+      lang="vi"
+    >
+      <PageHero title="Hướng dẫn xóa dữ liệu" lead={`Cập nhật lần cuối: ${updated.vi}.`} />
+      <section class="section">
+        <div class="container">
+          <div class="prose policy">
+            <p>
+              Trang này hướng dẫn bạn xóa tài khoản và dữ liệu cá nhân đã lưu ở ADS-Nolimit, kể cả khi bạn đăng nhập hoặc tạo tài
+              khoản bằng Facebook. Bạn có hai cách: tự xóa ngay trong tài khoản, hoặc gửi email cho chúng tôi.
+            </p>
+
+            <h2 id="tu-xoa">Cách 1: Tự xóa tài khoản (nhanh nhất)</h2>
+            <ol>
+              <li>
+                Đăng nhập ADS-Nolimit bằng cách bạn đã dùng (Facebook, Google hoặc email & mật khẩu).
+              </li>
+              <li>
+                Vào <a href={accountSecurity}>Tài khoản → Bảo mật</a>, kéo xuống mục <strong>Xóa tài khoản</strong>.
+              </li>
+              <li>
+                Bấm "Tôi muốn xóa tài khoản", gõ chữ <strong>XÓA</strong> để xác nhận. Hệ thống sẽ hỏi lại mật khẩu, hoặc mở cửa sổ
+                Facebook/Google để bạn xác nhận đúng tài khoản.
+              </li>
+              <li>Tài khoản đăng nhập và hồ sơ của bạn bị xóa ngay và không khôi phục được.</li>
+            </ol>
+            <p>
+              Tài khoản còn số dư thì chưa tự xóa được: bạn liên hệ ADS-Nolimit để được hỗ trợ xử lý số dư trước. Yêu cầu, đơn hàng và giao
+              dịch đã có được giữ lại để đối chiếu; muốn xóa cả những dữ liệu này, bạn gửi email như ở Cách 2.
+            </p>
+
+            <h2 id="gui-email">Cách 2: Gửi email yêu cầu xóa</h2>
+            <p>
+              Bạn gửi email tới <a href={links.email}>{contact.email}</a>, ghi rõ email hoặc tên tài khoản (và ghi "đăng nhập bằng
+              Facebook" nếu đúng) và dữ liệu bạn muốn xóa. Chúng tôi xử lý trong vòng <strong>30 ngày</strong> kể từ khi nhận yêu cầu
+              và trả lời xác nhận cho bạn.
+            </p>
+
+            <h2 id="go-khoi-facebook">Gỡ ADS-Nolimit khỏi Facebook</h2>
+            <p>
+              Để Facebook không còn cho ADS-Nolimit dùng thông tin của bạn, bạn gỡ ứng dụng trong Facebook:
+            </p>
+            <ol>
+              <li>Mở Facebook, vào <strong>Cài đặt và quyền riêng tư → Cài đặt</strong>.</li>
+              <li>Chọn <strong>Ứng dụng và trang web</strong> (có thể nằm trong mục "Quyền của bạn và trang web").</li>
+              <li>Tìm <strong>ADS-Nolimit</strong>, chọn <strong>Xóa</strong> (Remove) và xác nhận.</li>
+            </ol>
+            <p>
+              Gỡ ứng dụng chỉ chặn đăng nhập bằng Facebook từ lúc đó; tài khoản ADS-Nolimit và dữ liệu đã lưu vẫn còn cho tới khi bạn xóa
+              theo Cách 1 hoặc Cách 2.
+            </p>
+
+            <h2 id="du-lieu-facebook">ADS-Nolimit lấy gì từ Facebook</h2>
+            <ul>
+              <li>Chỉ <strong>tên, email, ảnh đại diện và mã định danh Facebook dành riêng cho ứng dụng (app-scoped ID)</strong> của tài khoản Facebook bạn dùng để đăng nhập.</li>
+              <li>Không đăng bài, không đọc bạn bè, không đọc tin nhắn hay bất kỳ thông tin nào khác trên Facebook của bạn.</li>
+              <li>
+                Nếu Facebook của bạn không có email (đăng ký bằng số điện thoại), bạn tự thêm email trong trang Tài khoản nếu muốn
+                nhận thông báo.
+              </li>
+            </ul>
+            <p>
+              Xem thêm <a href={`${privacyPage}#facebook`}>Chính sách bảo mật</a> để biết ADS-Nolimit lưu những gì và lưu bao lâu.
+            </p>
+          </div>
+        </div>
+      </section>
+    </BaseLayout>
+  ) : (
+    <BaseLayout
+      title="Data deletion instructions | ADS-Nolimit"
+      description="How to delete your ADS-Nolimit account and data, including when you signed in with Facebook, and how to remove the ADS-Nolimit app from Facebook."
+      lang="en"
+    >
+      <PageHero title="Data deletion instructions" lead={`Last updated: ${updated.en}.`} />
+      <section class="section">
+        <div class="container">
+          <div class="prose policy">
+            <p>
+              This page shows you how to delete the account and personal data ADS-Nolimit keeps about you, including when you signed in
+              or created your account with Facebook. You have two ways: delete the account yourself, or email us.
+            </p>
+
+            <h2 id="delete-yourself">Option 1: Delete your account yourself (fastest)</h2>
+            <ol>
+              <li>Sign in to ADS-Nolimit the way you did before (Facebook, Google, or email and password).</li>
+              <li>
+                Go to <a href={accountSecurity}>Account → Security</a> and scroll down to <strong>Delete account</strong>.
+              </li>
+              <li>
+                Press "I want to delete my account" and type <strong>DELETE</strong> to confirm. We will ask for your password again, or
+                open a Facebook/Google window so you can confirm it is really your account.
+              </li>
+              <li>Your sign-in account and profile are deleted right away and cannot be restored.</li>
+            </ol>
+            <p>
+              An account that still has a balance cannot be deleted yourself: contact ADS-Nolimit to settle the balance first. Requests,
+              orders and transactions are kept for our records; to have those deleted too, email us as in Option 2.
+            </p>
+
+            <h2 id="email-us">Option 2: Email us a deletion request</h2>
+            <p>
+              Email <a href={links.email}>{contact.email}</a> with your account email or name (say "signed in with Facebook" if that is
+              the case) and the data you want deleted. We process the request within <strong>30 days</strong> of receiving it and reply
+              to confirm.
+            </p>
+
+            <h2 id="remove-from-facebook">Remove ADS-Nolimit from Facebook</h2>
+            <p>To stop Facebook sharing your information with ADS-Nolimit, remove the app in Facebook:</p>
+            <ol>
+              <li>Open Facebook and go to <strong>Settings &amp; privacy → Settings</strong>.</li>
+              <li>Choose <strong>Apps and websites</strong> (it may be under "Your permissions and websites").</li>
+              <li>Find <strong>ADS-Nolimit</strong>, choose <strong>Remove</strong> and confirm.</li>
+            </ol>
+            <p>
+              Removing the app only blocks Facebook sign-in from then on; your ADS-Nolimit account and saved data stay until you delete
+              them with Option 1 or Option 2.
+            </p>
+
+            <h2 id="facebook-data">What ADS-Nolimit receives from Facebook</h2>
+            <ul>
+              <li>Only the <strong>name, email, profile picture and the app-scoped Facebook ID</strong> of the Facebook account you sign in with.</li>
+              <li>We do not post, read your friends list, read your messages or access anything else on your Facebook.</li>
+              <li>
+                If your Facebook account has no email (signed up with a phone number), you can add one on the Account page to get
+                notifications.
+              </li>
+            </ul>
+            <p>
+              See the <a href={`${privacyPage}#facebook`}>privacy policy</a> for what ADS-Nolimit stores and for how long.
+            </p>
+          </div>
+        </div>
+      </section>
+    </BaseLayout>
+  )
+}

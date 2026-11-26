@@ -4,9 +4,10 @@
  * Firestore chỉ được nạp riêng ở trang tài khoản (src/lib/auth/account.ts).
  */
 import { getApp, getApps, initializeApp } from 'firebase/app';
-import { getAuth, GoogleAuthProvider } from 'firebase/auth';
+import { FacebookAuthProvider, getAuth, GoogleAuthProvider } from 'firebase/auth';
 import type { ActionCodeSettings, User } from 'firebase/auth';
 import { firebaseConfig } from '../../config/firebase';
+import { isPhoneUA } from './facebook';
 import { errorCode, m, pageLang } from './messages';
 import type { MessageKey } from './messages';
 
@@ -34,8 +35,20 @@ export const googleProvider = (): GoogleAuthProvider => {
   return provider;
 };
 
+/* ---------- Đăng nhập Facebook (chỉ dùng khi mã Facebook có trong bản build; không dùng Facebook JS SDK) ---------- */
+
+export const facebookProvider = (): FacebookAuthProvider => {
+  const provider = new FacebookAuthProvider();
+  provider.addScope('email');
+  provider.addScope('public_profile');
+  // display=popup chỉ hợp cho máy tính; trên điện thoại để Facebook tự chọn giao diện.
+  if (!isPhoneUA(navigator.userAgent, navigator.maxTouchPoints || 0)) provider.setCustomParameters({ display: 'popup' });
+  return provider;
+};
+
 export const hasPassword = (user: User) => user.providerData.some((p) => p.providerId === 'password');
 export const hasGoogle = (user: User) => user.providerData.some((p) => p.providerId === 'google.com');
+export const hasFacebook = (user: User) => user.providerData.some((p) => p.providerId === 'facebook.com');
 
 /* ---------- Điều hướng an toàn sau khi đăng nhập ---------- */
 
