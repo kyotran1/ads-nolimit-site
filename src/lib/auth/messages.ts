@@ -5,7 +5,7 @@
  * File này được nạp ở trình duyệt, chỉ trên 4 trang tài khoản.
  */
 import { isIos, isStandalone } from '../pwa/install';
-import { facebookErrorText } from './facebook';
+import { facebookErrorText, inAppKind } from './facebook';
 
 export type Lang = 'vi' | 'en';
 type Text = Record<Lang, string>;
@@ -133,6 +133,15 @@ export const errorCode = (err: unknown): string => {
   return typeof code === 'string' ? code.replace(/^auth\//, '') : '';
 };
 
+/** Đang ở trình duyệt nhúng của một app (Facebook/Messenger/Zalo/Instagram…). */
+export const inAppBrowser = (): boolean => {
+  try {
+    return inAppKind(navigator.userAgent) !== null;
+  } catch {
+    return false;
+  }
+};
+
 /** Email Firebase kèm trong lỗi "email đã có tài khoản khác" (customData.email), '' nếu không có. */
 export const errorEmail = (err: unknown): string => {
   const email = (err as { customData?: { email?: unknown } } | null)?.customData?.email;
@@ -146,7 +155,7 @@ export const authErrorMessage = (
 ): string => {
   const raw = errorCode(err);
   // Facebook: chữ riêng (lỗi im lặng trả ''); email trùng lấy từ customData của lỗi Firebase.
-  if (context === 'facebook') return facebookErrorText(raw, pageLang(), errorEmail(err));
+  if (context === 'facebook') return facebookErrorText(raw, pageLang(), errorEmail(err), inAppBrowser());
   const code = aliases[raw] ?? raw;
   if (context === 'reauth' && reauthErrors[code]) return pick(reauthErrors[code]);
   if (context === 'google' || context === 'google-signin') {
@@ -307,8 +316,20 @@ const text = {
   },
   fbUnlinked: { vi: 'Đã bỏ nối Facebook.', en: 'Facebook has been unlinked.' },
   fbLinkOnlyOther: {
-    vi: 'Đây là cách đăng nhập duy nhất của bạn nên chưa bỏ nối được. Bạn thêm Google hoặc email & mật khẩu trước.',
-    en: 'This is your only way to sign in, so it cannot be unlinked yet. Add Google or an email and password first.',
+    vi: 'Để bỏ nối Facebook, bạn cần thêm một cách đăng nhập khác — liên hệ ADS-Nolimit qua Zalo 0888 88 2823 để được hỗ trợ.',
+    en: 'To unlink Facebook you need to add another way to sign in — contact ADS-Nolimit on Zalo 0888 88 2823 for help.',
+  },
+  fbLinkMismatch: {
+    vi: 'Chưa nối Facebook vì email khác nhau. Bạn có thể nối sau ở Tài khoản → Bảo mật.',
+    en: 'Facebook was not linked because the emails are different. You can link it later in Account → Security.',
+  },
+  emailAddedRelogin: {
+    vi: 'Email đã được thêm. Vì bảo mật, bạn đăng nhập lại bằng Facebook nhé.',
+    en: 'Your email has been added. For security, please sign in with Facebook again.',
+  },
+  needEmail: {
+    vi: 'Tài khoản của bạn chưa có email. Bạn thêm email ở khung đầu trang rồi thử lại nhé.',
+    en: 'Your account has no email yet. Add one in the box at the top of the page, then try again.',
   },
   welcomeFacebook: { vi: 'Chào mừng bạn đến với ADS-Nolimit!', en: 'Welcome to ADS-Nolimit!' },
   welcomeFacebookVerify: {
@@ -325,8 +346,8 @@ const text = {
   },
   noEmail: { vi: 'Chưa có email', en: 'No email yet' },
   emailGapSent: {
-    vi: 'Đã gửi email xác minh tới {email}. Bạn mở email và bấm link; xong bạn bấm “Tôi đã xác minh” để email được thêm vào tài khoản.',
-    en: 'Verification email sent to {email}. Open it and click the link, then press “I have verified” so the email is added to your account.',
+    vi: 'Đã gửi email xác minh tới {email}. Bạn mở email và bấm link. Sau khi bấm link, bạn có thể phải đăng nhập lại; nếu vẫn ở trang này, bạn bấm “Tôi đã xác minh”.',
+    en: 'Verification email sent to {email}. Open it and click the link. After clicking it you may need to sign in again; if you are still on this page, press “I have verified”.',
   },
   emailGapDone: { vi: 'Đã thêm và xác minh email. Cảm ơn bạn!', en: 'Your email is added and verified. Thank you!' },
   emailGapWaiting: {

@@ -19,6 +19,15 @@ import {
   canUnlink,
   reauthProvider,
   emailGapMode,
+  FACEBOOK_FIRST_IN_APP,
+  inAppBlockedMessage,
+  linkDecision,
+  armStallUnlock,
+  POPUP_STALL_MS,
+  RETURN_GRACE_MS,
+  fbTestDecision,
+  isPhoneUA,
+  isSessionGone,
 } from '../../src/lib/auth/facebook.ts';
 
 const UA = {
@@ -93,8 +102,9 @@ describe('bảng dịch lỗi Facebook (vi/en)', () => {
 });
 
 describe('thứ tự nút theo nền tảng', () => {
-  test('trong app Facebook iOS/Android và Messenger → Facebook lên trên + dòng nhắc Google', () => {
-    for (const ua of [UA.fbIos, UA.messengerIos, UA.fbAndroid]) assert.deepEqual(layout(ua), { facebookFirst: true, googleNote: true }, ua.slice(0, 60));
+  test('trong app Facebook iOS/Android và Messenger → dòng nhắc Google; Facebook lên trên chỉ khi hằng FACEBOOK_FIRST_IN_APP bật (tạm TẮT)', () => {
+    assert.equal(FACEBOOK_FIRST_IN_APP, false);
+    for (const ua of [UA.fbIos, UA.messengerIos, UA.fbAndroid]) assert.deepEqual(layout(ua), { facebookFirst: FACEBOOK_FIRST_IN_APP, googleNote: true }, ua.slice(0, 60));
   });
   test('trong Zalo (iOS, Android) → giữ thứ tự, vẫn có dòng nhắc', () => {
     for (const ua of [UA.zaloIos, UA.zaloAndroid]) assert.deepEqual(layout(ua), { facebookFirst: false, googleNote: true }, ua.slice(0, 60));
@@ -181,5 +191,168 @@ describe('không dùng Facebook JS SDK và không đặt tên giống quảng c�
       .filter((f) => /\.(astro|ts)$/.test(f))
       .filter((f) => /mở (ứng dụng|app) Facebook|open the Facebook app|open Facebook app/i.test(readFileSync(f, 'utf8')));
     assert.deepEqual(bad, []);
+  });
+});
+
+describe('trong trình duyệt của app: lỗi cửa sổ đăng nhập → hướng dẫn mở bằng Safari/Chrome (mục 1)', () => {
+  const VI = 'Trình duyệt trong app này chặn cửa sổ đăng nhập. Bạn bấm ⋯ (góc trên) → Mở bằng trình duyệt (Safari/Chrome) rồi thử lại.';
+  test('popup-blocked, operation-not-supported-in-this-environment, web-storage-unsupported, lỗi lạ → câu hướng dẫn (vi + en)', () => {
+    for (const code of ['auth/popup-blocked', 'auth/operation-not-supported-in-this-environment', 'auth/web-storage-unsupported', 'auth/something-new', 'internal-error']) {
+      assert.equal(facebookErrorText(code, 'vi', '', true), VI, code);
+      assert.match(facebookErrorText(code, 'en', '', true), /Open in browser \(Safari\/Chrome\)/, code);
+    }
+    assert.equal(inAppBlockedMessage('vi'), VI);
+  });
+  test('ngoài app giữ chữ cũ; lỗi khác (mạng, khóa, quá nhiều lần) trong app vẫn giữ chữ riêng; tự đóng cửa sổ vẫn im lặng', () => {
+    assert.match(facebookErrorText('auth/popup-blocked', 'vi', '', false), /pop-up/);
+    assert.match(facebookErrorText('auth/something-new', 'vi', '', false), /Chưa đăng nhập được bằng Facebook/);
+    assert.match(facebookErrorText('auth/network-request-failed', 'vi', '', true), /kiểm tra mạng/);
+    assert.match(facebookErrorText('auth/user-disabled', 'vi', '', true), /bị khóa/);
+    assert.equal(facebookErrorText('auth/popup-closed-by-user', 'vi', '', true), '');
+  });
+});
+
+describe('email trùng khi đang ở trong app: nhắc mở bằng Safari/Chrome để đăng nhập Google (mục 3)', () => {
+  test('đăng nhập: thêm câu nhắc trong app, không thêm ngoài app', () => {
+    assert.match(existsMessage('vi', 'a@b.vn', true), /Nếu trước đây bạn dùng Google, hãy mở trang bằng Safari\/Chrome để đăng nhập Google\.$/);
+    assert.match(existsMessage('en', 'a@b.vn', true), /If you used Google before, open this page in Safari\/Chrome to sign in with Google\.$/);
+    assert.doesNotMatch(existsMessage('vi', 'a@b.vn', false), /Safari/);
+    assert.equal(facebookErrorText('account-exists-with-different-credential', 'vi', 'a@b.vn', true), existsMessage('vi', 'a@b.vn', true));
+  });
+  test('đăng ký: cũng có câu nhắc trong app', () => {
+    assert.match(existsMessageSignUp('vi', 'a@b.vn', true), /hãy mở trang bằng Safari\/Chrome để đăng nhập Google\.$/);
+    assert.match(existsMessageSignUp('en', '', true), /open this page in Safari\/Chrome to sign in with Google\.$/);
+    assert.doesNotMatch(existsMessageSignUp('en', '', false), /open this page in Safari/);
+  });
+});
+
+describe('user-mismatch ở ngữ cảnh Facebook (mục 8)', () => {
+  test('chữ riêng vi + en', () => {
+    assert.equal(facebookErrorText('auth/user-mismatch', 'vi'), 'Bạn đã chọn một tài khoản Facebook khác với tài khoản đang đăng nhập.');
+    assert.match(facebookErrorText('user-mismatch', 'en'), /different Facebook account/);
+  });
+});
+
+describe('nối Facebook đang chờ: quyết định theo email (mục 7)', () => {
+  test('Facebook không báo email → không nối (skip), dù tài khoản kia có email', () => {
+    assert.equal(linkDecision('', 'a@b.vn'), 'skip');
+    assert.equal(linkDecision('', null), 'skip');
+  });
+  test('email khớp (không phân biệt hoa thường) → nối; khác nhau hoặc tài khoản không có email → mismatch', () => {
+    assert.equal(linkDecision('Lan@Example.com', 'lan@example.com'), 'link');
+    assert.equal(linkDecision('a@b.vn', 'c@d.vn'), 'mismatch');
+    assert.equal(linkDecision('a@b.vn', null), 'mismatch');
+    assert.equal(linkDecision('a@b.vn', ''), 'mismatch');
+  });
+});
+
+describe('cửa sổ đăng nhập không trả kết quả: hẹn mở khóa nút (mục 1)', () => {
+  /** Đồng hồ giả: chạy timer theo thời gian ảo; onReturn gọi tay. */
+  const fake = () => {
+    let now = 0;
+    let next = 1;
+    const timers = new Map();
+    let returns = [];
+    return {
+      env: {
+        setTimer: (fn, ms) => {
+          const id = next++;
+          timers.set(id, { at: now + ms, fn });
+          return id;
+        },
+        clearTimer: (id) => timers.delete(id),
+        onReturn: (fn) => {
+          returns.push(fn);
+          return () => (returns = returns.filter((f) => f !== fn));
+        },
+      },
+      tick: (ms) => {
+        now += ms;
+        for (const [id, t] of [...timers]) if (t.at <= now) { timers.delete(id); t.fn(); }
+      },
+      back: () => returns.slice().forEach((f) => f()),
+      pending: () => timers.size,
+      listeners: () => returns.length,
+    };
+  };
+  test('hằng số: 45 giây', () => assert.equal(POPUP_STALL_MS, 45000));
+  test('hết 45 giây mà chưa có kết quả → mở khóa đúng một lần', () => {
+    const f = fake();
+    let n = 0;
+    armStallUnlock(f.env, () => n++);
+    f.tick(44999);
+    assert.equal(n, 0);
+    f.tick(1);
+    assert.equal(n, 1);
+    f.tick(100000);
+    f.back();
+    f.tick(RETURN_GRACE_MS);
+    assert.equal(n, 1);
+    assert.equal(f.listeners(), 0);
+  });
+  test('khách quay lại trang mà cửa sổ chưa xong → mở khóa sau thời gian chờ ngắn', () => {
+    const f = fake();
+    let n = 0;
+    armStallUnlock(f.env, () => n++);
+    f.tick(5000);
+    f.back();
+    f.tick(RETURN_GRACE_MS - 1);
+    assert.equal(n, 0);
+    f.tick(1);
+    assert.equal(n, 1);
+  });
+  test('cửa sổ có kết quả (disarm) trước đó → không mở khóa, dọn sạch đồng hồ và lắng nghe', () => {
+    const f = fake();
+    let n = 0;
+    const disarm = armStallUnlock(f.env, () => n++);
+    f.back();
+    disarm();
+    f.tick(POPUP_STALL_MS * 2);
+    assert.equal(n, 0);
+    assert.equal(f.pending(), 0);
+    assert.equal(f.listeners(), 0);
+  });
+  test('quay lại nhiều lần chỉ hẹn một lần', () => {
+    const f = fake();
+    let n = 0;
+    armStallUnlock(f.env, () => n++);
+    f.back();
+    f.back();
+    f.tick(RETURN_GRACE_MS);
+    assert.equal(n, 1);
+  });
+});
+
+describe('thêm email xong Firebase thu hồi phiên → đăng nhập lại (mục 2)', () => {
+  test('nhận ra ba mã lỗi, có hoặc không có auth/', () => {
+    for (const c of ['user-token-expired', 'auth/user-not-found', 'auth/user-disabled']) assert.equal(isSessionGone(c), true, c);
+    for (const c of ['', 'network-request-failed', 'requires-recent-login']) assert.equal(isSessionGone(c), false, c);
+  });
+});
+
+describe('chế độ thử PUBLIC_FB_LOGIN=test (mục 11)', () => {
+  test('?fbtest=1 bật và ghi nhớ; ?fbtest=0 tắt và xóa; không có thì theo giá trị đã ghi', () => {
+    assert.deepEqual(fbTestDecision('?fbtest=1', null), { enabled: true, write: '1' });
+    assert.deepEqual(fbTestDecision('?next=%2Ftai-khoan%2F&fbtest=1', null), { enabled: true, write: '1' });
+    assert.deepEqual(fbTestDecision('?fbtest=0', '1'), { enabled: false, write: 'remove' });
+    assert.deepEqual(fbTestDecision('', '1'), { enabled: true, write: null });
+    assert.deepEqual(fbTestDecision('', null), { enabled: false, write: null });
+    assert.deepEqual(fbTestDecision('?fbtest=2', '1'), { enabled: true, write: null });
+    assert.deepEqual(fbTestDecision('?xfbtest=1', null), { enabled: false, write: null });
+  });
+  test('cờ đọc ba giá trị off / test / on', () => {
+    const src = readFileSync(join(dirname(fileURLToPath(import.meta.url)), '../../src/config/auth-providers.ts'), 'utf8');
+    assert.match(src, /PUBLIC_FB_LOGIN \?\? 'off'/);
+    assert.match(src, /flag === 'on' \|\| flag === 'test'/);
+    assert.match(src, /facebookTestOnly: boolean = flag === 'test'/);
+  });
+});
+
+describe('display=popup chỉ trên máy tính (mục 9)', () => {
+  test('điện thoại, iPad (cả chế độ Macintosh) → true; máy tính → false', () => {
+    for (const ua of [UA.fbIos, UA.fbAndroid, UA.safariIos, UA.chromeAndroid, UA.zaloIos]) assert.equal(isPhoneUA(ua, 5), true, ua.slice(0, 50));
+    assert.equal(isPhoneUA(UA.safariMac, 5), true); // iPad hiện UA Macintosh + cảm ứng
+    assert.equal(isPhoneUA(UA.safariMac, 0), false);
+    assert.equal(isPhoneUA(UA.chromeDesktop, 0), false);
   });
 });
