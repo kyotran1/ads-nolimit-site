@@ -6,6 +6,9 @@ import AuthShell from '../components/auth/AuthShell.astro';
 import Field from '../components/auth/Field.astro';
 import PasswordInput from '../components/auth/PasswordInput.astro';
 import GoogleButton from '../components/auth/GoogleButton.astro';
+import FacebookButton from '../components/auth/FacebookButton.astro';
+import { authProviders } from '../config/site';
+import { googleNoteMessage } from '../lib/auth/facebook';
 import { localize, t } from '../config/i18n';
 import type { Lang } from '../config/i18n';
 
@@ -38,6 +41,7 @@ const copy = {
     submit: 'Tạo tài khoản',
     or: 'hoặc',
     google: 'Đăng ký với Google',
+    facebook: 'Tiếp tục với Facebook',
     haveAccount: 'Đã có tài khoản?',
     signIn: 'Đăng nhập',
     below:
@@ -61,6 +65,7 @@ const copy = {
     submit: 'Create account',
     or: 'or',
     google: 'Sign up with Google',
+    facebook: 'Continue with Facebook',
     haveAccount: 'Already have an account?',
     signIn: 'Sign in',
     below:
@@ -106,7 +111,23 @@ const copy = {
     </form>
 
     <p class="auth-divider">{copy.or}</p>
-    <GoogleButton id="signup-google" label={copy.google} />
+    {
+      authProviders.facebook ? (
+        <div class="auth-providers" id="signup-providers">
+          <div class="auth-provider">
+            <GoogleButton id="signup-google" label={copy.google} />
+            <p class="auth-inapp-note" data-google-note hidden>
+              {googleNoteMessage(lang)}
+            </p>
+          </div>
+          <div class="auth-provider">
+            <FacebookButton id="signup-facebook" label={copy.facebook} />
+          </div>
+        </div>
+      ) : (
+        <GoogleButton id="signup-google" label={copy.google} />
+      )
+    }
 
     <p class="auth-switch">
       {copy.haveAccount} <a href={href.signIn} data-keep-next>{copy.signIn}</a>

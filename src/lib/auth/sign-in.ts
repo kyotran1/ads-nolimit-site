@@ -1,10 +1,13 @@
-/** Trang Đăng nhập (/dang-nhap/, /en/sign-in/): email + mật khẩu, hoặc Google. */
+/** Trang Đăng nhập (/dang-nhap/, /en/sign-in/): email + mật khẩu, Google, hoặc Facebook (khi bật cờ). */
 import { getAdditionalUserInfo, onAuthStateChanged, signInWithEmailAndPassword, signInWithPopup } from 'firebase/auth';
+import type { User } from 'firebase/auth';
+import { facebookLoginOn } from '../../config/auth-providers';
 import {
   auth,
   checkEmail,
   clearOnInput,
   config,
+  facebookProvider,
   fieldError,
   focusFirstInvalid,
   googleProvider,
@@ -17,6 +20,7 @@ import {
   setupPasswordToggles,
   welcomeTarget,
 } from './client';
+import type { LinkOutcome } from './facebook-flow';
 import { authErrorMessage, errorCode, m } from './messages';
 import { clearUserCache, writeUserCache } from './user-cache';
 
@@ -26,6 +30,7 @@ if (form) {
   const password = form.querySelector<HTMLInputElement>('#signin-password')!;
   const submit = form.querySelector<HTMLButtonElement>('button[type="submit"]');
   const google = document.querySelector<HTMLButtonElement>('#signin-google');
+  const facebook = facebookLoginOn ? document.querySelector<HTMLButtonElement>('#signin-facebook') : null;
   const alert = document.getElementById('signin-alert');
   let working = false;
 
@@ -52,10 +57,32 @@ if (form) {
   const finish = (busyButton: HTMLButtonElement | null, err: unknown, context: 'default' | 'google' = 'default') => {
     working = false;
     setBusy(busyButton, false);
-    lockButtons([submit, google], false);
+    lockButtons([submit, google, facebook], false);
     say(alert, authErrorMessage(err, context === 'google' ? 'google-signin' : context));
     if (errorCode(err) === 'invalid-credential') password.select();
   };
+
+  // Khách vừa nối Facebook vào tài khoản cũ: báo một nhịp rồi đi tiếp như thường.
+  const afterLink = async (user: User): Promise<LinkOutcome> => (facebookLoginOn ? (await loadFlow()).linkPendingFacebook(user) : 'none');
+  const goNext = (url: string, linked: LinkOutcome) => {
+    if (linked === 'none') {
+      location.assign(url);
+      return;
+    }
+    say(alert, m(linked === 'linked' ? 'fbLinked' : 'fbLinkFailed'), { kind: linked === 'linked' ? 'success' : 'info' });
+    setTimeout(() => location.assign(url), 1500);
+  };
+
+  // Chỉ khi cờ Facebook bật (hằng lúc build: tắt thì bộ gộp mã bỏ hẳn phần này, kể cả tệp facebook-flow.ts).
+  const loadFlow = () => import('./facebook-flow');
+  const finishFacebook = async (err: unknown) => {
+    const text = (await loadFlow()).facebookFailureText(err, 'signin');
+    working = false;
+    setBusy(facebook, false);
+    lockButtons([submit, google], false);
+    say(alert, text);
+  };
+  if (facebookLoginOn) void loadFlow().then((flow) => flow.applyProviderLayout(document.getElementById('signin-providers')));
 
   form.addEventListener('submit', async (event) => {
     event.preventDefault();
@@ -67,11 +94,11 @@ if (form) {
 
     working = true;
     setBusy(submit, true, 'busySignIn');
-    lockButtons([google], true);
+    lockButtons([google, facebook], true);
     try {
       const { user } = await signInWithEmailAndPassword(auth, email.value, password.value);
       writeUserCache(user);
-      location.assign(safeNext(nextParam()));
+      goNext(safeNext(nextParam()), await afterLink(user));
     } catch (err) {
       finish(submit, err);
     }
@@ -83,13 +110,29 @@ if (form) {
     say(alert, '');
     working = true;
     setBusy(google, true, 'busyGoogle');
-    lockButtons([submit], true);
+    lockButtons([submit, facebook], true);
     signInWithPopup(auth, googleProvider())
+      .then(async (result) => {
+        writeUserCache(result.user);
+        const isNew = getAdditionalUserInfo(result)?.isNewUser;
+        goNext(isNew ? welcomeTarget('google') : safeNext(nextParam(), config.paths.account), await afterLink(result.user));
+      })
+      .catch((err) => finish(google, err, 'google'));
+  });
+
+  // Facebook: cũng gọi signInWithPopup ngay trong lúc bấm (không await trước đó). Không dùng Facebook JS SDK.
+  if (facebookLoginOn) facebook?.addEventListener('click', () => {
+    if (working) return;
+    say(alert, '');
+    working = true;
+    setBusy(facebook, true, 'busyFacebook');
+    lockButtons([submit, google], true);
+    signInWithPopup(auth, facebookProvider())
       .then((result) => {
         writeUserCache(result.user);
         const isNew = getAdditionalUserInfo(result)?.isNewUser;
-        location.assign(isNew ? welcomeTarget('google') : safeNext(nextParam(), config.paths.account));
+        location.assign(isNew ? welcomeTarget('facebook') : safeNext(nextParam(), config.paths.account));
       })
-      .catch((err) => finish(google, err, 'google'));
+      .catch(finishFacebook);
   });
 }
