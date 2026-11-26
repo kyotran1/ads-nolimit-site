@@ -23,7 +23,7 @@ const copy = {
     provider: 'Đăng nhập bằng',
     fbLink: 'Nối Facebook',
     fbUnlink: 'Bỏ nối Facebook',
-    fbOnly: 'Facebook là cách đăng nhập duy nhất của bạn. Muốn bỏ nối, bạn thêm Google hoặc email & mật khẩu trước.',
+    fbOnly: `Để bỏ nối Facebook, bạn cần thêm một cách đăng nhập khác — liên hệ ADS-Nolimit qua Zalo ${contact.zaloPhone} để được hỗ trợ.`,
     created: 'Ngày tạo tài khoản',
     lastSignIn: 'Đăng nhập gần nhất',
     changePassword: 'Đổi mật khẩu',
@@ -56,7 +56,7 @@ const copy = {
     provider: 'Sign in with',
     fbLink: 'Link Facebook',
     fbUnlink: 'Unlink Facebook',
-    fbOnly: 'Facebook is your only way to sign in. To unlink it, add Google or an email and password first.',
+    fbOnly: `To unlink Facebook you need to add another way to sign in — contact ADS-Nolimit on Zalo ${contact.zaloPhone} for help.`,
     created: 'Account created',
     lastSignIn: 'Last sign-in',
     changePassword: 'Change password',
@@ -113,7 +113,7 @@ const copy = {
       <div class="acc-sub" id="fb-box" hidden>
         <p class="muted small" id="fb-state"></p>
         <div class="acc-actions">
-          {authProviders.facebook && <button type="button" class="btn btn-sm" id="fb-link" hidden>{copy.fbLink}</button>}
+          {(authProviders.facebook || authProviders.facebookTest) && <button type="button" class="btn btn-sm" id="fb-link" hidden>{copy.fbLink}</button>}
           <button type="button" class="btn btn-sm btn-ghost" id="fb-unlink" hidden>{copy.fbUnlink}</button>
         </div>
         <p class="muted small" id="fb-only" hidden>{copy.fbOnly}</p>

@@ -30,7 +30,8 @@ import {
   setBusy,
   withContinueUrl,
 } from '../auth/client';
-import { authProviders } from '../../config/auth-providers';
+import { facebookLoginOn, facebookTestOnly } from '../../config/auth-providers';
+import { facebookShown } from '../auth/fb-gate';
 import { canUnlink, hasProvider, providerLabels, reauthProvider } from '../auth/facebook';
 import { authErrorMessage, dataErrorMessage, errorCode, formatDateTime, m, pageLang } from '../auth/messages';
 import { clearUserCache } from '../auth/user-cache';
@@ -83,16 +84,18 @@ const fbUnlink = byId<HTMLButtonElement>('fb-unlink');
 
 const renderFacebookBox = (user: User) => {
   const linked = hasProvider(user.providerData, 'facebook.com');
-  const canLink = authProviders.facebook && !linked;
+  // Facebook hiện cho khách này? (off: không; test: chỉ khi đã bật ?fbtest=1; on: có). Đã nối từ trước vẫn thấy để bỏ nối, trừ chế độ test chưa bật.
+  const fbOn = facebookLoginOn && facebookShown();
+  const canLink = fbOn && !linked;
   const canUnlinkNow = linked && canUnlink(user.providerData, 'facebook.com');
-  fbBox.hidden = !(authProviders.facebook || linked);
+  fbBox.hidden = !(fbOn || (linked && !facebookTestOnly));
   fbState.textContent = linked ? m('fbStateLinked') : m('fbStateNone');
   if (fbLink) fbLink.hidden = !canLink;
   fbUnlink.hidden = !canUnlinkNow;
   byId('fb-only').hidden = !(linked && !canUnlinkNow);
 };
 
-fbLink?.addEventListener('click', () => {
+if (facebookLoginOn) fbLink?.addEventListener('click', () => {
   const user = me();
   if (!user) return;
   say(securityAlert, '');

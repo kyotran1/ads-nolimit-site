@@ -2,7 +2,7 @@
  * Key & máy (ADS-NOLIMIT AI Office): key của mình (che bớt, nút hiện/chép), gói, số máy đã dùng / tối đa,
  * danh sách máy đã kích hoạt, nút "Yêu cầu đổi máy" (tạo keyRequests/ cho chủ xử lý).
  */
-import { dataErrorMessage } from '../auth/messages';
+import { dataErrorMessage, m } from '../auth/messages';
 import { byId, confirmDialog, copyButton, h, icon, toast } from '../ui/dom';
 import { badge, isVisible, lang, loadError, me, register, when } from './ctx';
 import { ensure, errors, isLoaded, on, ops, reload, state } from './store';
@@ -18,7 +18,11 @@ const mask = (key: string) => key.replace(/^(AINO)-(\w{4})-(\w{4})-(\w{4})$/, '$
 
 const requestReset = async (k: LicenseKey, button: HTMLButtonElement) => {
   const user = me();
-  if (!user?.email) return;
+  if (!user) return;
+  if (!user.email) {
+    toast(m('needEmail'), 'error'); // khách Facebook chưa có email: nhắc thêm email thay vì im lặng
+    return;
+  }
   const answer = await confirmDialog({
     title: tx('keyResetTitle', { key: mask(k.key) }),
     body: [tx('keyResetBody')],

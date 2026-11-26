@@ -2,7 +2,7 @@
  * Thanh toán bằng số dư (dùng cho mục Dịch vụ và Khóa học):
  * kiểm tra số dư → thiếu thì mời nạp đúng số còn thiếu → hỏi xác nhận → ghi đơn (src/lib/ledger/ops.ts → purchase).
  */
-import { dataErrorMessage, errorCode } from '../auth/messages';
+import { dataErrorMessage, errorCode, m } from '../auth/messages';
 import { LedgerError } from '../ledger/ops';
 import type { PurchaseInput, PurchaseResult } from '../ledger/ops';
 import { roundUp } from '../money';
@@ -44,7 +44,11 @@ export interface PayRequest extends Omit<PurchaseInput, 'uid' | 'email' | 'lang'
 /** Trả về kết quả nếu đã thanh toán, null nếu khách hủy / thiếu tiền / lỗi (đã báo). */
 export const payFromBalance = async (req: PayRequest): Promise<PurchaseResult | null> => {
   const user = me();
-  if (!user?.email) return null;
+  if (!user) return null;
+  if (!user.email) {
+    toast(m('needEmail'), 'error'); // khách Facebook chưa có email: nhắc thêm email thay vì im lặng
+    return null;
+  }
   await ensure('wallet');
   const current = balance();
   if (current < req.total) {

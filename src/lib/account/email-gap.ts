@@ -9,7 +9,7 @@
 import { reauthenticateWithPopup, reload, sendEmailVerification, verifyBeforeUpdateEmail } from 'firebase/auth';
 import type { User } from 'firebase/auth';
 import { checkEmail, clearOnInput, config as authConfig, facebookProvider, googleProvider, say, setBusy, withContinueUrl } from '../auth/client';
-import { emailGapMode, reauthProvider } from '../auth/facebook';
+import { EMAIL_ADDED_KEY, emailGapMode, isSessionGone, reauthProvider } from '../auth/facebook';
 import { authErrorMessage, errorCode, m } from '../auth/messages';
 import { byId } from '../ui/dom';
 import { me } from './ctx';
@@ -139,6 +139,16 @@ const check = async (silent: boolean) => {
       say(alertBox, m('emailGapWaiting'), { kind: 'info' });
     }
   } catch (err) {
+    // Firebase thu hồi phiên khi email đổi: đưa khách về trang Đăng nhập kèm câu giải thích (kể cả khi tự kiểm lúc quay lại trang).
+    if (isSessionGone(errorCode(err))) {
+      try {
+        sessionStorage.setItem(EMAIL_ADDED_KEY, '1');
+      } catch {
+        /* không ghi được: vẫn đưa về trang Đăng nhập */
+      }
+      location.assign(`${authConfig.paths.signIn}?next=${encodeURIComponent(authConfig.paths.account)}`);
+      return;
+    }
     if (!silent) say(alertBox, authErrorMessage(err));
   } finally {
     if (!silent) setBusy(doneButton, false);

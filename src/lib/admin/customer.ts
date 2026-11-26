@@ -88,7 +88,7 @@ export const renderCustomer = async (root: HTMLElement, uid: string, tab = 'dich
         'div',
         { class: 'adm-cust-id' },
         h('h2', { text: cust.name || '(chưa có tên)' }),
-        h('p', { text: [cust.email, cust.phone, cust.company].filter(Boolean).join(' · ') || cust.uid }),
+        h('p', { text: [cust.email || 'Chưa có email', cust.phone, cust.company].filter(Boolean).join(' · ') }),
         h('p', { class: 'muted small', text: `Tạo tài khoản ${cust.createdAt ? when(new Date(cust.createdAt)) : '—'} · UID ${cust.uid}` }),
       ),
       h('div', { class: 'adm-cust-side' }, h('div', { class: 'adm-balance' }, h('span', { class: 'muted small', text: 'Số dư ví' }), balanceEl), h('div', { class: 'adm-actions' }, adjust, attach)),

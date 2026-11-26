@@ -39,7 +39,7 @@ export const renderKeys = async (root: HTMLElement) => {
       }
       const key = await ops.issueKey(me(), { uid: c.uid, email: c.email, plan: f.value('plan'), maxMachines: max, note: f.value('note') || undefined });
       issued.replaceChildren(
-        h('div', { class: 'auth-alert', 'data-kind': 'success' }, h('p', {}, 'Đã cấp key cho ', h('strong', { text: c.email }), ':'), h('p', { class: 'adm-code' }, h('strong', { class: 'mono', text: key }), copyButton(() => key, copyLabels, 'key'))),
+        h('div', { class: 'auth-alert', 'data-kind': 'success' }, h('p', {}, 'Đã cấp key cho ', h('strong', { text: c.email || 'Chưa có email' }), ':'), h('p', { class: 'adm-code' }, h('strong', { class: 'mono', text: key }), copyButton(() => key, copyLabels, 'key'))),
       );
       toast('Đã cấp key.');
       void drawLists();
