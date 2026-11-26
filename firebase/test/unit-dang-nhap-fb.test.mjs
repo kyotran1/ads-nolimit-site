@@ -342,9 +342,10 @@ describe('chế độ thử PUBLIC_FB_LOGIN=test (mục 11)', () => {
   });
   test('cờ đọc ba giá trị off / test / on', () => {
     const src = readFileSync(join(dirname(fileURLToPath(import.meta.url)), '../../src/config/auth-providers.ts'), 'utf8');
-    assert.match(src, /PUBLIC_FB_LOGIN \?\? 'off'/);
-    assert.match(src, /flag === 'on' \|\| flag === 'test'/);
-    assert.match(src, /facebookTestOnly: boolean = flag === 'test'/);
+    assert.match(src, /PUBLIC_FB_LOGIN \?\? 'off'/); // mặc định off
+    assert.match(src, /facebookTestOnly: boolean = \(import\.meta\.env\.PUBLIC_FB_LOGIN \?\? 'off'\) === 'test'/);
+    assert.match(src, /facebookLoginOn: boolean = \(import\.meta\.env\.PUBLIC_FB_LOGIN \?\? 'off'\) === 'on' \|\| facebookTestOnly/);
+    assert.match(src, /facebook: \(import\.meta\.env\.PUBLIC_FB_LOGIN \?\? 'off'\) === 'on'/); // công khai chỉ khi on
   });
 });
 
