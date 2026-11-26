@@ -1,9 +1,9 @@
 // Đăng nhập / tạo tài khoản bằng Facebook (kế hoạch docs/superpowers/plans/2026-11-26-dang-nhap-facebook.md).
-// Cần HAI bản build: cờ BẬT (PUBLIC_FB_LOGIN=on) phục vụ ở WEB_PORT, cờ TẮT (build thường) phục vụ ở OFF_PORT,
+// Cần BA bản build: cờ BẬT (PUBLIC_FB_LOGIN=on) phục vụ ở WEB_PORT, cờ TẮT (build thường) phục vụ ở OFF_PORT, chế độ THỬ (PUBLIC_FB_LOGIN=test) ở TEST_PORT,
 // và emulator Firestore (trang Tài khoản). Facebook/Firebase đều là bản giả (e2e/dang-nhap-fb/fb-harness.cjs), không gọi mạng thật. Chạy:
-//   bash e2e/pwa/serve.sh 4380 <dist-fb>; bash e2e/pwa/serve.sh 4381 <dist>
+//   bash e2e/pwa/serve.sh 4380 <dist-fb>; bash e2e/pwa/serve.sh 4381 <dist>; bash e2e/pwa/serve.sh 4382 <dist-fbtest>
 //   cd firebase && npx firebase --config ../e2e/dang-nhap-fb/firebase.8097.json emulators:exec --only firestore --project demo-ads-nolimit \
-//     "WEB_PORT=4380 OFF_PORT=4381 EMU_PORT=8097 SHOTS_DIR=<thư mục ảnh> node ../e2e/dang-nhap-fb/e2e-dang-nhap-fb.cjs"
+//     "WEB_PORT=4380 OFF_PORT=4381 TEST_PORT=4382 EMU_PORT=8097 SHOTS_DIR=<thư mục ảnh> node ../e2e/dang-nhap-fb/e2e-dang-nhap-fb.cjs"
 const path = require('path');
 const { SHOTS, setupContext, chromium, emu, watchConsole, step: stepAll, assert, eq, has, results, BASE, FakeAuth } = require('../pwa/harness.cjs');
 const { auditPage } = require('../sang-toi/tuong-phan.cjs');
@@ -13,6 +13,7 @@ const { installFacebookPopup, lastOpen, finishPopup } = require('./fb-harness.cj
 const ONLY = process.env.ONLY ? new RegExp(process.env.ONLY) : null;
 const step = (name, fn) => (!ONLY || ONLY.test(name) ? stepAll(name, fn) : Promise.resolve());
 const OFF = 'http://127.0.0.1:' + (process.env.OFF_PORT || '4381');
+const TEST = 'http://127.0.0.1:' + (process.env.TEST_PORT || '4382');
 
 const UA = {
   chromeDesktop: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36',
@@ -56,7 +57,7 @@ async function newCtx(browser, { ua = UA.chromeDesktop, width = 1440, light = fa
   await ctx.addInitScript(SKIP_ONBOARD);
   if (light) await ctx.addInitScript(LIGHT);
   // Bản build cờ TẮT chạy ở cổng khác: cho đi qua như máy chủ chính (đăng ký sau → được xử lý trước route chung).
-  await ctx.route((u) => u.origin === OFF, (r) => r.continue());
+  await ctx.route((u) => u.origin === OFF || u.origin === TEST, (r) => r.continue());
   return ctx;
 }
 async function open(browser, p, o = {}) {
@@ -162,7 +163,7 @@ const hashTo = async (page, h) => { await page.evaluate((x) => (location.hash = 
       eq(o.path, '/__/auth/handler', 'đường dẫn handler');
       eq(o.providerId, 'facebook.com', 'providerId');
       assert(o.scopes.includes('email') && o.scopes.includes('public_profile'), 'scope email + public_profile: ' + o.scopes);
-      eq(o.custom.display, 'popup', 'display=popup');
+      eq(o.custom.display, 'popup', 'máy tính: display=popup');
       eq(o.authType, 'signInViaPopup', 'authType');
       eq(await page.$eval(`#${key}-facebook`, (b) => b.getAttribute('aria-busy')), 'true', 'nút báo đang xử lý');
       has(await page.$eval(`#${key}-facebook`, (b) => b.textContent), lang === 'en' ? 'Opening Facebook' : 'Đang mở Facebook', 'chữ đang mở');
@@ -406,11 +407,12 @@ const hashTo = async (page, h) => { await page.evaluate((x) => (location.hash = 
   });
 
   // ---------- 7. Trình duyệt trong app ----------
-  await step('(7) UA trong app Facebook iOS/Android: nút Facebook TRÊN nút Google + dòng nhắc Google; Zalo: giữ thứ tự + dòng nhắc; Safari: không dòng nhắc', async () => {
+  await step('(7) UA trong app Facebook iOS/Android: Google GIỮ vị trí cũ, Facebook ngay dưới (tạm chưa đưa lên đầu) + dòng nhắc Google; Zalo: cũng vậy; Safari: không dòng nhắc', async () => {
     for (const [key, ua] of [['fbIos', UA.fbIos], ['fbAndroid', UA.fbAndroid]]) for (const [p, lang, k] of [['/dang-nhap/', 'vi', 'signin'], ['/dang-ky/', 'vi', 'signup'], ['/en/sign-in/', 'en', 'signin'], ['/en/sign-up/', 'en', 'signup']]) {
       const { ctx, page } = await open(browser, p, { ua, width: 430 });
       const g = await box(page, `#${k}-google`), f = await box(page, `#${k}-facebook`);
-      assert(f.y < g.y, `${key} ${p}: Facebook (${f.y}) phải trên Google (${g.y})`);
+      assert(g.y < f.y, `${key} ${p}: Google (${g.y}) vẫn ở trên, Facebook (${f.y}) ngay dưới`);
+      eq(await page.$eval(`#${k}-providers`, (e) => e.dataset.first || ''), '', `${key} ${p}: không đặt data-first (hằng FACEBOOK_FIRST_IN_APP đang tắt)`);
       eq(await visible(page, '[data-google-note]'), 1, `${key} ${p}: có dòng nhắc`);
       const note = await alertText(page, '[data-google-note]');
       has(note, lang === 'en' ? 'Google does not allow sign-in inside this app' : 'Google không cho đăng nhập trong app này', 'dòng nhắc');
@@ -418,6 +420,7 @@ const hashTo = async (page, h) => { await page.evaluate((x) => (location.hash = 
       assert(!/mở (ứng dụng|app) Facebook|open the Facebook app/i.test(note), 'không hứa mở app Facebook');
       const gb = await box(page, `#${k}-google`), nb = await box(page, '[data-google-note]');
       assert(nb.y >= gb.y + gb.h - 1 && nb.y - (gb.y + gb.h) < 40, 'dòng nhắc nằm ngay dưới nút Google');
+      assert(nb.y + nb.h <= f.y + 1, 'dòng nhắc nằm giữa Google và Facebook');
       assert(f.h >= 44 && gb.h >= 44, 'nút ≥ 44px');
       eq(await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth), 0, 'không tràn ngang');
       if (key === 'fbIos' && p === '/dang-nhap/') { await shotLogin(page, 'dang-nhap-trong-app-facebook-ios-430-toi'); }
@@ -454,6 +457,7 @@ const hashTo = async (page, h) => { await page.evaluate((x) => (location.hash = 
     eq(await visible(page, '#fb-unlink'), 0, 'không có nút Bỏ nối');
     eq(await visible(page, '#fb-link'), 0, 'đã nối thì không có nút Nối');
     eq(await visible(page, '#fb-only'), 1, 'có chú thích vì sao');
+    has(await alertText(page, '#fb-only'), 'Để bỏ nối Facebook, bạn cần thêm một cách đăng nhập khác — liên hệ ADS-Nolimit qua Zalo 0888 88 2823 để được hỗ trợ.', 'chữ hướng dẫn làm được (mục 5)');
     eq(await visible(page, '#mailgap'), 0, 'email đã xác minh: không còn khối nhắc');
     await shot(page, 'bao-mat-facebook-430-sang', { fullPage: true });
     await ctx.close();
@@ -514,8 +518,8 @@ const hashTo = async (page, h) => { await page.evaluate((x) => (location.hash = 
 
   // ---------- 9. Trang xóa dữ liệu ----------
   for (const [p, lang, must, titleRe] of [
-    ['/xoa-du-lieu/', 'vi', ['Cách 1: Tự xóa tài khoản', 'Cách 2: Gửi email yêu cầu xóa', 'contact-support@ads-nolimit.agency', '30 ngày', 'Ứng dụng và trang web', 'tên, email và ảnh đại diện', 'Không đăng bài, không đọc bạn bè'], /Hướng dẫn xóa dữ liệu/],
-    ['/en/data-deletion/', 'en', ['Option 1: Delete your account yourself', 'Option 2: Email us a deletion request', 'contact-support@ads-nolimit.agency', '30 days', 'Apps and websites', 'name, email and profile picture', 'do not post, read your friends list'], /Data deletion instructions/],
+    ['/xoa-du-lieu/', 'vi', ['Cách 1: Tự xóa tài khoản', 'Cách 2: Gửi email yêu cầu xóa', 'contact-support@ads-nolimit.agency', '30 ngày', 'Ứng dụng và trang web', 'tên, email, ảnh đại diện và mã định danh Facebook dành riêng cho ứng dụng (app-scoped ID)', 'Không đăng bài, không đọc bạn bè'], /Hướng dẫn xóa dữ liệu/],
+    ['/en/data-deletion/', 'en', ['Option 1: Delete your account yourself', 'Option 2: Email us a deletion request', 'contact-support@ads-nolimit.agency', '30 days', 'Apps and websites', 'name, email, profile picture and the app-scoped Facebook ID', 'do not post, read your friends list'], /Data deletion instructions/],
   ]) {
     await step(`(9) ${p}: đủ nội dung, có liên kết tới Tài khoản → Bảo mật, đọc rõ sáng + tối, chân trang/Chính sách bảo mật có liên kết`, async () => {
       for (const light of [false, true]) {
@@ -557,6 +561,302 @@ const hashTo = async (page, h) => { await page.evaluate((x) => (location.hash = 
     await page.waitForTimeout(500);
     eq(urls.filter((u) => /facebook|fbcdn|fb\.com/i.test(u)).length, 0, 'không yêu cầu Facebook: ' + urls.filter((u) => /facebook/i.test(u)).join(','));
     eq(await page.evaluate(() => typeof window.FB), 'undefined', 'không có window.FB');
+    await ctx.close();
+  });
+
+  // ======================================================================================================
+  // Đợt sửa theo kiểm tra độc lập (mục 1-11)
+  // ======================================================================================================
+  const IN_APP_VI = 'Trình duyệt trong app này chặn cửa sổ đăng nhập. Bạn bấm ⋯ (góc trên) → Mở bằng trình duyệt (Safari/Chrome) rồi thử lại.';
+  const busy = (page, id) => page.$eval(id, (b) => b.getAttribute('aria-busy') === 'true');
+
+  // ---------- 12. (mục 1) Trong app: cửa sổ không trả kết quả → mở khóa nút ----------
+  await step('(12) trong app Facebook: cửa sổ không trả kết quả → khách quay lại trang (focus) thì nút được mở khóa sau thời gian chờ ngắn + chữ hướng dẫn; bấm tiếp mở cửa sổ MỚI và đăng nhập được', async () => {
+    const { ctx, page } = await open(browser, '/dang-nhap/', { ua: UA.fbIos, width: 430 });
+    await page.click('#signin-facebook'); await waitPopup(page);
+    eq(await busy(page, '#signin-facebook'), true, 'nút đang bận');
+    await page.evaluate(() => window.dispatchEvent(new Event('focus')));
+    await page.waitForTimeout(1200);
+    eq(await busy(page, '#signin-facebook'), true, 'còn trong thời gian chờ (cửa sổ vừa đóng có thể sắp trả kết quả)');
+    await page.waitForFunction(() => !document.getElementById('signin-facebook').hasAttribute('aria-busy'), null, { timeout: 6000 });
+    assert(!(await page.$eval('#signin-google', (b) => b.disabled)) && !(await page.$eval('#signin-form button[type=submit]', (b) => b.disabled)), 'các nút khác cũng mở lại');
+    eq(await alertText(page, '#signin-alert'), IN_APP_VI, 'chữ hướng dẫn mở bằng Safari/Chrome');
+    await page.evaluate(() => { const el = document.getElementById('signin-alert'); window.scrollTo(0, el.getBoundingClientRect().top + scrollY - 420); });
+    await page.waitForTimeout(250);
+    await shot(page, 'loi-trong-app-430-toi');
+    ctx.fake.addFacebookProfile('FB-STALL', { email: 'stall@example.com', emailVerified: true });
+    await page.click('#signin-facebook'); await waitPopup(page, 2);
+    eq(await page.evaluate(() => window.__opens.length), 2, 'cú bấm tiếp theo mở cửa sổ mới');
+    await finishPopup(page, { token: 'FB-STALL' });
+    await page.waitForURL(/\/tai-khoan\//, { timeout: 10000 });
+    await ctx.close();
+  });
+  await step('(12) trong app Facebook: đồng hồ 45 giây mở khóa nút dù khách không quay lại trang (đồng hồ giả của Playwright)', async () => {
+    const { ctx, page } = await open(browser, '/dang-nhap/', { ua: UA.fbAndroid, width: 430 });
+    await page.clock.install();
+    await page.click('#signin-facebook');
+    eq(await page.evaluate(() => window.__opens.length), 1, 'đã mở cửa sổ');
+    await page.clock.runFor(44000);
+    eq(await busy(page, '#signin-facebook'), true, 'sau 44 giây vẫn bận');
+    await page.clock.runFor(1500);
+    eq(await busy(page, '#signin-facebook'), false, 'sau 45 giây đã mở khóa');
+    eq(await alertText(page, '#signin-alert'), IN_APP_VI, 'chữ hướng dẫn');
+    await ctx.close();
+  });
+  await step('(12) ngoài app (Chrome máy tính): quay lại trang KHÔNG mở khóa (cửa sổ vẫn đang chờ khách)', async () => {
+    const { ctx, page } = await open(browser, '/dang-nhap/');
+    await page.click('#signin-facebook'); await waitPopup(page);
+    await page.evaluate(() => { window.dispatchEvent(new Event('focus')); });
+    await page.waitForTimeout(2600);
+    eq(await busy(page, '#signin-facebook'), true, 'vẫn bận');
+    eq(await alertText(page, '#signin-alert'), '', 'không có chữ báo');
+    await ctx.close();
+  });
+  await step('(12) trong app: popup bị chặn → chữ hướng dẫn mở bằng Safari/Chrome (vi + en, đăng nhập + đăng ký)', async () => {
+    for (const [p, lang, key] of [['/dang-nhap/', 'vi', 'signin'], ['/en/sign-in/', 'en', 'signin'], ['/dang-ky/', 'vi', 'signup'], ['/en/sign-up/', 'en', 'signup']]) {
+      const { ctx, page } = await open(browser, p, { ua: UA.fbIos, width: 430 });
+      if (key === 'signup') await page.check('#signup-consent');
+      await page.evaluate(() => (window.__blockPopups = true));
+      await page.click(`#${key}-facebook`);
+      await page.waitForFunction((id) => document.getElementById(id).innerText.length > 0, `${key}-alert`);
+      const t = await alertText(page, `#${key}-alert`);
+      if (lang === 'vi') eq(t, IN_APP_VI, p);
+      else eq(t, 'The browser inside this app blocks the sign-in window. Tap ⋯ (top corner) → Open in browser (Safari/Chrome) and try again.', p);
+      eq(await busy(page, `#${key}-facebook`), false, p + ' nút mở lại');
+      await ctx.close();
+    }
+  });
+
+  // ---------- 13. (mục 3) Email trùng khi đang ở trong app ----------
+  await step('(13) email trùng trong app Facebook → có câu nhắc mở Safari/Chrome để đăng nhập Google (đăng nhập + đăng ký, vi + en); ngoài app không có', async () => {
+    for (const [p, key, inApp, re] of [
+      ['/dang-nhap/', 'signin', true, /Nếu trước đây bạn dùng Google, hãy mở trang bằng Safari\/Chrome để đăng nhập Google\./],
+      ['/en/sign-in/', 'signin', true, /If you used Google before, open this page in Safari\/Chrome to sign in with Google\./],
+      ['/dang-ky/', 'signup', true, /Nếu trước đây bạn dùng Google, hãy mở trang bằng Safari\/Chrome để đăng nhập Google\./],
+      ['/en/sign-up/', 'signup', true, /open this page in Safari\/Chrome to sign in with Google\./],
+      ['/dang-nhap/', 'signin', false, /Safari\/Chrome để đăng nhập Google/],
+    ]) {
+      const fake = new FakeAuth();
+      fake.addUser({ email: 'ap@example.com', password: 'Mk-12345678', displayName: 'Ap', emailVerified: true });
+      fake.addFacebookProfile('FB-AP', { email: 'ap@example.com' });
+      const ctx = await newCtx(browser, { fake, ua: inApp ? UA.fbIos : UA.iphone26, width: 430 });
+      const page = await ctx.newPage();
+      await page.goto(BASE + p);
+      if (key === 'signup') await page.check('#signup-consent');
+      await page.click(`#${key}-facebook`); await waitPopup(page);
+      await finishPopup(page, { token: 'FB-AP' });
+      await page.waitForFunction((id) => document.getElementById(id).innerText.includes('ap@example.com'), `${key}-alert`);
+      const t = await alertText(page, `#${key}-alert`);
+      if (inApp) assert(re.test(t), `${p}: ${t}`); else assert(!re.test(t), `${p} ngoài app không có câu nhắc: ${t}`);
+      await ctx.close();
+    }
+  });
+
+  // ---------- 14. (mục 2) Thêm email xong Firebase thu hồi phiên ----------
+  await step('(14) thêm email xong, bấm link rồi "Tôi đã xác minh" mà phiên bị thu hồi → về trang Đăng nhập với câu "Email đã được thêm…"; chữ "đã gửi" nói có thể phải đăng nhập lại', async () => {
+    for (const err of ['TOKEN_EXPIRED', 'USER_NOT_FOUND']) {
+      const fake = new FakeAuth();
+      fake.addFacebookProfile('FB-REV', { email: '', displayName: 'Thu Hồi' });
+      const { ctx, page } = await facebookSignIn(browser, fake, 'FB-REV', { width: 430, ua: UA.iphone26 });
+      await page.fill('#mailgap-email', 'rev@example.com');
+      await page.click('#mailgap-form button[type=submit]');
+      await page.waitForFunction(() => document.getElementById('mailgap-status').innerText.length > 0);
+      has(await alertText(page, '#mailgap-status'), 'Sau khi bấm link, bạn có thể phải đăng nhập lại', 'chữ đã gửi (' + err + ')');
+      fake.confirmPendingEmail(fake.facebookUser('FB-REV'));
+      fake.nextError['accounts:lookup'] = err;
+      await page.click('#mailgap-done');
+      // Hai nơi cùng đưa về trang Đăng nhập (trang Tài khoản khi mất phiên, và khối thêm email): chờ trang đích ổn định.
+      await page.waitForFunction(() => location.pathname === '/dang-nhap/' && document.readyState === 'complete' && !!document.getElementById('signin-alert') && document.getElementById('signin-alert').innerText.length > 0, null, { timeout: 12000 });
+      eq(await alertText(page, '#signin-alert'), 'Email đã được thêm. Vì bảo mật, bạn đăng nhập lại bằng Facebook nhé.', 'câu giải thích (' + err + ')');
+      eq(await page.evaluate(() => sessionStorage.getItem('adsnl-email-added')), null, 'cờ được xóa sau khi hiện');
+      await page.reload({ waitUntil: 'load' });
+      eq(await alertText(page, '#signin-alert'), '', 'tải lại thì không hiện nữa');
+      await ctx.close();
+    }
+    const fake = new FakeAuth();
+    fake.addFacebookProfile('FB-REV-EN', { email: '' });
+    const { ctx, page } = await facebookSignIn(browser, fake, 'FB-REV-EN', { lang: 'en', width: 390, ua: UA.iphone26 });
+    await page.fill('#mailgap-email', 'rev-en@example.com');
+    await page.click('#mailgap-form button[type=submit]');
+    await page.waitForFunction(() => document.getElementById('mailgap-status').innerText.length > 0);
+    has(await alertText(page, '#mailgap-status'), 'you may need to sign in again', 'chữ đã gửi (en)');
+    fake.confirmPendingEmail(fake.facebookUser('FB-REV-EN'));
+    fake.nextError['accounts:lookup'] = 'TOKEN_EXPIRED';
+    await page.click('#mailgap-done');
+    await page.waitForFunction(() => location.pathname === '/en/sign-in/' && document.readyState === 'complete' && !!document.getElementById('signin-alert') && document.getElementById('signin-alert').innerText.length > 0, null, { timeout: 12000 });
+    eq(await alertText(page, '#signin-alert'), 'Your email has been added. For security, please sign in with Facebook again.', 'en');
+    await ctx.close();
+  });
+
+  // ---------- 15. (mục 4) Nạp phần Facebook lỗi KHÔNG làm hỏng đăng nhập khác ----------
+  await step('(15) tệp facebook-flow không nạp được → đăng nhập mật khẩu vẫn đi tiếp bình thường; đăng nhập Facebook báo lỗi và luôn mở khóa nút', async () => {
+    const fake = new FakeAuth();
+    const pu = fake.addUser({ email: 'chan@example.com', password: 'Mk-12345678', displayName: 'Chặn', emailVerified: true });
+    fake.addFacebookProfile('FB-BLK', { email: 'blk@example.com' });
+    const ctx = await newCtx(browser, { fake });
+    const failed = [];
+    ctx.on('requestfailed', (r) => failed.push(r.url()));
+    await ctx.route(/facebook-flow[^/]*\.js/, (r) => r.abort());
+    const page = await ctx.newPage();
+    await page.goto(BASE + '/dang-nhap/');
+    await page.waitForTimeout(400);
+    assert(failed.some((u) => /facebook-flow/.test(u)), 'tệp facebook-flow đã bị chặn thật');
+    await page.fill('#signin-email', pu.email); await page.fill('#signin-password', 'Mk-12345678');
+    await page.click('#signin-form button[type=submit]');
+    await page.waitForURL(/\/tai-khoan\//, { timeout: 10000 });
+    await page.waitForSelector('#acc-app:not([hidden])');
+    // đăng nhập Facebook khi không nạp được phần xử lý lỗi
+    const ctx2 = await newCtx(browser, { fake: new FakeAuth() });
+    await ctx2.route(/facebook-flow[^/]*\.js/, (r) => r.abort());
+    const page2 = await ctx2.newPage();
+    await page2.goto(BASE + '/dang-nhap/');
+    ctx2.fake.nextError['accounts:signInWithIdp'] = 'USER_DISABLED';
+    ctx2.fake.addFacebookProfile('FB-BLK2', { email: 'b2@example.com' });
+    await page2.click('#signin-facebook'); await waitPopup(page2);
+    await finishPopup(page2, { token: 'FB-BLK2' });
+    await page2.waitForFunction(() => document.getElementById('signin-alert').innerText.length > 0);
+    has(await alertText(page2, '#signin-alert'), 'bị khóa', 'báo lỗi bằng chữ Facebook dù không nạp được flow');
+    eq(await busy(page2, '#signin-facebook'), false, 'nút mở khóa');
+    assert(!(await page2.$eval('#signin-google', (b) => b.disabled)), 'Google mở khóa');
+    await ctx.close(); await ctx2.close();
+  });
+
+  // ---------- 16. (mục 7) Email khác nhau → báo nhẹ, không nối ----------
+  await step('(16) Facebook báo email trùng của A, nhưng khách đăng nhập bằng tài khoản B (email khác) → KHÔNG nối, báo "Chưa nối Facebook vì email khác nhau"', async () => {
+    const fake = new FakeAuth();
+    const a = fake.addUser({ email: 'a-khach@example.com', password: 'Mk-12345678', displayName: 'A', emailVerified: true });
+    const b = fake.addUser({ email: 'b-khach@example.com', password: 'Mk-12345678', displayName: 'B', emailVerified: true });
+    fake.addFacebookProfile('FB-MM', { email: 'a-khach@example.com' });
+    const ctx = await newCtx(browser, { fake });
+    const page = await ctx.newPage();
+    await page.goto(BASE + '/dang-nhap/');
+    await page.click('#signin-facebook'); await waitPopup(page);
+    await finishPopup(page, { token: 'FB-MM' });
+    await page.waitForFunction(() => document.getElementById('signin-alert').innerText.includes('a-khach@example.com'));
+    await page.fill('#signin-email', b.email); await page.fill('#signin-password', 'Mk-12345678');
+    await page.click('#signin-form button[type=submit]');
+    await page.waitForFunction(() => /Chưa nối Facebook vì email khác nhau/.test(document.getElementById('signin-alert').innerText), null, { timeout: 8000 });
+    const linkCalls = fake.calls.filter((c) => c.endpoint === 'accounts:signInWithIdp' && c.body.idToken);
+    eq(linkCalls.length, 0, 'không gọi linkWithCredential');
+    assert(!(b.providers || []).some((p) => p.providerId === 'facebook.com') && !(a.providers || []).some((p) => p.providerId === 'facebook.com'), 'không tài khoản nào được nối Facebook');
+    await page.waitForURL(/\/tai-khoan\//, { timeout: 8000 });
+    await ctx.close();
+  });
+
+  // ---------- 17. (mục 8) user-mismatch ----------
+  await step('(17) xóa tài khoản: chọn một tài khoản Facebook KHÁC với tài khoản đang đăng nhập → câu báo user-mismatch riêng cho Facebook', async () => {
+    const fake = new FakeAuth();
+    fake.addFacebookProfile('FB-A', { email: 'a-mm@example.com', emailVerified: true });
+    fake.addFacebookProfile('FB-B', { email: 'b-mm@example.com', emailVerified: true });
+    const { ctx, page } = await facebookSignIn(browser, fake, 'FB-A');
+    await hashTo(page, 'bao-mat');
+    await page.click('#delete-section summary');
+    await page.fill('#del-confirm', 'XÓA');
+    await page.click('#delete-form button[type=submit]');
+    await waitPopup(page);
+    await finishPopup(page, { token: 'FB-B' });
+    await page.waitForFunction(() => document.getElementById('delete-alert').innerText.length > 0);
+    eq(await alertText(page, '#delete-alert'), 'Bạn đã chọn một tài khoản Facebook khác với tài khoản đang đăng nhập.', 'user-mismatch');
+    await ctx.close();
+  });
+
+  // ---------- 18. (mục 9) display=popup chỉ trên máy tính ----------
+  await step('(18) điện thoại (iPhone, Android): KHÔNG đặt display=popup; máy tính: có', async () => {
+    for (const [ua, width, expect] of [[UA.iphone26, 430, undefined], [UA.fbAndroid, 430, undefined], [UA.chromeDesktop, 1440, 'popup']]) {
+      const { ctx, page } = await open(browser, '/dang-nhap/', { ua, width });
+      await page.click('#signin-facebook'); await waitPopup(page);
+      eq((await lastOpen(page)).custom.display, expect, ua.slice(0, 40));
+      await ctx.close();
+    }
+  });
+
+  // ---------- 19. (mục 6) Khách không email: thanh toán / key / nạp ngân sách không im lặng ----------
+  await step('(19) quản trị/khách: mã nguồn có câu "chưa có email" thay vì im lặng ở thanh toán, đặt lại máy, nạp ngân sách; trang quản trị hiện "Chưa có email"', async () => {
+    const fs = require('fs');
+    const root = path.join(__dirname, '../../src/lib');
+    for (const f of ['account/pay.ts', 'account/keys.ts', 'account/budget-topup.ts']) {
+      const code = fs.readFileSync(path.join(root, f), 'utf8');
+      assert(/toast\(m\('needEmail'\), 'error'\)/.test(code), f + ' phải báo needEmail');
+      assert(!/if \(!user\?\.email\) return/.test(code), f + ' không còn return im lặng');
+    }
+    for (const f of ['admin/shared.ts', 'admin/keys.ts', 'admin/customer.ts']) assert(/Chưa có email/.test(fs.readFileSync(path.join(root, f), 'utf8')), f + ' hiện "Chưa có email"');
+  });
+
+  // ---------- 20. (mục 10) Chính sách + trang xóa dữ liệu theo cờ ----------
+  await step('(20) Chính sách bảo mật: có app-scoped ID; bản cờ tắt và chế độ thử KHÔNG có câu "nối hoặc bỏ nối Facebook ở Bảo mật", bản cờ bật có', async () => {
+    for (const [name, base, hasLinkSentence] of [['tắt', OFF, false], ['thử', TEST, false], ['bật', BASE, true]]) {
+      for (const [p, lang] of [['/chinh-sach-bao-mat/', 'vi'], ['/en/privacy/', 'en']]) {
+        const html = await (await fetch(base + p)).text();
+        const sec = html.slice(html.indexOf('id="facebook"'), html.indexOf('id="facebook"') + 4000).replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ');
+        has(sec, lang === 'en' ? 'app-scoped Facebook ID' : 'mã định danh Facebook dành riêng cho ứng dụng (app-scoped ID)', `${name} ${p} có app-scoped ID`);
+        const re = lang === 'en' ? /link or unlink Facebook/ : /nối hoặc bỏ nối Facebook/;
+        eq(re.test(sec), hasLinkSentence, `${name} ${p}: câu nối/bỏ nối ${hasLinkSentence ? 'phải có' : 'không được có'}`);
+        has(sec, lang === 'en' ? 'remove ADS-Nolimit from Facebook' : 'gỡ ADS-Nolimit khỏi Facebook', `${name} ${p} vẫn có hướng dẫn gỡ khỏi Facebook`);
+      }
+    }
+    const html = await (await fetch(OFF + '/xoa-du-lieu/')).text();
+    assert(/app-scoped ID/.test(html), 'trang xóa dữ liệu (bản tắt) có app-scoped ID');
+  });
+
+  // ---------- 21. (mục 11) Chế độ thử: off / test / on ----------
+  await step('(21) chế độ thử: chưa bật thì y như cờ tắt (không nút, không khung, ghi chú chỉ Google); ?fbtest=1 hiện nút + ghi nhớ; ?fbtest=0 tắt và xóa', async () => {
+    for (const [p, key] of [['/dang-nhap/', 'signin'], ['/dang-ky/', 'signup'], ['/en/sign-in/', 'signin'], ['/en/sign-up/', 'signup']]) {
+      const { ctx, page } = await open(browser, p, { base: TEST, width: 430, ua: UA.iphone26 });
+      eq(await visible(page, `#${key}-facebook`), 0, p + ' chưa bật: nút Facebook không hiện');
+      eq(await visible(page, '.auth-provider'), 1, p + ' chỉ còn khung nút Google');
+      const note = await page.evaluate(() => Array.from(document.querySelectorAll('.auth-note')).filter((e) => getComputedStyle(e).display !== 'none' && e.getClientRects().length > 0).map((e) => e.textContent).join('|'));
+      if (key === 'signin') assert(!/Facebook/.test(note) && /Google/.test(note), p + ' ghi chú chỉ nhắc Google: ' + note);
+      const urls = [];
+      page.on('request', (r) => urls.push(r.url()));
+      await page.reload({ waitUntil: 'load' });
+      await page.waitForTimeout(300);
+      assert(!urls.some((u) => /facebook-flow/.test(u)), p + ' chưa bật: không nạp facebook-flow');
+      await page.click(`#${key}-google`, { trial: true });
+      await ctx.close();
+    }
+    // bật
+    const { ctx, page } = await open(browser, '/dang-nhap/?fbtest=1', { base: TEST, width: 430, ua: UA.iphone26 });
+    eq(await visible(page, '#signin-facebook'), 1, 'bật: nút hiện');
+    eq(await page.evaluate(() => localStorage.getItem('adsnl-fbtest')), '1', 'ghi nhớ trong localStorage');
+    const note = await page.evaluate(() => Array.from(document.querySelectorAll('.auth-note')).filter((e) => getComputedStyle(e).display !== 'none' && e.getClientRects().length > 0).map((e) => e.textContent).join('|'));
+    has(note, 'Google hoặc Facebook', 'ghi chú đổi sang bản có Facebook');
+    const g = await box(page, '#signin-google'), f = await box(page, '#signin-facebook');
+    assert(g.y < f.y && f.h >= 44, 'Facebook dưới Google, ≥ 44px');
+    await page.click('#signin-facebook'); await waitPopup(page);
+    eq((await lastOpen(page)).providerId, 'facebook.com', 'bấm mở cửa sổ Facebook');
+    await shotLogin(page, 'che-do-thu-bat-430-toi');
+    // tải lại không kèm tham số: vẫn hiện (đã ghi nhớ), cả trang đăng ký
+    await page.goto(TEST + '/dang-ky/', { waitUntil: 'load' });
+    eq(await visible(page, '#signup-facebook'), 1, 'nhớ qua trang khác');
+    // tắt
+    await page.goto(TEST + '/dang-nhap/?fbtest=0', { waitUntil: 'load' });
+    eq(await visible(page, '#signin-facebook'), 0, 'tắt: nút ẩn');
+    eq(await page.evaluate(() => localStorage.getItem('adsnl-fbtest')), null, 'đã xóa khỏi localStorage');
+    await page.goto(TEST + '/dang-nhap/', { waitUntil: 'load' });
+    eq(await visible(page, '#signin-facebook'), 0, 'tắt rồi thì không tự hiện lại');
+    await ctx.close();
+  });
+  await step('(21) chế độ thử: mục Bảo mật (nối/bỏ nối) cũng chỉ hiện khi đã bật; khách đã nối Facebook thấy hộp Facebook khi bật, không thấy khi chưa bật', async () => {
+    for (const on of [false, true]) {
+      const fake = new FakeAuth();
+      const pu = fake.addUser({ email: 'thu@example.com', password: 'Mk-12345678', displayName: 'Thử', emailVerified: true });
+      const ctx = await newCtx(browser, { fake, width: 430, ua: UA.iphone26 });
+      const page = await ctx.newPage();
+      await page.goto(TEST + '/dang-nhap/?next=%2Ftai-khoan%2F%23bao-mat' + (on ? '&fbtest=1' : ''));
+      await page.fill('#signin-email', pu.email); await page.fill('#signin-password', 'Mk-12345678');
+      await page.click('#signin-form button[type=submit]');
+      await page.waitForURL(/\/tai-khoan\//); await page.waitForSelector('#acc-app:not([hidden])'); await page.waitForTimeout(600);
+      await hashTo(page, 'bao-mat');
+      eq(await visible(page, '#fb-box'), on ? 1 : 0, `hộp Facebook ở Bảo mật (${on ? 'đã bật' : 'chưa bật'})`);
+      eq(await visible(page, '#fb-link'), on ? 1 : 0, `nút Nối Facebook (${on ? 'đã bật' : 'chưa bật'})`);
+      if (on) await shot(page, 'che-do-thu-bao-mat-430-toi', { fullPage: true });
+      await ctx.close();
+    }
+  });
+  await step('(21) chế độ thử: trang Tài khoản của khách Facebook (đăng nhập qua bản thử đã bật) vẫn có khối Thêm email; cờ BẬT hiện cho mọi khách không cần ?fbtest', async () => {
+    const { ctx, page } = await open(browser, '/dang-nhap/', { width: 430, ua: UA.iphone26 });
+    eq(await visible(page, '#signin-facebook'), 1, 'bản bật: nút hiện, không cần ?fbtest');
+    eq(await page.evaluate(() => localStorage.getItem('adsnl-fbtest')), null, 'bản bật không ghi khóa thử');
     await ctx.close();
   });
 
