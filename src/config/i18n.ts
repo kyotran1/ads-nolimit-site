@@ -43,6 +43,7 @@ export const routes: readonly RoutePair[] = [
   { vi: '/lien-he/', en: '/en/contact/' },
   { vi: '/chinh-sach-bao-mat/', en: '/en/privacy/' },
   { vi: '/dieu-khoan/', en: '/en/terms/' },
+  { vi: '/xoa-du-lieu/', en: '/en/data-deletion/' },
   // Tài khoản khách hàng (Firebase Authentication)
   { vi: '/dang-nhap/', en: '/en/sign-in/' },
   { vi: '/dang-ky/', en: '/en/sign-up/' },
