@@ -545,6 +545,25 @@ function thuGuiMessenger() {
   return kq.gui === 1;
 }
 
+/**
+ * Chạy tay: ghi MỘT tin Zalo thử vào hàng đợi (zaloQueue, id bắt đầu bằng "thu_") cho TEST_UID, hoặc người nối Messenger gần nhất.
+ * Người đó phải đã bật "Nhận qua Zalo" và có số Zalo hợp lệ trên web. Xem ở Quản trị → Nhắc qua Zalo; thử xong bấm "Bỏ qua".
+ */
+function thuZalo() {
+  let uid = tbProp_('TEST_UID');
+  if (!uid) {
+    let moiNhat = 0;
+    fsList('notifyPrivate').forEach(function (d) {
+      const t = d.data && d.data.linkedAt instanceof Date ? d.data.linkedAt.getTime() : 0;
+      if (t > moiNhat) { moiNhat = t; uid = d.id; }
+    });
+  }
+  if (!uid) { Logger.log('Chua co TEST_UID va chua ai noi Messenger'); return false; }
+  const kq = ghiZaloQueue_({ label: 'K-Aura (thu)' }, { balance: 1500000, daysLeft: 2 }, [uid], 'thu');
+  Logger.log('thuZalo: moi=' + kq.moi + ' boQua=' + kq.boQua + ' loi=' + JSON.stringify(kq.loi) + (kq.boQua ? ' (bo qua = chua bat Nhan qua Zalo / so Zalo chua hop le / tin thu hom nay da xu ly)' : ''));
+  return kq.moi === 1;
+}
+
 /** Chạy tay: in TÊN các Thuộc tính tập lệnh còn thiếu (không in giá trị). */
 function kiemTraCaiDat() {
   const batBuoc = ['PAGE_ID', 'PAGE_TOKEN', 'GAS_KEY'];
