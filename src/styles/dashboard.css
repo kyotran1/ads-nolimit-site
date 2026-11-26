@@ -511,6 +511,41 @@ dialog .eyebrow {
   font-size: 1.15rem;
   margin-bottom: 0.75rem;
 }
+/* Khối "Thêm email / xác minh email" của khách đăng nhập bằng Facebook (đầu bảng điều khiển, không chặn xem mục) */
+.mailgap {
+  display: grid;
+  gap: 0.75rem;
+  margin-bottom: 1.25rem;
+  border-color: rgb(24 119 242 / 0.5);
+}
+.mailgap[hidden],
+.mailgap [hidden] {
+  display: none;
+}
+.mailgap h2 {
+  font-size: 1.15rem;
+  letter-spacing: -0.015em;
+}
+.mailgap-text {
+  color: var(--text-2);
+  font-size: 0.9375rem;
+  max-width: 48rem;
+}
+.mailgap-form {
+  display: grid;
+  gap: 0.75rem;
+  max-width: 28rem;
+}
+.mailgap-form .btn,
+.mailgap-verify .btn {
+  min-height: 44px;
+}
+.mailgap-verify {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.6rem;
+}
+
 .panel-head {
   display: flex;
   align-items: baseline;

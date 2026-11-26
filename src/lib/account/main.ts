@@ -24,6 +24,7 @@ import './keys';
 import './reports';
 import { loadProfile } from './profile';
 import { isLeaving, renderSecurity, whenDeleted } from './security';
+import { renderEmailGap } from './email-gap';
 import { gate, initLocks } from './locked';
 
 const titleEl = byId('dash-title');
@@ -96,9 +97,14 @@ const renderAvatar = (user: User) => {
 const renderUser = (user: User) => {
   renderAvatar(user);
   byId('side-name').textContent = nameOf(user);
-  byId('side-email').textContent = user.email ?? '';
+  byId('side-email').textContent = user.email || m('noEmail');
   renderHello();
   renderSecurity(user);
+  renderEmailGap(user, (u) => {
+    // Email vừa được thêm/xác minh: vẽ lại tên/email ở menu, Bảo mật, và ghi email vào hồ sơ.
+    renderUser(u);
+    void loadProfile(u);
+  });
 };
 
 /* ---------- Số dư & khóa (mọi chỗ cùng lúc) ---------- */
@@ -117,6 +123,10 @@ const readParams = (user: User): Route | null => {
   if (welcome === '1') say(notice, m('welcome', { email: user.email ?? '' }), { kind: 'success' });
   else if (welcome === 'noverify') say(notice, m('welcomeNoVerify'), { kind: 'info' });
   else if (welcome === 'google') say(notice, m('welcomeGoogle'), { kind: 'success' });
+  else if (welcome === 'facebook')
+    say(notice, !user.email ? m('welcomeFacebookNoEmail') : user.emailVerified ? m('welcomeFacebook') : m('welcomeFacebookVerify', { email: user.email }), {
+      kind: !user.email || !user.emailVerified ? 'info' : 'success',
+    });
 
   const plan = params.get('plan');
   let route: Route | null = null;

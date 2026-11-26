@@ -16,6 +16,7 @@ import logoMark from '../assets/brand/logo-mark.png';
 import BaseLayout from '../layouts/BaseLayout.astro';
 import AuthConfig from '../components/auth/AuthConfig.astro';
 import Icon from '../components/Icon.astro';
+import Field from '../components/auth/Field.astro';
 import Overview from '../components/account/Overview.astro';
 import TopUp from '../components/account/TopUp.astro';
 import Orders from '../components/account/Orders.astro';
@@ -60,6 +61,14 @@ const copy = {
     deletedText:
       'Tài khoản và hồ sơ của bạn đã được xóa. Cảm ơn bạn đã dùng thử. Nếu cần ADS-Nolimit hỗ trợ, bạn vẫn có thể liên hệ qua Zalo, hotline hoặc email.',
     deletedHome: 'Về trang chủ',
+    gapAddTitle: 'Thêm email để nhận thông báo và được cấp quyền xem báo cáo',
+    gapAddText: 'Facebook của bạn không chia sẻ email. Bạn nhập email, chúng tôi gửi thư xác minh; bấm link trong thư là email được thêm vào tài khoản. Bạn vẫn xem các mục khác bình thường.',
+    gapVerifyTitle: 'Xác minh email để được cấp quyền xem báo cáo',
+    gapVerifyText: 'Email Facebook của bạn chưa được xác minh. Bạn bấm “Gửi email xác minh”, mở thư và bấm link; xong bạn bấm “Tôi đã xác minh”.',
+    gapEmail: 'Email của bạn',
+    gapSendAdd: 'Gửi email xác minh',
+    gapSendVerify: 'Gửi email xác minh',
+    gapDone: 'Tôi đã xác minh',
   },
   en: {
     title: 'Your account | ADS-Nolimit',
@@ -83,6 +92,14 @@ const copy = {
     deletedText:
       'Your account and profile have been deleted. Thank you for trying ADS-Nolimit. If you need us, you can still reach us by Telegram, Zalo or email.',
     deletedHome: 'Back to the homepage',
+    gapAddTitle: 'Add an email to get notifications and report access',
+    gapAddText: 'Your Facebook account did not share an email. Enter one and we send a verification email; click the link in it and the email is added to your account. You can keep using the other sections meanwhile.',
+    gapVerifyTitle: 'Verify your email to get report access',
+    gapVerifyText: 'Your Facebook email is not verified yet. Press “Send verification email”, open it and click the link, then press “I have verified”.',
+    gapEmail: 'Your email',
+    gapSendAdd: 'Send verification email',
+    gapSendVerify: 'Send verification email',
+    gapDone: 'I have verified',
   },
 }[lang];
 
@@ -185,6 +202,26 @@ const configJson = JSON.stringify(config).replace(/</g, '\\u003c');
         </header>
 
         <div id="acc-notice" class="auth-alert acc-notice" role="status"></div>
+
+        <!-- Khách Facebook: chưa có email → thêm email; có email chưa xác minh → nhắc xác minh. Không chặn xem các mục. -->
+        <section class="panel mailgap" id="mailgap" aria-labelledby="mailgap-title" hidden>
+          <h2 id="mailgap-title" data-mode-add hidden>{copy.gapAddTitle}</h2>
+          <h2 data-mode-verify hidden>{copy.gapVerifyTitle}</h2>
+          <p class="mailgap-text" data-mode-add hidden>{copy.gapAddText}</p>
+          <p class="mailgap-text" data-mode-verify hidden>{copy.gapVerifyText}</p>
+          <form id="mailgap-form" class="mailgap-form" novalidate data-mode-add hidden>
+            <Field id="mailgap-email" name="email" type="email" label={copy.gapEmail} autocomplete="email" inputmode="email" />
+            <button type="submit" class="btn btn-primary">{copy.gapSendAdd}</button>
+          </form>
+          <div class="mailgap-verify" data-mode-verify hidden>
+            <button type="button" class="btn btn-primary" id="mailgap-send">{copy.gapSendVerify}</button>
+          </div>
+          <div class="mailgap-verify" id="mailgap-done-row" hidden>
+            <button type="button" class="btn" id="mailgap-done">{copy.gapDone}</button>
+          </div>
+          <div id="mailgap-alert" class="auth-alert" role="alert"></div>
+          <div id="mailgap-status" class="auth-alert" role="status"></div>
+        </section>
 
         <Overview lang={lang} />
         <TopUp lang={lang} />

@@ -6,7 +6,7 @@
 import Field from '../auth/Field.astro';
 import PasswordInput from '../auth/PasswordInput.astro';
 import Icon from '../Icon.astro';
-import { contact, primaryChannel } from '../../config/site';
+import { authProviders, contact, primaryChannel } from '../../config/site';
 import type { Lang } from '../../config/i18n';
 
 interface Props {
@@ -20,7 +20,10 @@ const copy = {
     email: 'Email',
     resend: 'Gửi lại email xác minh',
     iVerified: 'Tôi đã xác minh',
-    provider: 'Cách đăng nhập',
+    provider: 'Đăng nhập bằng',
+    fbLink: 'Nối Facebook',
+    fbUnlink: 'Bỏ nối Facebook',
+    fbOnly: 'Facebook là cách đăng nhập duy nhất của bạn. Muốn bỏ nối, bạn thêm Google hoặc email & mật khẩu trước.',
     created: 'Ngày tạo tài khoản',
     lastSignIn: 'Đăng nhập gần nhất',
     changePassword: 'Đổi mật khẩu',
@@ -50,7 +53,10 @@ const copy = {
     email: 'Email',
     resend: 'Resend verification email',
     iVerified: 'I have verified',
-    provider: 'Sign-in method',
+    provider: 'Sign in with',
+    fbLink: 'Link Facebook',
+    fbUnlink: 'Unlink Facebook',
+    fbOnly: 'Facebook is your only way to sign in. To unlink it, add Google or an email and password first.',
     created: 'Account created',
     lastSignIn: 'Last sign-in',
     changePassword: 'Change password',
@@ -104,6 +110,14 @@ const copy = {
           <dd id="acc-last"></dd>
         </div>
       </dl>
+      <div class="acc-sub" id="fb-box" hidden>
+        <p class="muted small" id="fb-state"></p>
+        <div class="acc-actions">
+          {authProviders.facebook && <button type="button" class="btn btn-sm" id="fb-link" hidden>{copy.fbLink}</button>}
+          <button type="button" class="btn btn-sm btn-ghost" id="fb-unlink" hidden>{copy.fbUnlink}</button>
+        </div>
+        <p class="muted small" id="fb-only" hidden>{copy.fbOnly}</p>
+      </div>
       <div id="security-alert" class="auth-alert" role="alert"></div>
       <div id="security-status" class="auth-alert" role="status"></div>
 

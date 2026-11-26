@@ -5,11 +5,13 @@
 import {
   EmailAuthProvider,
   deleteUser,
+  linkWithPopup,
   reauthenticateWithCredential,
   reauthenticateWithPopup,
   reload,
   sendEmailVerification,
   signOut,
+  unlink,
   updatePassword,
 } from 'firebase/auth';
 import type { User } from 'firebase/auth';
@@ -18,6 +20,7 @@ import {
   auth,
   clearOnInput,
   config as authConfig,
+  facebookProvider,
   fieldError,
   focusFirstInvalid,
   googleProvider,
@@ -27,7 +30,9 @@ import {
   setBusy,
   withContinueUrl,
 } from '../auth/client';
-import { authErrorMessage, dataErrorMessage, errorCode, formatDateTime, m } from '../auth/messages';
+import { authProviders } from '../../config/auth-providers';
+import { canUnlink, hasProvider, providerLabels, reauthProvider } from '../auth/facebook';
+import { authErrorMessage, dataErrorMessage, errorCode, formatDateTime, m, pageLang } from '../auth/messages';
 import { clearUserCache } from '../auth/user-cache';
 import { byId } from '../ui/dom';
 import { me, money, register } from './ctx';
@@ -42,16 +47,16 @@ const securityAlert = byId('security-alert');
 const securityStatus = byId('security-status');
 
 export const renderSecurity = (user: User) => {
-  byId('acc-email').textContent = user.email ?? '';
+  byId('acc-email').textContent = user.email || m('noEmail');
   const verified = byId('acc-verified');
+  verified.hidden = !user.email;
   verified.textContent = m(user.emailVerified ? 'verified' : 'unverified');
   verified.className = `badge ${user.emailVerified ? 'badge--ok' : 'badge--warn'}`;
-  byId('acc-verify').hidden = user.emailVerified;
+  byId('acc-verify').hidden = user.emailVerified || !user.email;
 
-  const providers = user.providerData.map((p) =>
-    p.providerId === 'password' ? m('providerPassword') : p.providerId === 'google.com' ? m('providerGoogle') : p.providerId,
-  );
-  byId('acc-provider').textContent = providers.join(m('and'));
+  // "Cách đăng nhập": Google / Facebook / Email & mật khẩu theo providerData
+  const labels = providerLabels(user.providerData, pageLang());
+  byId('acc-provider').textContent = labels.join(m('and'));
   const created = user.metadata.creationTime;
   const last = user.metadata.lastSignInTime;
   byId('acc-created').textContent = created ? formatDateTime(new Date(created)) : '—';
@@ -59,10 +64,70 @@ export const renderSecurity = (user: User) => {
 
   const password = hasPassword(user);
   byId('pw-section').hidden = !password;
-  byId('google-only').hidden = password;
+  const noPassword = byId('google-only');
+  noPassword.hidden = password;
+  noPassword.textContent = m('noPassword', { providers: labels.filter((l) => l !== m('providerPassword')).join(m('and')) });
   byId('delete-password-wrap').hidden = !password;
-  byId('delete-google-note').hidden = password;
+  const social = byId('delete-google-note');
+  social.hidden = password;
+  social.textContent = m('deleteSocial', { provider: m(reauthProvider(user.providerData) === 'facebook' ? 'providerFacebook' : 'providerGoogle') });
+  renderFacebookBox(user);
 };
+
+/* ---------- Nối / bỏ nối Facebook ---------- */
+
+const fbBox = byId('fb-box');
+const fbState = byId('fb-state');
+const fbLink = document.getElementById('fb-link') as HTMLButtonElement | null; // chỉ có khi cờ Facebook bật
+const fbUnlink = byId<HTMLButtonElement>('fb-unlink');
+
+const renderFacebookBox = (user: User) => {
+  const linked = hasProvider(user.providerData, 'facebook.com');
+  const canLink = authProviders.facebook && !linked;
+  const canUnlinkNow = linked && canUnlink(user.providerData, 'facebook.com');
+  fbBox.hidden = !(authProviders.facebook || linked);
+  fbState.textContent = linked ? m('fbStateLinked') : m('fbStateNone');
+  if (fbLink) fbLink.hidden = !canLink;
+  fbUnlink.hidden = !canUnlinkNow;
+  byId('fb-only').hidden = !(linked && !canUnlinkNow);
+};
+
+fbLink?.addEventListener('click', () => {
+  const user = me();
+  if (!user) return;
+  say(securityAlert, '');
+  say(securityStatus, '');
+  setBusy(fbLink, true, 'busyFacebook');
+  // Gọi thẳng trong lúc bấm để cửa sổ Facebook không bị chặn.
+  linkWithPopup(user, facebookProvider())
+    .then(() => {
+      renderSecurity(user);
+      say(securityStatus, m('fbLinked'));
+    })
+    .catch((err) => say(securityAlert, authErrorMessage(err, 'facebook')))
+    .finally(() => setBusy(fbLink, false));
+});
+
+fbUnlink.addEventListener('click', async () => {
+  const user = me();
+  if (!user) return;
+  say(securityAlert, '');
+  say(securityStatus, '');
+  if (!canUnlink(user.providerData, 'facebook.com')) {
+    say(securityAlert, m('fbLinkOnlyOther'), { kind: 'info' });
+    return;
+  }
+  setBusy(fbUnlink, true, 'busySave');
+  try {
+    await unlink(user, 'facebook.com');
+    renderSecurity(user);
+    say(securityStatus, m('fbUnlinked'));
+  } catch (err) {
+    say(securityAlert, authErrorMessage(err));
+  } finally {
+    setBusy(fbUnlink, false);
+  }
+});
 
 /* ---------- Xác minh email ---------- */
 
@@ -234,7 +299,7 @@ deleteForm.addEventListener('submit', (event) => {
   const reauth =
     withPassword && user.email
       ? reauthenticateWithCredential(user, EmailAuthProvider.credential(user.email, delPassword.value))
-      : reauthenticateWithPopup(user, googleProvider());
+      : reauthenticateWithPopup(user, reauthProvider(user.providerData) === 'facebook' ? facebookProvider() : googleProvider());
   reauth
     .then(async () => {
       stage = 'data';
@@ -249,7 +314,7 @@ deleteForm.addEventListener('submit', (event) => {
       setBusy(submit, false);
       const message =
         stage === 'reauth'
-          ? authErrorMessage(err, withPassword ? 'reauth' : 'google')
+          ? authErrorMessage(err, withPassword ? 'reauth' : reauthProvider(user.providerData) === 'facebook' ? 'facebook' : 'google')
           : stage === 'data'
             ? errorCode(err).includes('permission-denied')
               ? tx('deleteBlockedRule')
