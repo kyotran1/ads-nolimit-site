@@ -416,7 +416,44 @@ dialog .eyebrow {
     animation: none;
   }
 }
+/* Nút "Tải app" ở đầu trang Tài khoản: điện thoại / máy tính bảng (< 1080px), máy tính có thẻ ở Tổng quan và chân trang */
+.dash-top-actions .dash-app {
+  flex: none;
+  min-width: 44px;
+  min-height: 44px;
+}
+@media (min-width: 1080px) {
+  .dash-top-actions .dash-app {
+    display: none;
+  }
+}
+/* Rất hẹp (< 400px): nút Làm mới chỉ còn biểu tượng (tên vẫn đọc được qua thuộc tính title) để nhường chỗ cho tiêu đề */
+@media (max-width: 399.98px) {
+  #acc-refresh span {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+  }
+  #acc-refresh {
+    min-width: 44px;
+    min-height: 44px;
+  }
+}
 @media (max-width: 479.98px) {
+  .dash-app {
+    padding-inline: 0.7rem;
+  }
+  .dash-app span {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+  }
   .dash-refresh {
     padding-inline: 0.7rem;
   }
@@ -3442,19 +3479,6 @@ dialog.ob-dialog {
 }
 .install-text p + p {
   margin-top: 0.45rem;
-}
-.install-steps {
-  margin: 0.4rem 0 0;
-  padding-left: 1.25rem;
-  display: grid;
-  gap: 0.3rem;
-  color: var(--text);
-}
-.install-share {
-  display: inline-block;
-  vertical-align: -0.3em;
-  margin: 0 0.15rem;
-  color: var(--blue-ink);
 }
 .install-actions {
   grid-column: 1 / -1;

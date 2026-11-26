@@ -268,20 +268,12 @@ const text = {
     vi: 'Mở nhanh từ màn hình chính, vào thẳng Tài khoản, không cần gõ địa chỉ.',
     en: 'Open it from your home screen and go straight to your account, no address to type.',
   },
-  installBtn: { vi: 'Cài ứng dụng', en: 'Install app' },
+  installBtn: { vi: 'Tải app', en: 'Get app' },
   installLater: { vi: 'Để sau', en: 'Not now' },
-  installIosLead: { vi: 'Cài ứng dụng trên iPhone/iPad, làm 2 bước:', en: 'Install on iPhone/iPad in 2 steps:' },
-  installIosStep1: { vi: 'Bấm nút Chia sẻ {icon} ở thanh Safari.', en: 'Tap the Share button {icon} in Safari.' },
-  installIosStep2: { vi: 'Chọn “Thêm vào Màn hình chính”, rồi bấm Thêm.', en: 'Choose “Add to Home Screen”, then tap Add.' },
-  installManual: {
-    vi: 'Chưa cài: mở menu của trình duyệt (dấu ⋮ hoặc ⋯) rồi chọn “Cài đặt ứng dụng” hoặc “Thêm vào màn hình chính”.',
-    en: 'Not installed yet: open your browser menu (⋮ or ⋯) and choose “Install app” or “Add to Home screen”.',
+  installHow: {
+    vi: 'Bấm “Tải app”: máy nào cài được bằng một lần bấm thì cài ngay, máy nào cần tự làm vài bước (như iPhone) thì bạn sẽ thấy từng bước.',
+    en: 'Tap “Get app”: if your device can install in one tap it does, and if you need a few manual steps (like on iPhone) you will see each step.',
   },
-  installManualHave: {
-    vi: 'Đã cài rồi: mở ADS-Nolimit từ màn hình chính hoặc menu Start, không cần cài lại. Nếu lỡ xóa biểu tượng trên máy tính, gõ chrome://apps trong Chrome để mở lại, hoặc gỡ ở đó rồi cài lại.',
-    en: 'Already installed: open ADS-Nolimit from your home screen or Start menu — no need to install again. If you removed the icon on a computer, type chrome://apps in Chrome to open it, or uninstall it there and install again.',
-  },
-  installDone: { vi: 'Đã cài. Bạn mở ADS-Nolimit từ màn hình chính.', en: 'Installed. Open ADS-Nolimit from your home screen.' },
 
   // bảo mật / xóa tài khoản
   deleteBlocked: {

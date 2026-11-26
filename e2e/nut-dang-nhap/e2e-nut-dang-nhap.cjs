@@ -41,6 +41,14 @@ const measure = () => {
     Object.assign(r, { barText: bar.querySelector('.acct-label').textContent, barHref: bar.getAttribute('href'), barH: bb.height, barW: bb.width, barInHeader: Math.abs(row2.getBoundingClientRect().top - hdr.bottom) < 1 && bb.top >= hdr.bottom,
       suShown: vis(su), suHref: su.getAttribute('href'), suH: su.getBoundingClientRect().height, barOverflow: [bar, su, bar.querySelector('.acct-text'), bar.querySelector('.acct-label')].some((e) => vis(e) && e.scrollWidth > e.clientWidth + 1) });
   }
+  const app = document.querySelector('.row2-app');
+  if (app) {
+    const ab = app.getBoundingClientRect();
+    const rb = document.querySelector('.row2-inner').getBoundingClientRect();
+    const others = [bar, su].filter((e) => e && vis(e)).map((e) => e.getBoundingClientRect());
+    const labelShown = (() => { const l = app.querySelector('.row2-app-label'); const b = l.getBoundingClientRect(); return vis(l) && b.width > 8; })();
+    Object.assign(r, { app: { shown: vis(app), w: ab.width, h: ab.height, inside: ab.right <= rb.right + 0.5 && ab.left >= rb.left - 0.5, overlap: others.some((o) => ab.left < o.right - 0.5 && o.left < ab.right - 0.5 && ab.top < o.bottom && o.top < ab.bottom), overflow: app.scrollWidth > app.clientWidth + 1, labelShown, sameRow: others.every((o) => Math.abs(o.top - ab.top) < 2) } });
+  }
   return r;
 };
 
@@ -69,6 +77,8 @@ const measure = () => {
           const href = signedIn ? (en ? '/en/account/' : '/tai-khoan/') : (en ? '/en/sign-in/' : '/dang-nhap/');
           ok(r.barText === want && r.barHref === href, `${tag}: nút "${r.barText}" → ${r.barHref}`);
           ok(signedIn ? !r.suShown : r.suShown && r.suHref === (en ? '/en/sign-up/' : '/dang-ky/'), `${tag}: nút Tạo tài khoản ${r.suShown ? 'hiện → ' + r.suHref : 'ẩn'}`);
+          ok(r.app && r.app.shown && r.app.w >= 44 && r.app.h >= 44 && r.app.inside && !r.app.overlap && !r.app.overflow && r.app.sameRow, `${tag}: nút Tải app ${r.app && Math.round(r.app.w)}×${r.app && Math.round(r.app.h)}, trong hàng, không chồng, cùng hàng`);
+          ok(r.app && (w < 360 ? !r.app.labelShown : r.app.labelShown), `${tag}: nút Tải app ${w < 360 ? 'chỉ còn biểu tượng' : 'có chữ'}`);
           ok(r.barH >= 44 && (signedIn || r.suH >= 44) && !r.barOverflow, `${tag}: nút cao ≥ 44px, chữ không tràn (${r.barH}/${r.suH})`);
         } else ok(!r.row2Shown, `${tag}: màn hình rộng không có hàng dưới`);
       }

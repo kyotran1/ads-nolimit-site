@@ -91,5 +91,9 @@ const { lang = langFromPath(Astro.url.pathname), ...seo } = Astro.props;
       // Ánh sáng theo chuột cho [data-glow] (xem src/styles/fx.css)
       import '../scripts/glow';
     </script>
+    <script>
+      // Nút "Tải app" ([data-install-app]) trên mọi trang; bảng hướng dẫn chỉ tải khi bấm
+      import '../scripts/install-entry';
+    </script>
   </body>
 </html>

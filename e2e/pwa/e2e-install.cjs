@@ -69,21 +69,19 @@ const goto = async (page, lang, which) => { await page.evaluate((x) => (location
 
   await step('(a2) sự kiện đến SAU khi mã nạp → thẻ hiện nhờ adsnl-install-ready', async () => {
     const { ctx, page } = await open(browser);
-    eq(await page.$('[data-view="overview"] .install-card'), null, 'ban đầu hidden → không chèn gì vào Tổng quan');
-    eq((await cards(page)).map((x) => x.mode).join(), 'manual', 'Hồ sơ chỉ có khối hướng dẫn thủ công');
+    eq((await cards(page)).map((x) => x.mode).join(), 'manual,manual', 'không có sự kiện: Tổng quan + Hồ sơ đều có thẻ dạng manual (vẫn có nút Tải app)');
     await page.evaluate(`${FAKE_PROMPT}; window.dispatchEvent(new Event('adsnl-install-ready'));`);
     await page.waitForTimeout(300);
     eq((await cards(page)).find((x) => x.inView === 'overview')?.mode, 'prompt', 'thẻ hiện');
     await ctx.close();
   });
 
-  await step('(b) UA iPhone Safari → thẻ ios với 2 bước + biểu tượng Chia sẻ', async () => {
+  await step('(b) UA iPhone Safari → thẻ ios có nút Tải app + lời nói thật về iPhone', async () => {
     const { ctx, page } = await open(browser, { ua: IPHONE, width: 390 });
     const ov = (await cards(page)).find((x) => x.inView === 'overview');
     eq(ov.mode, 'ios', 'dạng ios');
-    has(ov.text, 'Thêm vào Màn hình chính', 'bước 2'); has(ov.text, 'Để sau', 'nút');
-    eq(await page.$$eval('[data-view="overview"] .install-card .install-steps li', (l) => l.length), 2, '2 bước');
-    eq(await page.$$eval('[data-view="overview"] .install-card svg.install-share', (l) => l.length), 1, 'biểu tượng Chia sẻ');
+    has(ov.text, 'Tải app', 'nút'); has(ov.text, 'Để sau', 'nút Để sau'); has(ov.text, 'iPhone', 'nói thật: iPhone cần tự làm vài bước');
+    eq(await page.$$eval('.install-card [data-install-app]', (l) => l.length), 2, 'cả thẻ và khối Hồ sơ có nút Tải app');
     eq((await cards(page)).find((x) => x.inView === 'profile').mode, 'ios', 'Hồ sơ cũng ios');
     await ctx.close();
   });

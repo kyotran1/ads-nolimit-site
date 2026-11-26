@@ -22,22 +22,54 @@ export interface InstallEnv {
 export const SNOOZE_MS = 30 * 24 * 3600 * 1000;
 export const SNOOZE_KEY = 'adsnl-pwa-snooze';
 
-/** Chọn dạng hiển thị: thẻ ở Tổng quan ('card', tôn trọng "Để sau") hay khối cố định ở Hồ sơ ('profile'). */
+/** Chọn dạng hiển thị: thẻ ở Tổng quan ('card', tôn trọng "Để sau") hay khối cố định ở Hồ sơ ('profile'). Chưa cài thì luôn có nút. */
 export function installMode(env: InstallEnv, where: 'card' | 'profile'): InstallMode {
   if (env.standalone || env.installed) return 'hidden';
   if (where === 'card' && env.snoozedUntil > env.now) return 'hidden';
   if (env.canPrompt) return 'prompt';
   if (env.iosSafari) return 'ios';
-  return where === 'profile' ? 'manual' : 'hidden';
+  // Không có sự kiện cài: vẫn có nút "Tải app", bấm thì mở bảng hướng dẫn theo nền tảng (install-sheet.ts).
+  return 'manual';
+}
+
+/** Nền tảng của khách, để chọn đúng cách hướng dẫn cài (bảng hướng dẫn ở install-sheet.ts). */
+export type InstallPlatform =
+  | 'ios-safari'
+  | 'ios-safari-26'
+  | 'ios-chrome'
+  | 'ios-other'
+  | 'ios-inapp'
+  | 'android-inapp'
+  | 'android'
+  | 'desktop-safari'
+  | 'desktop-firefox'
+  | 'desktop';
+
+/** Trình duyệt nhúng trong app mạng xã hội / chat: không cài được, phải mở bằng trình duyệt thật. */
+const IN_APP = /FBAN|FBAV|FB_IAB|Instagram|Zalo|Line\/|musical_ly|BytedanceWebview/;
+
+/** Phân loại nền tảng từ chuỗi User-Agent (+ số điểm chạm, để nhận iPad đòi trang máy tính). Hàm thuần, có test. */
+export function installPlatform(ua: string, maxTouchPoints: number): InstallPlatform {
+  const iphoneOrIpod = /iPhone|iPod/.test(ua);
+  const ipad = /iPad/.test(ua) || (/Macintosh/.test(ua) && maxTouchPoints > 1);
+  if (iphoneOrIpod || ipad) {
+    if (IN_APP.test(ua)) return 'ios-inapp';
+    if (/CriOS/.test(ua)) return 'ios-chrome';
+    if (/FxiOS|EdgiOS|OPiOS|GSA\/|coc_coc_browser/.test(ua)) return 'ios-other';
+    if (!/Safari/.test(ua)) return 'ios-other';
+    const major = Number(/Version\/(\d+)/.exec(ua)?.[1] ?? 0);
+    return major >= 26 ? 'ios-safari-26' : 'ios-safari';
+  }
+  if (/Android/.test(ua)) return IN_APP.test(ua) ? 'android-inapp' : 'android';
+  if (/Firefox\//.test(ua)) return 'desktop-firefox';
+  if (/Macintosh/.test(ua) && /Safari\//.test(ua) && !/Chrome|Chromium|CriOS|Edg\/|OPR\/|coc_coc_browser/.test(ua)) return 'desktop-safari';
+  return 'desktop';
 }
 
 /** Safari thật trên iPhone/iPad (có iPad đòi trang máy tính); loại Chrome/Firefox iOS và trình duyệt trong app Facebook/Zalo. */
 export function isIosSafari(ua: string, maxTouchPoints: number): boolean {
-  const iphoneOrIpod = /iPhone|iPod/.test(ua);
-  const ipad = /iPad/.test(ua) || (/Macintosh/.test(ua) && maxTouchPoints > 1);
-  if (!iphoneOrIpod && !ipad) return false;
-  if (/CriOS|FxiOS|EdgiOS|OPiOS|FBAN|FBAV|FB_IAB|Instagram|Zalo|Line\/|GSA\//.test(ua)) return false;
-  return /Safari/.test(ua);
+  const p = installPlatform(ua, maxTouchPoints);
+  return p === 'ios-safari' || p === 'ios-safari-26';
 }
 
 /* ---------- Phần trình duyệt ---------- */
@@ -87,7 +119,7 @@ const readSnooze = (): number => {
 let snoozedInMemory = 0;
 
 /** Báo cho mọi khối cài ứng dụng đang hiện (Tổng quan, Hồ sơ) vẽ lại. */
-const CHANGED = 'adsnl-install-changed';
+export const CHANGED = 'adsnl-install-changed';
 const announce = () => {
   try {
     window.dispatchEvent(new Event(CHANGED));
@@ -124,25 +156,36 @@ export const currentInstallMode = (where: 'card' | 'profile'): InstallMode => {
   }
 };
 
-/** Mở hộp cài của trình duyệt. Trả về true nếu khách chấp nhận. Sự kiện chỉ dùng được một lần nên luôn bỏ sau khi gọi. */
-export const promptInstall = async (): Promise<boolean> => {
+export type PromptResult = 'accepted' | 'dismissed' | 'error' | 'none';
+
+/**
+ * Mở hộp cài của trình duyệt. PHẢI gọi thẳng trong sự kiện bấm (đoạn đến `ev.prompt()` chạy đồng bộ, không await trước đó).
+ * Sự kiện chỉ dùng được một lần nên luôn bỏ sau khi gọi. 'none' = không có sự kiện; 'error' = hộp cài không mở được.
+ */
+export const tryPrompt = async (): Promise<PromptResult> => {
   const ev = deferred();
-  if (!ev) return false;
+  if (!ev) return 'none';
+  let result: PromptResult = 'dismissed';
   try {
     (window as unknown as { __adsnlInstall?: unknown }).__adsnlInstall = null;
     await ev.prompt();
     const choice = await ev.userChoice;
     if (choice?.outcome === 'accepted') {
       installedNow = true;
-      announce();
-      return true;
+      result = 'accepted';
     }
   } catch {
-    /* hộp cài không mở được: coi như chưa cài */
+    result = 'error';
   }
   announce();
-  return false;
+  return result;
 };
+
+/** Như tryPrompt nhưng chỉ trả về true nếu khách chấp nhận. */
+export const promptInstall = async (): Promise<boolean> => (await tryPrompt()) === 'accepted';
+
+/** Đã ở trong app hoặc vừa cài xong: mọi nút "Tải app" phải ẩn. */
+export const installHidden = (): boolean => installedNow || isStandalone();
 
 /** Gọi `redraw` khi có thể đổi dạng hiển thị: sự kiện cài sẵn sàng (đến trước hoặc sau khi mã này nạp), đã cài, đổi chế độ hiển thị. */
 export const watchInstall = (redraw: () => void) => {

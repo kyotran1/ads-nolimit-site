@@ -13,13 +13,13 @@ describe('installMode', () => {
       assert.equal(installMode(env({ installed: true, iosSafari: true }), where), 'hidden');
     }
   });
-  test('card: đang hoãn → hidden; canPrompt → prompt; iosSafari → ios; còn lại → hidden', () => {
+  test('card: đang hoãn → hidden; canPrompt → prompt; iosSafari → ios; còn lại → manual (vẫn có nút Tải app)', () => {
     assert.equal(installMode(env({ canPrompt: true, snoozedUntil: now + 1 }), 'card'), 'hidden');
     assert.equal(installMode(env({ iosSafari: true, snoozedUntil: now + 1 }), 'card'), 'hidden');
     assert.equal(installMode(env({ canPrompt: true, snoozedUntil: now }), 'card'), 'prompt');
     assert.equal(installMode(env({ canPrompt: true }), 'card'), 'prompt');
     assert.equal(installMode(env({ iosSafari: true }), 'card'), 'ios');
-    assert.equal(installMode(env(), 'card'), 'hidden');
+    assert.equal(installMode(env(), 'card'), 'manual');
   });
   test('profile: bỏ qua hoãn; prompt / ios / manual', () => {
     assert.equal(installMode(env({ canPrompt: true, snoozedUntil: now + SNOOZE_MS }), 'profile'), 'prompt');

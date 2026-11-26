@@ -96,6 +96,9 @@ const showRow2 = !accountPaths.includes(path);
           <div class="mobile-acct">
             <AccountLink lang={lang} variant="mobile" />
             <a href={localize('/dang-ky/', lang)} class="btn mobile-signup">{s.signUp}</a>
+            <button type="button" class="btn mobile-app install-entry" data-install-app>
+              <Icon name="download" />{s.getAppMenu}
+            </button>
           </div>
           <p class="mobile-group">{s.language}</p>
           <LangSwitch lang={lang} size="lg" />
@@ -140,6 +143,9 @@ const showRow2 = !accountPaths.includes(path);
         <a href={localize('/dang-ky/', lang)} class="btn row2-signup">
           {s.signUp}
         </a>
+        <button type="button" class="btn row2-app install-entry" data-install-app aria-label={s.getAppMenu}>
+          <Icon name="download" /><span class="row2-app-label">{s.getApp}</span>
+        </button>
       </div>
     </div>
   )
@@ -475,6 +481,11 @@ const showRow2 = !accountPaths.includes(path);
   .mobile-acct :global(.acct.is-in) ~ .mobile-signup {
     display: none;
   }
+  .mobile-app {
+    grid-column: 1 / -1;
+    min-height: 48px;
+    flex: none;
+  }
 
   /* Hàng dưới của thanh đầu trang (< 1080px): "Đăng nhập" | "Tạo tài khoản" */
   .header-row2 {
@@ -486,7 +497,7 @@ const showRow2 = !accountPaths.includes(path);
   }
   .row2-inner {
     display: grid;
-    grid-template-columns: 1fr 1fr;
+    grid-template-columns: 1fr 1fr auto;
     gap: 0.6rem;
   }
   .row2-signup {
@@ -501,12 +512,69 @@ const showRow2 = !accountPaths.includes(path);
   .row2-inner :global(.acct.is-in) ~ .row2-signup {
     display: none;
   }
+  /* Nút "Tải app" luôn thấy ở hàng dưới (ẩn khi đã ở trong app: <html data-pwa>, xem global.css) */
+  .row2-app {
+    flex: none;
+    min-height: 44px;
+    min-width: 44px;
+    padding-inline: 0.85rem;
+    font-size: 0.9375rem;
+    white-space: nowrap;
+  }
+  .row2-app :global(svg) {
+    width: 1.2rem;
+    height: 1.2rem;
+  }
+  /* Đã đăng nhập: nút Tài khoản chiếm phần còn lại, nút app nằm bên phải */
+  .row2-inner:has(:global(.acct.is-in)) {
+    grid-template-columns: 1fr auto;
+  }
+  .row2-inner:has(:global(.acct.is-in)) :global(.acct.is-in) {
+    grid-column: 1 / 2;
+  }
+  /* Đang ở trong app: không còn nút app, hai nút kia chia đều như cũ */
+  :global(:root[data-pwa]) .row2-inner {
+    grid-template-columns: 1fr 1fr;
+  }
+  :global(:root[data-pwa]) .row2-inner:has(:global(.acct.is-in)) {
+    grid-template-columns: 1fr;
+  }
+  :global(:root[data-pwa]) .row2-inner:has(:global(.acct.is-in)) :global(.acct.is-in) {
+    grid-column: 1 / -1;
+  }
+  /* Điện thoại (< 480px): 3 nút chung một hàng, chữ nhỏ lại một nấc, bỏ biểu tượng người ở nút Đăng nhập cho đủ chỗ */
+  @media (max-width: 479.98px) {
+    .row2-signup,
+    .row2-app,
+    .row2-inner :global(.acct--bar) {
+      font-size: 0.875rem;
+      padding-inline: 0.5rem;
+    }
+    .row2-app {
+      gap: 0.4rem;
+    }
+    .row2-inner :global(.acct--bar:not(.is-in) .acct-avatar) {
+      display: none;
+    }
+  }
   @media (max-width: 359.98px) {
     .row2-inner {
       gap: 0.5rem;
     }
     .row2-signup {
       padding-inline: 0.5rem;
+    }
+    /* Hẹp: nút app chỉ còn biểu tượng (nhãn vẫn đọc được bằng trình đọc màn hình), cao ≥ 44px */
+    .row2-app {
+      padding-inline: 0.6rem;
+    }
+    .row2-app-label {
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      overflow: hidden;
+      clip-path: inset(50%);
+      white-space: nowrap;
     }
   }
 

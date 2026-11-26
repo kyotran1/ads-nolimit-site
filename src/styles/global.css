@@ -806,3 +806,10 @@ a.card:hover,
     radial-gradient(60% 80% at 100% 0%, rgb(72 0 168 / 0.07), transparent 70%),
     var(--bg-deep);
 }
+
+/* ---------- Nút "Tải app" (.install-entry, bấm: src/scripts/install-entry.ts) ----------
+   Đang chạy như app đã cài (PwaHead.astro gắn <html data-pwa>) hoặc vừa cài xong: ẩn mọi nút tải app. */
+:root[data-pwa] .install-entry,
+.install-entry[hidden] {
+  display: none !important;
+}

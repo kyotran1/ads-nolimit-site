@@ -19,6 +19,14 @@ const register = import.meta.env.PROD;
 <meta name="apple-mobile-web-app-capable" content="yes" />
 <meta name="apple-mobile-web-app-status-bar-style" content="black" />
 <script is:inline>
+  // Đang chạy như app đã cài: ẩn mọi nút "Tải app" (.install-entry) ngay từ đầu, không chờ mã khác nạp.
+  (function () {
+    try {
+      if ((window.matchMedia && window.matchMedia('(display-mode: standalone)').matches) || navigator.standalone === true) {
+        document.documentElement.setAttribute('data-pwa', '1');
+      }
+    } catch (e) {}
+  })();
   // Giữ lại sự kiện mời cài (Android/máy tính) để thẻ mời cài ở trang Tài khoản dùng sau.
   window.addEventListener('beforeinstallprompt', function (event) {
     event.preventDefault();

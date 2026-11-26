@@ -54,6 +54,9 @@ const contacts = [
           <li>
             <a href={links.messenger} rel="noopener"><Icon name="messenger" /> Messenger</a>
           </li>
+          <li class="install-entry">
+            <button type="button" class="footer-app" data-install-app><Icon name="download" /> {s.getAppFooter}</button>
+          </li>
         </ul>
       </div>
 
@@ -170,7 +173,8 @@ const contacts = [
     gap: 0.5rem;
     margin-top: 1.25rem;
   }
-  .footer-quick a {
+  .footer-quick a,
+  .footer-quick button {
     display: inline-flex;
     align-items: center;
     gap: 0.4rem;
@@ -187,8 +191,15 @@ const contacts = [
       background-color 0.2s ease,
       box-shadow 0.2s ease;
   }
+  .footer-quick button {
+    background: transparent;
+    font-family: inherit;
+    cursor: pointer;
+  }
   .footer-quick a:hover,
-  .footer-quick a:focus-visible {
+  .footer-quick a:focus-visible,
+  .footer-quick button:hover,
+  .footer-quick button:focus-visible {
     border-color: rgb(165 140 255 / 0.65);
     background: rgb(124 92 255 / 0.12);
     box-shadow: 0 10px 26px -14px rgb(124 92 255 / 0.9);
