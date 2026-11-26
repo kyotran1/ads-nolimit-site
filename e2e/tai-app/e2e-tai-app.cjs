@@ -256,14 +256,16 @@ async function openAccount(browser, { lang = 'vi', width = 390, ua, init = '', m
   });
 
   await step('(4) trình duyệt trong app: nút Mở bằng Safari / Chrome có href đúng, Sao chép link ghi đúng địa chỉ trang', async () => {
-    for (const [key, startsWith, endsWith, btn] of [['fbIos', 'x-safari-https://www.ads-nolimit.agency/bang-gia/', null, 'Mở bằng Safari'], ['zaloIos', 'x-safari-https://www.ads-nolimit.agency/bang-gia/', null, 'Mở bằng Safari'], ['fbAndroid', 'intent://www.ads-nolimit.agency/bang-gia/', ';package=com.android.chrome;end', 'Mở bằng Chrome']]) {
+    // Nút mở dùng đúng tên miền đang mở (bản thử: 127.0.0.1:<cổng>; web thật: www.ads-nolimit.agency)
+    const HOST = '127.0.0.1:' + (process.env.WEB_PORT || '4330');
+    for (const [key, startsWith, endsWith, btn] of [['fbIos', `x-safari-https://${HOST}/bang-gia/`, null, 'Mở bằng Safari'], ['zaloIos', `x-safari-https://${HOST}/bang-gia/`, null, 'Mở bằng Safari'], ['fbAndroid', `intent://${HOST}/bang-gia/`, ';end', 'Mở bằng Chrome']]) {
       const { ctx, page } = await pub(browser, '/bang-gia/?x=1', { ua: UA[key], motion: false });
       await page.click('.row2-app');
       await page.waitForSelector('dialog.isheet[open]');
       const href = await page.$eval('a.isheet-open', (a) => a.getAttribute('href'));
       assert(href.startsWith(startsWith), `${key}: href ${href}`);
       assert(href.includes('/bang-gia/?x=1'), `${key}: có đường dẫn + query ${href}`);
-      if (endsWith) assert(href.endsWith(endsWith), `${key}: kết thúc ${href}`);
+      if (endsWith) assert(href.endsWith(endsWith) && href.includes(';package=com.android.chrome;S.browser_fallback_url=https%3A%2F%2F'), `${key}: kết thúc + dự phòng ${href}`);
       has(await page.$eval('a.isheet-open', (a) => a.textContent), btn, 'nhãn nút');
       await page.click('.isheet-copy');
       await page.waitForTimeout(200);
@@ -378,7 +380,7 @@ async function openAccount(browser, { lang = 'vi', width = 390, ua, init = '', m
     await shot(page, 'iphone430-facebook-ho-so-toi', { fullPage: true });
     await page.click('.install-card--profile [data-install-app]'); await page.waitForSelector('dialog.isheet[open]');
     eq(await page.$eval('dialog.isheet', (d) => d.dataset.platform), 'ios-inapp', 'bảng trong app');
-    assert((await page.$eval('a.isheet-open', (a) => a.getAttribute('href'))).startsWith('x-safari-https://www.ads-nolimit.agency/'), 'href Safari');
+    assert((await page.$eval('a.isheet-open', (a) => a.getAttribute('href'))).startsWith('x-safari-https://127.0.0.1:' + (process.env.WEB_PORT || '4330') + '/'), 'href Safari');
     await ctx.close();
   });
   await step('(6) ảnh thanh đầu trang 320/390 sáng + tối; Tài khoản đầu trang sáng', async () => {

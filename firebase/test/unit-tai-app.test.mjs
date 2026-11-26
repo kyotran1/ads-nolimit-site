@@ -9,6 +9,7 @@ const UA = {
   iphoneSafari26: 'Mozilla/5.0 (iPhone; CPU iPhone OS 18_6 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/26.0 Mobile/15E148 Safari/604.1',
   ipadDesktopMode: 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.5 Safari/605.1.15',
   ipadSafari: 'Mozilla/5.0 (iPad; CPU OS 17_5 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.5 Mobile/15E148 Safari/604.1',
+  ipadSafari26: 'Mozilla/5.0 (iPad; CPU OS 18_6 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/26.0 Mobile/15E148 Safari/604.1',
   chromeIos: 'Mozilla/5.0 (iPhone; CPU iPhone OS 17_5 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) CriOS/126.0.6478.153 Mobile/15E148 Safari/604.1',
   cocCocIos: 'Mozilla/5.0 (iPhone; CPU iPhone OS 17_5 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.5 Mobile/15E148 Safari/604.1 coc_coc_browser/120.0.250 Mobile',
   edgeIos: 'Mozilla/5.0 (iPhone; CPU iPhone OS 17_5 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 EdgiOS/126.2592.80 Mobile/15E148 Safari/605.1.15',
@@ -31,6 +32,7 @@ describe('installPlatform', () => {
     ['iPhone Safari 17', UA.iphoneSafari17, 5, 'ios-safari'],
     ['iPhone Safari 26', UA.iphoneSafari26, 5, 'ios-safari-26'],
     ['iPad (UA iPad)', UA.ipadSafari, 5, 'ios-safari'],
+    ['iPad Safari 26 (nút Chia sẻ ở thanh trên) → bước chung', UA.ipadSafari26, 5, 'ios-safari'],
     ['iPad đòi trang máy tính (Macintosh + chạm)', UA.ipadDesktopMode, 5, 'ios-safari'],
     ['Chrome iOS', UA.chromeIos, 5, 'ios-chrome'],
     ['Cốc Cốc iOS', UA.cocCocIos, 5, 'ios-other'],
@@ -110,6 +112,7 @@ describe('splitStep và địa chỉ mở trình duyệt', () => {
   });
   test('safariUrl / chromeUrl', () => {
     assert.equal(safariUrl('/bang-gia/'), 'x-safari-https://www.ads-nolimit.agency/bang-gia/');
-    assert.equal(chromeUrl('/en/?a=1'), 'intent://www.ads-nolimit.agency/en/?a=1#Intent;scheme=https;package=com.android.chrome;end');
+    assert.equal(chromeUrl('/en/?a=1'), 'intent://www.ads-nolimit.agency/en/?a=1#Intent;scheme=https;package=com.android.chrome;S.browser_fallback_url=https%3A%2F%2Fwww.ads-nolimit.agency%2Fen%2F%3Fa%3D1;end');
+    assert.equal(safariUrl('/x/', 'preview.test:4370'), 'x-safari-https://preview.test:4370/x/');
   });
 });

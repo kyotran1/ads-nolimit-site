@@ -9,6 +9,8 @@
  * Đang ở trong app đã cài (hoặc vừa cài xong): gắn `data-pwa` lên <html>, CSS ẩn mọi `.install-entry`.
  */
 import { CHANGED, installHidden, tryPrompt } from '../lib/pwa/install';
+// Nạp thẳng (không tải chậm): nếu tải chậm, khách để tab mở qua một lần cập nhật web thì tệp cũ đã bị xóa → bấm không có gì xảy ra.
+import { openInstallSheet, showInstalled } from '../lib/pwa/install-sheet';
 
 const syncHidden = () => {
   try {
@@ -18,11 +20,12 @@ const syncHidden = () => {
   }
 };
 
-const openSheet = async () => {
+const openSheet = () => {
   try {
-    (await import('../lib/pwa/install-sheet')).openInstallSheet();
+    openInstallSheet();
   } catch {
-    /* tải bảng lỗi (mất mạng giữa chừng): không có gì để hiện */
+    /* lỗi bất ngờ khi dựng bảng: tải lại trang để lần bấm sau chạy với mã mới nhất */
+    location.reload();
   }
 };
 
@@ -31,12 +34,12 @@ const onEntry = async () => {
   if (result === 'accepted') {
     syncHidden();
     try {
-      (await import('../lib/pwa/install-sheet')).showInstalled();
+      showInstalled();
     } catch {
       /* bỏ qua */
     }
   } else if (result === 'none' || result === 'error') {
-    await openSheet();
+    openSheet();
   }
 };
 

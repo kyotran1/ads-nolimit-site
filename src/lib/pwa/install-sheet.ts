@@ -50,10 +50,12 @@ const copyHref = async (): Promise<boolean> => {
     return true;
   } catch {
     try {
-      const ta = h('textarea', { 'aria-hidden': 'true', readonly: 'true', style: 'position:fixed;left:-9999px;top:0' });
+      // Gắn vào trong bảng đang mở (ngoài bảng bị khóa khi showModal) và chọn bằng setSelectionRange (iOS không chọn ô readonly).
+      const ta = h('textarea', { 'aria-hidden': 'true', style: 'position:fixed;left:-9999px;top:0;font-size:16px' }) as HTMLTextAreaElement;
       ta.value = href;
-      document.body.append(ta);
-      ta.select();
+      (document.querySelector('dialog.isheet') ?? document.body).append(ta);
+      ta.focus();
+      ta.setSelectionRange(0, href.length);
       const ok = document.execCommand('copy');
       ta.remove();
       return ok;
@@ -85,11 +87,16 @@ export const openInstallSheet = () => {
   const ui = sheetUi(lang);
 
   const dlg = h('dialog', { class: 'isheet', 'data-platform': platform, 'aria-labelledby': 'isheet-title' });
+  const unlock = () => document.documentElement.classList.remove('isheet-lock');
   const close = () => {
     if (dlg.open) dlg.close();
     dlg.remove();
+    unlock();
   };
-  dlg.addEventListener('close', () => dlg.remove());
+  dlg.addEventListener('close', () => {
+    dlg.remove();
+    unlock();
+  });
   // Bấm ra ngoài hộp (vào lớp nền của <dialog>) thì đóng
   dlg.addEventListener('click', (e) => {
     if (e.target === dlg) close();
@@ -109,8 +116,8 @@ export const openInstallSheet = () => {
   );
 
   const actions: HTMLElement[] = [];
-  if (c.open === 'safari') actions.push(h('a', { class: 'btn btn-primary isheet-open', href: safariUrl(currentPath()) }, icon('external'), ui.openSafari));
-  if (c.open === 'chrome') actions.push(h('a', { class: 'btn btn-primary isheet-open', href: chromeUrl(currentPath()) }, icon('external'), ui.openChrome));
+  if (c.open === 'safari') actions.push(h('a', { class: 'btn btn-primary isheet-open', href: safariUrl(currentPath(), location.host) }, icon('external'), ui.openSafari));
+  if (c.open === 'chrome') actions.push(h('a', { class: 'btn btn-primary isheet-open', href: chromeUrl(currentPath(), location.host) }, icon('external'), ui.openChrome));
   if (c.copy) {
     const copyBtn = h('button', { type: 'button', class: 'btn isheet-copy' }, icon('copy'), h('span', { text: ui.copy }));
     copyBtn.addEventListener('click', async () => {
@@ -141,6 +148,7 @@ export const openInstallSheet = () => {
     ),
   );
   document.body.append(dlg);
+  document.documentElement.classList.add('isheet-lock'); // không cuộn trang nền khi bảng mở
   if (typeof dlg.showModal === 'function') dlg.showModal();
   else dlg.setAttribute('open', '');
 };

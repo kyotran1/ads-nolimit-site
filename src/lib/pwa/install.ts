@@ -58,7 +58,8 @@ export function installPlatform(ua: string, maxTouchPoints: number): InstallPlat
     if (/FxiOS|EdgiOS|OPiOS|GSA\/|coc_coc_browser/.test(ua)) return 'ios-other';
     if (!/Safari/.test(ua)) return 'ios-other';
     const major = Number(/Version\/(\d+)/.exec(ua)?.[1] ?? 0);
-    return major >= 26 ? 'ios-safari-26' : 'ios-safari';
+    // iPad để nút Chia sẻ ở thanh trên cùng → dùng bước chung, không dùng bước "⋯ góc dưới" của iPhone iOS 26.
+    return major >= 26 && iphoneOrIpod ? 'ios-safari-26' : 'ios-safari';
   }
   if (/Android/.test(ua)) return IN_APP.test(ua) ? 'android-inapp' : 'android';
   if (/Firefox\//.test(ua)) return 'desktop-firefox';

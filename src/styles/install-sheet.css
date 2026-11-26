@@ -168,7 +168,7 @@ dialog.isheet::backdrop {
 .isheet-toast {
   position: fixed;
   left: 50%;
-  bottom: calc(1rem + env(safe-area-inset-bottom, 0px));
+  bottom: calc(1rem + var(--bar-h, 0px) + env(safe-area-inset-bottom, 0px));
   transform: translateX(-50%);
   z-index: 200;
   width: max-content;
@@ -182,4 +182,14 @@ dialog.isheet::backdrop {
   line-height: 1.4;
   text-align: center;
   box-shadow: var(--shadow-lg);
+}
+
+/* Bảng đang mở: không cuộn trang nền (iOS vuốt vào nền tối) */
+html.isheet-lock,
+html.isheet-lock body {
+  overflow: hidden;
+}
+/* Trình duyệt không có <dialog> (iOS < 15.4): bảng vẫn nổi trên cùng */
+.isheet[open] {
+  z-index: 1000;
 }

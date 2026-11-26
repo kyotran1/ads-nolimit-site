@@ -442,7 +442,8 @@ dialog .eyebrow {
     min-height: 44px;
   }
 }
-@media (max-width: 479.98px) {
+/* Rất hẹp (< 400px): nút Tải app cũng chỉ còn biểu tượng */
+@media (max-width: 399.98px) {
   .dash-app {
     padding-inline: 0.7rem;
   }
@@ -453,6 +454,21 @@ dialog .eyebrow {
     overflow: hidden;
     clip-path: inset(50%);
     white-space: nowrap;
+  }
+}
+/* Điện thoại (< 480px): giữ chữ "Tải app" cho dễ thấy; Làm mới và Trang chủ chỉ còn biểu tượng */
+@media (max-width: 479.98px) {
+  #acc-refresh span {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+  }
+  #acc-refresh {
+    min-width: 44px;
+    min-height: 44px;
   }
   .dash-refresh {
     padding-inline: 0.7rem;

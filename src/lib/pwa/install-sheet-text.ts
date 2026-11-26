@@ -168,8 +168,14 @@ const items: Record<InstallPlatform, Item> = {
       en: 'Your browser has not offered its install box yet. Install from the address bar or the menu:',
     },
     steps: {
-      vi: ['Tìm biểu tượng cài {install} ở cuối thanh địa chỉ, bấm vào rồi chọn Cài đặt.', 'Hoặc bấm {dotsv} → “Truyền, lưu và chia sẻ” → “Cài đặt trang dưới dạng ứng dụng”.'],
-      en: ['Look for the install icon {install} at the end of the address bar, click it and choose Install.', 'Or click {dotsv} → “Cast, save and share” → “Install page as app”.'],
+      vi: [
+        'Tìm biểu tượng cài {install} ở cuối thanh địa chỉ, bấm vào rồi chọn Cài đặt.',
+        'Chrome / Cốc Cốc: bấm {dotsv} → “Truyền, lưu và chia sẻ” → “Cài đặt trang dưới dạng ứng dụng”. Edge: bấm ⋯ → “Ứng dụng” → “Cài đặt trang web này dưới dạng ứng dụng”.',
+      ],
+      en: [
+        'Look for the install icon {install} at the end of the address bar, click it and choose Install.',
+        'Chrome: click {dotsv} → “Cast, save and share” → “Install page as app”. Edge: click ⋯ → “Apps” → “Install this site as an app”.',
+      ],
     },
     note: {
       vi: 'Dùng Chrome, Edge hoặc Cốc Cốc. Nếu không thấy biểu tượng, có thể bạn đã cài rồi.',
@@ -237,5 +243,8 @@ export function splitStep(step: string): (string | { glyph: Glyph })[] {
 
 /** Địa chỉ mở bằng Safari (iOS 17+) / Chrome (Android) cho trình duyệt trong app; `path` gồm đường dẫn + ?query. */
 export const SITE_HOST = 'www.ads-nolimit.agency';
-export const safariUrl = (path: string): string => `x-safari-https://${SITE_HOST}${path}`;
-export const chromeUrl = (path: string): string => `intent://${SITE_HOST}${path}#Intent;scheme=https;package=com.android.chrome;end`;
+/** `host`: tên miền đang mở (bản xem trước mở đúng bản xem trước); mặc định web thật. */
+export const safariUrl = (path: string, host: string = SITE_HOST): string => `x-safari-https://${host}${path}`;
+/** Máy không có Chrome: trình duyệt mặc định mở lại trang (S.browser_fallback_url). */
+export const chromeUrl = (path: string, host: string = SITE_HOST): string =>
+  `intent://${host}${path}#Intent;scheme=https;package=com.android.chrome;S.browser_fallback_url=${encodeURIComponent(`https://${host}${path}`)};end`;
