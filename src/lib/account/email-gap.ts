@@ -34,6 +34,7 @@ export const renderEmailGap = (user: User, changed?: (user: User) => void) => {
   if (changed) onChanged = changed;
   const mode = modeOf(user);
   box.hidden = mode === 'none';
+  box.setAttribute('aria-labelledby', mode === 'verify' ? 'mailgap-title-verify' : 'mailgap-title-add');
   box.querySelectorAll<HTMLElement>('[data-mode-add]').forEach((el) => (el.hidden = mode !== 'add'));
   box.querySelectorAll<HTMLElement>('[data-mode-verify]').forEach((el) => (el.hidden = mode !== 'verify'));
   doneRow.hidden = mode === 'none' || !waiting;

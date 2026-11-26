@@ -204,9 +204,9 @@ const configJson = JSON.stringify(config).replace(/</g, '\\u003c');
         <div id="acc-notice" class="auth-alert acc-notice" role="status"></div>
 
         <!-- Khách Facebook: chưa có email → thêm email; có email chưa xác minh → nhắc xác minh. Không chặn xem các mục. -->
-        <section class="panel mailgap" id="mailgap" aria-labelledby="mailgap-title" hidden>
-          <h2 id="mailgap-title" data-mode-add hidden>{copy.gapAddTitle}</h2>
-          <h2 data-mode-verify hidden>{copy.gapVerifyTitle}</h2>
+        <section class="panel mailgap" id="mailgap" aria-labelledby="mailgap-title-add" hidden>
+          <h2 id="mailgap-title-add" data-mode-add hidden>{copy.gapAddTitle}</h2>
+          <h2 id="mailgap-title-verify" data-mode-verify hidden>{copy.gapVerifyTitle}</h2>
           <p class="mailgap-text" data-mode-add hidden>{copy.gapAddText}</p>
           <p class="mailgap-text" data-mode-verify hidden>{copy.gapVerifyText}</p>
           <form id="mailgap-form" class="mailgap-form" novalidate data-mode-add hidden>
