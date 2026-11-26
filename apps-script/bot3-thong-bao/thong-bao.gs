@@ -12,7 +12,8 @@
  *   GAS_KEY             khóa chung với Worker (trùng biến GAS_KEY của Worker) — SECRET
  *   THONG_BAO_TEMPLATE  tên mẫu tin tiện ích (mặc định thong_bao_ngan_sach_thap)
  *   THONG_BAO_LANG      mã ngôn ngữ mẫu tin (mặc định vi)
- *   GRAPH_VERSION       (không bắt buộc) phiên bản Graph API, mặc định v23.0
+ *   GRAPH_VERSION       (không bắt buộc) phiên bản Graph API, mặc định v27.0
+ *   TEST_UID            (không bắt buộc) uid khách dùng cho thuGuiMessenger() (thử gửi một tin mẫu)
  *
  * Dữ liệu Firestore (xem docs/superpowers/specs/2026-11-26-thong-bao-zalo-facebook-design.md):
  *   notifyCodes/{mã}    khách tạo trên web; ở đây đọc rồi xóa
@@ -25,7 +26,10 @@
 
 const TB_LINK_BAO_CAO = 'https://www.ads-nolimit.agency/tai-khoan/#bao-cao-ads';
 const TB_LINK_ZALO_QUAN_TRI = 'https://www.ads-nolimit.agency/quan-tri/#nhac-zalo';
-const TB_HAN_MA_MS = 7 * 24 * 60 * 60 * 1000; // mã nối hết hạn sau 7 ngày
+const TB_HAN_MA_MS = 24 * 60 * 60 * 1000; // mã nối hết hạn sau 24 giờ
+const TB_MA_TOI_DA = 5; // mỗi khách tối đa 5 mã còn hạn
+const TB_GRAPH_MAC_DINH = 'v27.0';
+const TB_LOI_VINH_VIEN = [551, 10, 200, 230]; // Graph: người nhận không nhận được / thiếu quyền → thử lại cũng vô ích
 const TB_MAU_MAC_DINH = 'thong_bao_ngan_sach_thap';
 const TB_THAN_MAU =
   'Thông báo tài khoản quảng cáo {{1}}: số dư còn khoảng {{2}}, đủ chạy khoảng {{3}} ngày. ' +
@@ -73,7 +77,7 @@ function laNgay_(x) {
   return Object.prototype.toString.call(x) === '[object Date]';
 }
 
-/** Mã còn hạn (≤ 7 ngày kể từ lúc tạo)? createdAt là Date; thiếu/hỏng → hết hạn. */
+/** Mã còn hạn (≤ 24 giờ kể từ lúc tạo)? createdAt là Date; thiếu/hỏng → hết hạn. */
 function maConHan_(createdAt, now) {
   const t = laNgay_(createdAt) ? createdAt.getTime() : NaN;
   if (isNaN(t)) return false;
@@ -81,10 +85,22 @@ function maConHan_(createdAt, now) {
   return tuoi >= -60000 && tuoi <= TB_HAN_MA_MS; // cho lệch đồng hồ 1 phút
 }
 
+/** Làm sạch một tham số của mẫu tin (Meta từ chối # $ % xuống dòng, tab): bỏ ký tự đó, gộp dấu cách, cắt 60 ký tự. */
+function sachThamSo_(v) {
+  const t = String(v === null || v === undefined ? '' : v).replace(/[#$%]/g, '').replace(/[\r\n\t]+/g, ' ').replace(/ {2,}/g, ' ').trim().slice(0, 60).trim();
+  return t || '-';
+}
+
 /** Ba tham số của mẫu tin tiện ích: tên TKQC, số dư, số ngày. Số ngày chưa tính được → "vài". */
 function thamSoMessenger_(tk, l) {
   const ngay = soNgayCon_(l);
-  return [String(tk.label || tk.accountName || 'ADS-Nolimit'), dinhDangTien_(l.balance), ngay === null ? 'vài' : String(ngay)];
+  return [sachThamSo_(tk.label || tk.accountName || 'ADS-Nolimit'), sachThamSo_(dinhDangTien_(l.balance)), ngay === null ? 'vài' : String(ngay)];
+}
+
+/** Lỗi Graph "vĩnh viễn" (thử lại cũng vô ích): mã 551, 10, 200, 230 hoặc "user not available". */
+function loiVinhVien_(r) {
+  const e = (r && r.body && r.body.error) || {};
+  return TB_LOI_VINH_VIEN.indexOf(Number(e.code)) >= 0 || /user not available/i.test(String(e.message || ''));
 }
 
 /** Nội dung tin Zalo soạn sẵn cho Chủ tịch. Không tính được số ngày thì bỏ vế "đủ chạy". */
@@ -137,7 +153,7 @@ function tbProp_(k) {
 function goiGraph_(duongDan, payload) {
   const token = tbProp_('PAGE_TOKEN');
   if (!token) return { ok: false, code: 0, body: { error: { message: 'chua dan PAGE_TOKEN' } } };
-  const ver = tbProp_('GRAPH_VERSION') || 'v23.0';
+  const ver = tbProp_('GRAPH_VERSION') || TB_GRAPH_MAC_DINH;
   try {
     const res = UrlFetchApp.fetch('https://graph.facebook.com/' + ver + '/' + duongDan, {
       method: 'post',
@@ -181,13 +197,29 @@ function xuLyMeta_(payload) {
       try {
         if (!ev || !ev.sender || !ev.sender.id) return;
         if (ev.message && ev.message.is_echo) return; // tin do chính page gửi
+        const psid = String(ev.sender.id);
         const ma = trichMaNoi_(ev);
-        if (!ma) return;
+        if (!ma) {
+          // Không có mã: chỉ đáp khi khách bấm "Bắt đầu / Get started", hoặc đã nối rồi mà nhắn lại (mỗi 6 giờ tối đa 1 lần)
+          const batDau = !!(ev.postback && ev.postback.payload === 'GET_STARTED');
+          const co = !!(ev.message && typeof ev.message.text === 'string');
+          if (!batDau && !co) return;
+          const dauDap = 'meta_dap_' + psid;
+          if (cache.get(dauDap)) return;
+          if (daNoi_(psid)) {
+            cache.put(dauDap, '1', 21600);
+            traLoiMessenger_(psid, 'Bạn đã nối thông báo rồi ✓');
+          } else if (batDau) {
+            cache.put(dauDap, '1', 3600);
+            traLoiMessenger_(psid, 'Để nối thông báo, bạn mở mục Thông báo trên web ADS-Nolimit, bấm "Nối Messenger" rồi gửi dòng mã ở đó nhé.');
+          }
+          return;
+        }
         // Meta có thể gửi lại cùng một sự kiện: chỉ xử lý một lần
-        const dau = 'meta_' + (ev.message && ev.message.mid ? ev.message.mid : String(ev.sender.id) + '_' + String(ev.timestamp || '') + '_' + ma);
+        const dau = 'meta_' + (ev.message && ev.message.mid ? ev.message.mid : psid + '_' + String(ev.timestamp || '') + '_' + ma);
         if (cache.get(dau)) return;
         cache.put(dau, '1', 3600);
-        if (noiMessenger_(String(ev.sender.id), ma)) kq.noi++; else kq.bo++;
+        if (noiMessenger_(psid, ma)) kq.noi++; else kq.bo++;
       } catch (err) {
         console.error('xuLyMeta_: ' + err);
       }
@@ -201,12 +233,13 @@ function noiMessenger_(psid, ma) {
   const doc = fsGet('notifyCodes/' + ma);
   const uid = doc && doc.data && typeof doc.data.uid === 'string' ? doc.data.uid : '';
   if (!doc || !uid) {
+    if (daNoi_(psid)) { traLoiMessenger_(psid, 'Bạn đã nối thông báo rồi ✓'); return false; }
     traLoiMessenger_(psid, 'Mã nối không đúng hoặc đã dùng rồi. Bạn mở mục Thông báo trên web ADS-Nolimit và bấm "Nối Messenger" để lấy mã mới nhé.');
     return false;
   }
   if (!maConHan_(doc.data.createdAt, new Date())) {
     try { fsCall('delete', 'notifyCodes/' + ma); } catch (e) { /* bỏ qua */ }
-    traLoiMessenger_(psid, 'Mã nối đã hết hạn (quá 7 ngày). Bạn mở mục Thông báo trên web ADS-Nolimit và bấm "Nối Messenger" để lấy mã mới nhé.');
+    traLoiMessenger_(psid, 'Mã nối đã hết hạn (quá 24 giờ). Bạn mở mục Thông báo trên web ADS-Nolimit và bấm "Nối Messenger" để lấy mã mới nhé.');
     return false;
   }
   const bay = new Date();
@@ -216,8 +249,24 @@ function noiMessenger_(psid, ma) {
   if (ten) messenger.name = ten;
   fsSet('notifyLinks/' + uid, { messenger: messenger });
   try { fsCall('delete', 'notifyCodes/' + ma); } catch (e) { console.error('Khong xoa duoc ma noi: ' + e); }
+  try { CacheService.getScriptCache().put('meta_psid_' + psid, '1', 21600); } catch (e) { /* bỏ qua */ }
   traLoiMessenger_(psid, 'Đã nối thông báo tài khoản ADS-Nolimit ✓');
   return true;
+}
+
+/** PSID này đã nối (có trong notifyPrivate)? Kết quả "có" nhớ 6 giờ, "không" nhớ 10 phút để không quét lại liên tục. */
+function daNoi_(psid) {
+  const cache = CacheService.getScriptCache();
+  if (cache.get('meta_psid_' + psid)) return true;
+  if (cache.get('meta_psid_no_' + psid)) return false;
+  let co = false;
+  try {
+    co = fsList('notifyPrivate').some(function (d) { return d.data && d.data.psid === psid; });
+  } catch (e) {
+    return false;
+  }
+  cache.put(co ? 'meta_psid_' + psid : 'meta_psid_no_' + psid, '1', co ? 21600 : 600);
+  return co;
 }
 
 /** Tin trả lời trong 24 giờ sau tin của khách (messaging_type RESPONSE). Lỗi chỉ ghi nhật ký. */
@@ -232,7 +281,7 @@ function layTenMessenger_(psid) {
   try {
     const token = tbProp_('PAGE_TOKEN');
     if (!token) return '';
-    const res = UrlFetchApp.fetch('https://graph.facebook.com/' + (tbProp_('GRAPH_VERSION') || 'v23.0') + '/' + encodeURIComponent(psid) + '?fields=name', {
+    const res = UrlFetchApp.fetch('https://graph.facebook.com/' + (tbProp_('GRAPH_VERSION') || TB_GRAPH_MAC_DINH) + '/' + encodeURIComponent(psid) + '?fields=name', {
       headers: { Authorization: 'Bearer ' + token },
       muteHttpExceptions: true,
     });
@@ -248,8 +297,11 @@ function layTenMessenger_(psid) {
 function doPostMeta_(e) {
   let payload = null;
   try { payload = JSON.parse(e.postData.contents); } catch (err) { return traLoi({ ok: false }); }
+  const lock = LockService.getScriptLock();
+  if (!lock.tryLock(10000)) return traLoi({ ok: false, loi: 'ban' });
   let kq;
   try { kq = xuLyMeta_(payload); } catch (err) { console.error('xuLyMeta_: ' + err); kq = { ok: false }; }
+  finally { lock.releaseLock(); }
   return traLoi({ ok: !!(kq && kq.ok) });
 }
 
@@ -258,10 +310,11 @@ function doPostMeta_(e) {
 /**
  * Gửi mẫu tin tiện ích cho mọi thành viên (chủ + người xem thêm) đã nối Messenger và đang bật nhận.
  * Lỗi từng người chỉ ghi vào kq.loi; KHÔNG ném lỗi (không làm hỏng đồng bộ).
- * @return {{gui:number, boQua:number, loi:string[]}}
+ * loi = lỗi tạm (thử lại giờ sau); vinhVien = lỗi vĩnh viễn (551, 10, 200, 230, user not available): coi như đã xử lý.
+ * @return {{gui:number, boQua:number, loi:string[], vinhVien:string[]}}
  */
 function guiMessengerThap_(tk, l, uids) {
-  const kq = { gui: 0, boQua: 0, loi: [] };
+  const kq = { gui: 0, boQua: 0, loi: [], vinhVien: [] };
   const mau = tbProp_('THONG_BAO_TEMPLATE') || TB_MAU_MAC_DINH;
   const lang = tbProp_('THONG_BAO_LANG') || 'vi';
   const pageId = tbProp_('PAGE_ID');
@@ -283,6 +336,7 @@ function guiMessengerThap_(tk, l, uids) {
       if (!psid || !pageId) { kq.boQua++; return; }
       const r = goiGraph_(pageId + '/messages', thanMessengerThap_(psid, mau, lang, tk, l));
       if (r.ok) kq.gui++;
+      else if (loiVinhVien_(r)) kq.vinhVien.push('Messenger ' + uid.slice(0, 6) + ' (khong gui duoc, bo qua): ' + loiGraph_(r));
       else kq.loi.push('Messenger ' + uid.slice(0, 6) + ': ' + loiGraph_(r));
     } catch (err) {
       kq.loi.push('Messenger ' + String(uid).slice(0, 6) + ': ' + err);
@@ -332,6 +386,7 @@ function ghiZaloQueue_(tk, l, uids, actId) {
  * Không ném lỗi.
  */
 function thongBaoThap_(tk, latest, homNay, patch, loiKhac) {
+  try { donDepNgay_(homNay); } catch (err) { loiKhac.push('Don dep loi: ' + err); }
   if (tk.data.lastNotifyDay === homNay) return 0;
   let zaloMoi = 0;
   try {
@@ -340,13 +395,51 @@ function thongBaoThap_(tk, latest, homNay, patch, loiKhac) {
     const ms = guiMessengerThap_(tk.data, latest, uids);
     const zl = ghiZaloQueue_(tk.data, latest, uids, tk.id);
     zaloMoi = zl.moi;
-    ms.loi.concat(zl.loi).forEach(function (e) { loiKhac.push('Thong bao ' + ten + ': ' + e); });
-    // Chỉ để lại cho giờ sau khi Messenger lỗi hết (chưa gửi được ai); nếu không thì đã báo xong hôm nay.
+    ms.loi.concat(ms.vinhVien || [], zl.loi).forEach(function (e) { loiKhac.push('Thong bao ' + ten + ': ' + e); });
+    // Lỗi TẠM với tất cả (chưa gửi được ai) → để giờ sau thử lại. Lỗi vĩnh viễn thì coi là đã xử lý (vẫn đánh dấu hôm nay).
     if (ms.gui > 0 || ms.loi.length === 0) patch.lastNotifyDay = homNay;
   } catch (err) {
     loiKhac.push('Thong bao loi: ' + err);
   }
   return zaloMoi;
+}
+
+/* ======================= Dọn dẹp (tối đa 1 lần/ngày) ======================= */
+
+/**
+ * Xóa notifyCodes hết hạn; mỗi khách giữ tối đa TB_MA_TOI_DA mã còn hạn (xóa mã cũ nhất);
+ * xóa notifyPrivate của uid đã bấm "Bỏ nối" (notifyLinks.messenger.linked === false) hoặc không còn users/{uid}.
+ * @return {{ma:number, psid:number}} số tài liệu đã xóa
+ */
+function donDep_() {
+  const kq = { ma: 0, psid: 0 };
+  const now = new Date();
+  const xoa = function (path) { try { fsCall('delete', path); return true; } catch (e) { return false; } };
+  const conHan = {};
+  fsList('notifyCodes').forEach(function (d) {
+    if (!maConHan_(d.data && d.data.createdAt, now)) { if (xoa('notifyCodes/' + d.id)) kq.ma++; return; }
+    const u = d.data && typeof d.data.uid === 'string' ? d.data.uid : '';
+    (conHan[u] = conHan[u] || []).push({ id: d.id, t: d.data.createdAt.getTime() });
+  });
+  Object.keys(conHan).forEach(function (u) {
+    conHan[u].sort(function (a, b) { return b.t - a.t; });
+    conHan[u].slice(TB_MA_TOI_DA).forEach(function (m) { if (xoa('notifyCodes/' + m.id)) kq.ma++; });
+  });
+  fsList('notifyPrivate').forEach(function (d) {
+    const lk = fsGet('notifyLinks/' + d.id);
+    const boNoi = !!(lk && lk.data && lk.data.messenger && lk.data.messenger.linked === false);
+    if (boNoi || !fsGet('users/' + d.id)) { if (xoa('notifyPrivate/' + d.id)) kq.psid++; }
+  });
+  return kq;
+}
+
+/** Gọi donDep_ tối đa 1 lần/ngày (nhớ ngày trong Thuộc tính TB_DON_NGAY; lỗi thì thử lại lần đồng bộ sau). */
+function donDepNgay_(homNay) {
+  const props = PropertiesService.getScriptProperties();
+  if (props.getProperty('TB_DON_NGAY') === homNay) return null;
+  const kq = donDep_();
+  props.setProperty('TB_DON_NGAY', homNay);
+  return kq;
 }
 
 /** Email tổng hợp cho Chủ tịch: "Có N khách cần nhắc nạp qua Zalo". Gọi cuối đồng bộ; N = 0 thì không gửi. */
@@ -372,7 +465,7 @@ function emailTongHopZalo_(soMoi) {
  * Tạo mẫu tin UTILITY của page (POST /{PAGE_ID}/message_templates). Chạy tay trong trình soạn Apps Script.
  * Meta duyệt thường trong vài giây; trạng thái về qua webhook message_template_status_update (ghi vào nhật ký).
  */
-function taoMauTinTienIch_() {
+function taoMauTinTienIch() {
   const ten = tbProp_('THONG_BAO_TEMPLATE') || TB_MAU_MAC_DINH;
   const lang = tbProp_('THONG_BAO_LANG') || 'vi';
   const r = goiGraph_(tbProp_('PAGE_ID') + '/message_templates', {
@@ -386,4 +479,67 @@ function taoMauTinTienIch_() {
   });
   console.log(r.ok ? 'Da gui yeu cau tao mau ' + ten + ': ' + JSON.stringify(r.body) : 'Chua tao duoc mau: ' + loiGraph_(r));
   return r.ok;
+}
+
+/** Chạy tay: đặt nút "Bắt đầu / Get started" cho page (payload GET_STARTED). Chạy một lần sau khi có PAGE_TOKEN. */
+function caiNutBatDau() {
+  const r = goiGraph_(tbProp_('PAGE_ID') + '/messenger_profile', { get_started: { payload: 'GET_STARTED' } });
+  Logger.log(r.ok ? 'Da cai nut Bat dau: ' + JSON.stringify(r.body) : 'Chua cai duoc nut Bat dau: ' + loiGraph_(r));
+  return r.ok;
+}
+
+/**
+ * Chạy tay: gửi MỘT tin mẫu tiện ích thử cho khách có uid trong Thuộc tính TEST_UID (khách đó phải đã nối Messenger).
+ * Kết quả ghi bằng Logger (xem Nhật ký thực thi). Không đụng tới lastNotifyDay, không ghi hàng đợi Zalo.
+ */
+function thuGuiMessenger() {
+  const uid = tbProp_('TEST_UID');
+  if (!uid) { Logger.log('Chua dat Thuoc tinh TEST_UID'); return false; }
+  const kq = guiMessengerThap_({ label: 'K-Aura (thu)' }, { balance: 1500000, daysLeft: 2 }, [uid]);
+  Logger.log('thuGuiMessenger: gui=' + kq.gui + ' boQua=' + kq.boQua + ' loi=' + JSON.stringify(kq.loi.concat(kq.vinhVien)));
+  if (kq.boQua && !kq.gui && !kq.loi.length && !kq.vinhVien.length) Logger.log('Khach nay chua noi Messenger, da tat nhan Messenger, hoac chua co PAGE_ID.');
+  return kq.gui === 1;
+}
+
+/** Chạy tay: in TÊN các Thuộc tính tập lệnh còn thiếu (không in giá trị). */
+function kiemTraCaiDat() {
+  const batBuoc = ['PAGE_ID', 'PAGE_TOKEN', 'GAS_KEY'];
+  const tuyChon = ['THONG_BAO_TEMPLATE', 'THONG_BAO_LANG', 'GRAPH_VERSION', 'TEST_UID'];
+  const thieu = batBuoc.filter(function (k) { return !tbProp_(k); });
+  const chuaDat = tuyChon.filter(function (k) { return !tbProp_(k); });
+  Logger.log(thieu.length ? 'THIEU (bat buoc): ' + thieu.join(', ') : 'Du cac thuoc tinh bat buoc.');
+  if (chuaDat.length) Logger.log('Chua dat (khong bat buoc, dung mac dinh): ' + chuaDat.join(', '));
+  return thieu;
+}
+
+/* ======================= Email: tôn trọng công tắc "Nhận email" ======================= */
+
+/**
+ * Bỏ khỏi danh sách email nhận cảnh báo những người đã TẮT email ở mục Thông báo (users/{uid}.notify.email === false).
+ * Tương ứng email ↔ uid: customerEmail ↔ uid; viewerEmails[i] ↔ viewerUids[i]. Email không biết uid, hoặc lỗi đọc → giữ nguyên.
+ */
+function locEmailNhan_(tkData, dsEmail) {
+  const uidTheoEmail = {};
+  const gan = function (e, u) {
+    const k = typeof e === 'string' ? e.trim().toLowerCase() : '';
+    if (k && typeof u === 'string' && u) uidTheoEmail[k] = u;
+  };
+  try {
+    gan(tkData.customerEmail, tkData.uid);
+    const ue = Array.isArray(tkData.viewerEmails) ? tkData.viewerEmails : [];
+    const uu = Array.isArray(tkData.viewerUids) ? tkData.viewerUids : [];
+    ue.forEach(function (e, i) { gan(e, uu[i]); });
+  } catch (err) {
+    return dsEmail;
+  }
+  return (dsEmail || []).filter(function (e) {
+    const u = uidTheoEmail[String(e).trim().toLowerCase()];
+    if (!u) return true;
+    try {
+      const d = fsGet('users/' + u);
+      return !(d && d.data && d.data.notify && d.data.notify.email === false);
+    } catch (err) {
+      return true;
+    }
+  });
 }

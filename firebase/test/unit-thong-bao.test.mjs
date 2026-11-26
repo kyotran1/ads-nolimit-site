@@ -10,18 +10,22 @@ const SRC = readFileSync(new URL('../../apps-script/bot3-thong-bao/thong-bao.gs'
 const NOW = Date.parse('2026-11-26T03:00:00Z'); // 10:00 giờ Việt Nam, 26/11/2026
 const DAY = 864e5;
 
-const makeEnv = ({ props = {}, graph = () => ({ status: 200, body: { message_id: 'm.1' } }) } = {}) => {
+const makeEnv = ({ props = {}, locked = false, graph = () => ({ status: 200, body: { message_id: 'm.1' } }) } = {}) => {
   const store = new Map(); // đường dẫn Firestore → dữ liệu
   const writes = []; // {op, path, data}
   const fetches = []; // gọi Graph
   const mails = [];
   const cache = new Map();
+  const logs = [];
+  const locks = { tried: 0, released: 0 };
   const properties = new Map(Object.entries({ PAGE_ID: 'PAGE1', PAGE_TOKEN: 'TOKEN_THU', GAS_KEY: 'KHOA_THU', ...props }));
   const ctx = {
     console: { log: () => {}, error: () => {} },
     JSON, Math, Number, String, Object, Array, RegExp, isNaN, encodeURIComponent,
     Date: class extends Date { constructor(...a) { super(...(a.length ? a : [NOW])); } static now() { return NOW; } },
-    PropertiesService: { getScriptProperties: () => ({ getProperty: (k) => (properties.has(k) ? properties.get(k) : null) }) },
+    PropertiesService: { getScriptProperties: () => ({ getProperty: (k) => (properties.has(k) ? properties.get(k) : null), setProperty: (k, v) => properties.set(k, String(v)) }) },
+    Logger: { log: (m) => logs.push(String(m)) },
+    LockService: { getScriptLock: () => ({ tryLock: (ms) => { locks.tried++; locks.ms = ms; return !locked; }, releaseLock: () => { locks.released++; } }) },
     CacheService: { getScriptCache: () => ({ get: (k) => (cache.has(k) ? cache.get(k) : null), put: (k, v) => cache.set(k, String(v)) }) },
     UrlFetchApp: {
       fetch: (url, opts) => {
@@ -36,13 +40,14 @@ const makeEnv = ({ props = {}, graph = () => ({ status: 200, body: { message_id:
     // các hàm có sẵn của bot 3 (bản giả trong bộ nhớ)
     fsGet: (path) => (store.has(path) ? { updateTime: 't', data: structuredClone(store.get(path)) } : null),
     fsSet: (path, obj) => { writes.push({ op: 'set', path, data: obj }); store.set(path, obj); },
+    fsList: (col) => [...store.entries()].filter(([k]) => k.startsWith(col + '/') && !k.slice(col.length + 1).includes('/')).map(([k, v]) => ({ id: k.slice(col.length + 1), data: structuredClone(v) })),
     fsCall: (method, path) => { if (method === 'delete') { writes.push({ op: 'delete', path }); store.delete(path); } return {}; },
     thanhVien: (d) => [...new Set([d.uid, ...(Array.isArray(d.memberUids) ? d.memberUids : [])])],
     traLoi: (o) => ({ s: JSON.stringify(o) }),
   };
   vm.createContext(ctx);
   vm.runInContext(SRC, ctx);
-  const env = { ctx, store, writes, fetches, mails, properties, cache };
+  const env = { ctx, store, writes, fetches, mails, properties, cache, logs, locks };
   env.sets = (prefix) => writes.filter((w) => w.op === 'set' && w.path.startsWith(prefix));
   env.graphBodies = () => fetches.map((f) => JSON.parse(f.opts.payload));
   return env;
@@ -86,11 +91,12 @@ describe('hàm thuần', () => {
     for (const ok of ['0912345678', '0351234567', '0881234567']) assert.equal(env.ctx.hopLeSoZalo_(ok), true, ok);
     for (const bad of ['', '0912 345 678', '+84912345678', '84912345678', '091234567', '0212345678', null, 912345678]) assert.equal(env.ctx.hopLeSoZalo_(bad), false, String(bad));
   });
-  test('maConHan_: ≤ 7 ngày còn hạn, quá 7 ngày / thiếu / hỏng thì hết hạn', () => {
+  test('maConHan_: ≤ 24 giờ còn hạn, quá 24 giờ / thiếu / hỏng thì hết hạn', () => {
     const now = new Date(NOW);
-    assert.equal(env.ctx.maConHan_(new Date(NOW - 6.9 * DAY), now), true);
-    assert.equal(env.ctx.maConHan_(new Date(NOW - 7 * DAY), now), true);
-    assert.equal(env.ctx.maConHan_(new Date(NOW - 7 * DAY - 1000), now), false);
+    assert.equal(env.ctx.maConHan_(new Date(NOW - 23.9 * 36e5), now), true);
+    assert.equal(env.ctx.maConHan_(new Date(NOW - DAY), now), true);
+    assert.equal(env.ctx.maConHan_(new Date(NOW - DAY - 1000), now), false);
+    assert.equal(env.ctx.maConHan_(new Date(NOW - 2 * DAY), now), false);
     assert.equal(env.ctx.maConHan_(undefined, now), false);
     assert.equal(env.ctx.maConHan_('2026-11-25', now), false);
     assert.equal(env.ctx.maConHan_(new Date(NOW + 10 * 60000), now), false, 'mã "từ tương lai" không hợp lệ');
@@ -171,9 +177,9 @@ describe('xuLyMeta_ (webhook từ Worker)', () => {
       assert.equal(env.store.get('notifyPrivate/lan').psid, 'P1');
     }
   });
-  test('mã hết hạn (> 7 ngày) → không nối, xóa mã, báo khách tạo mã mới', () => {
+  test('mã hết hạn (> 24 giờ) → không nối, xóa mã, báo khách tạo mã mới', () => {
     const env = makeEnv();
-    seedCode(env, new Date(NOW - 8 * DAY));
+    seedCode(env, new Date(NOW - 25 * 36e5));
     const r = call(env, 'xuLyMeta_', hook(evText('NOI-' + CODE)));
     assert.equal(r.noi, 0);
     assert.equal(env.store.has('notifyPrivate/lan'), false);
@@ -241,6 +247,14 @@ describe('xuLyMeta_ (webhook từ Worker)', () => {
     assert.deepEqual(JSON.parse(env.ctx.doPostMeta_({ postData: { contents: '{hong' } }).s), { ok: false });
     assert.deepEqual(JSON.parse(env.ctx.doPostMeta_({ postData: { contents: JSON.stringify(hook(evText('NOI-' + CODE))) } }).s), { ok: true });
     assert.deepEqual(JSON.parse(env.ctx.doPostMeta_({ postData: { contents: JSON.stringify({ ...hook(), key: 'SAI' }) } }).s), { ok: false });
+    assert.equal(env.locks.ms, 10000);
+    assert.equal(env.locks.released, env.locks.tried, 'khóa luôn được nhả');
+  });
+  test('N5: không lấy được khóa trong 10 giây → trả {ok:false}, không xử lý', () => {
+    const env = makeEnv({ locked: true });
+    seedCode(env);
+    assert.equal(JSON.parse(env.ctx.doPostMeta_({ postData: { contents: JSON.stringify(hook(evText('NOI-' + CODE))) } }).s).ok, false);
+    assert.equal(env.store.has('notifyPrivate/lan'), false);
   });
 });
 
@@ -296,15 +310,34 @@ describe('guiMessengerThap_', () => {
     assert.equal(env.fetches.length, 0);
     assert.equal(env.store.has('notifyPrivate/nam'), false, 'PSID bị xóa sau khi bỏ nối');
   });
-  test('Graph lỗi một người → ghi lỗi, người khác vẫn được gửi, không ném lỗi', () => {
+  test('Graph lỗi tạm một người → ghi lỗi, người khác vẫn được gửi, không ném lỗi', () => {
     let n = 0;
-    const env = makeEnv({ graph: () => (++n === 1 ? { status: 400, body: { error: { code: 551, message: 'nguoi dung khong nhan duoc' } } } : { status: 200, body: {} }) });
+    const env = makeEnv({ graph: () => (++n === 1 ? { status: 500, body: { error: { code: 2, message: 'tam thoi' } } } : { status: 200, body: {} }) });
     for (const uid of ['lan', 'nam']) { env.store.set('users/' + uid, user(null)); linkedFor(env, uid); }
     const kq = call(env, 'guiMessengerThap_', tk, latest, ['lan', 'nam']);
     assert.equal(kq.gui, 1);
     assert.equal(kq.loi.length, 1);
-    assert.match(kq.loi[0], /551/);
+    assert.equal(kq.vinhVien.length, 0);
+    assert.match(kq.loi[0], /tam thoi/);
     assert.equal(kq.loi[0].includes('TOKEN_THU'), false);
+  });
+  test('V3: lỗi vĩnh viễn (551, 10, 200, 230, "user not available") vào vinhVien, không vào loi', () => {
+    for (const [code, msg] of [[551, 'x'], [10, 'x'], [200, 'x'], [230, 'x'], [100, '(#100) The user not available']]) {
+      const env = makeEnv({ graph: () => ({ status: 400, body: { error: { code, message: msg } } }) });
+      env.store.set('users/lan', user(null)); linkedFor(env, 'lan');
+      const kq = call(env, 'guiMessengerThap_', tk, latest, ['lan']);
+      assert.equal(kq.loi.length, 0, String(code));
+      assert.equal(kq.vinhVien.length, 1, String(code));
+    }
+  });
+  test('V3: tham số mẫu bị lọc # $ % xuống dòng tab, gộp khoảng trắng, cắt 60 ký tự', () => {
+    const env = makeEnv();
+    assert.equal(env.ctx.sachThamSo_('A#B$C%D\nE\tF   G'), 'ABCD E F G');
+    assert.equal(env.ctx.sachThamSo_('x'.repeat(100)).length, 60);
+    assert.equal(env.ctx.sachThamSo_('###'), '-');
+    assert.equal(env.ctx.sachThamSo_(undefined), '-');
+    const p = [...env.ctx.thamSoMessenger_({ label: 'Tên\n#lạ  $ với %' }, { balance: 1, daysLeft: 1 })];
+    assert.equal(p[0], 'Tên lạ với');
   });
   test('mạng hỏng (ném lỗi) / thiếu PAGE_TOKEN → ghi lỗi, không ném', () => {
     const e1 = makeEnv({ graph: () => ({ throw: 'mang hong' }) });
@@ -418,6 +451,17 @@ describe('thongBaoThap_ (1 lần/ngày/TKQC) + email tổng hợp', () => {
     assert.equal(r.patch.lastNotifyDay, undefined);
     assert.equal(r.loiKhac.length, 1);
   });
+  test('V3: lỗi vĩnh viễn → vẫn đánh dấu lastNotifyDay, lỗi vào loiKhac; lần sau không gọi lại', () => {
+    const env = makeEnv({ graph: () => ({ status: 400, body: { error: { code: 551, message: 'khong nhan duoc' } } }) });
+    env.store.set('users/lan', user(null)); linkedFor(env, 'lan');
+    const r = run(env, { ...tk, memberUids: ['lan'] });
+    assert.equal(r.patch.lastNotifyDay, '2026-11-26');
+    assert.equal(r.loiKhac.length, 1);
+    assert.match(r.loiKhac[0], /551/);
+    const f = env.fetches.length;
+    run(env, { ...tk, memberUids: ['lan'], lastNotifyDay: '2026-11-26' });
+    assert.equal(env.fetches.length, f);
+  });
   test('không ai nối Messenger/bật Zalo → vẫn đánh dấu đã xử lý hôm nay, không gửi gì', () => {
     const env = makeEnv();
     env.store.set('users/lan', user(null));
@@ -438,10 +482,10 @@ describe('thongBaoThap_ (1 lần/ngày/TKQC) + email tổng hợp', () => {
   });
 });
 
-describe('taoMauTinTienIch_ + an toàn khóa', () => {
+describe('taoMauTinTienIch + an toàn khóa', () => {
   test('gửi đúng mẫu UTILITY: tên, ngôn ngữ, thân có {{1}}{{2}}{{3}}, nút URL "Xem báo cáo"', () => {
     const env = makeEnv();
-    assert.equal(env.ctx.taoMauTinTienIch_(), true);
+    assert.equal(env.ctx.taoMauTinTienIch(), true);
     assert.ok(env.fetches[0].url.endsWith('/PAGE1/message_templates'));
     const b = JSON.parse(env.fetches[0].opts.payload);
     assert.equal(b.category, 'UTILITY');
@@ -455,5 +499,142 @@ describe('taoMauTinTienIch_ + an toàn khóa', () => {
   test('tệp .gs không chứa khóa/mã bí mật gắn cứng và không định nghĩa lại tên của bot 3', () => {
     assert.equal(/EAA[A-Za-z0-9]{20,}|sk-ant|const\s+KHOA\b/.test(SRC), false);
     for (const dup of ['function vnd(', 'function doPost(', 'function fsCall(', 'function fsGet(', 'function guiEmail(', 'const WEB ', 'const FS ', 'const DU_AN', 'const TZ ']) assert.equal(SRC.includes(dup), false, dup);
+  });
+});
+
+describe('V2: Bắt đầu / đã nối rồi', () => {
+  const batDau = (psid = 'PSID9') => ({ sender: { id: psid }, recipient: { id: 'PAGE1' }, timestamp: NOW, postback: { payload: 'GET_STARTED', title: 'Get Started' } });
+  test('PSID đã nối nhắn lại không kèm mã → "Bạn đã nối thông báo rồi ✓", không ghi gì, chỉ 1 lần/6 giờ', () => {
+    const env = makeEnv();
+    env.store.set('notifyPrivate/lan', { psid: 'PSID9' });
+    const w = env.writes.length;
+    call(env, 'xuLyMeta_', hook(evText('xin chào')));
+    call(env, 'xuLyMeta_', hook(evText('alo')));
+    assert.equal(env.graphBodies().length, 1);
+    assert.equal(env.graphBodies()[0].message.text, 'Bạn đã nối thông báo rồi ✓');
+    assert.equal(env.writes.length, w);
+  });
+  test('mã không còn (đã dùng) nhưng PSID đã nối → "Bạn đã nối thông báo rồi ✓" thay vì báo mã sai', () => {
+    const env = makeEnv();
+    env.store.set('notifyPrivate/lan', { psid: 'PSID9' });
+    const r = call(env, 'xuLyMeta_', hook(evText('NOI-' + CODE)));
+    assert.equal(r.noi, 0);
+    assert.equal(env.graphBodies()[0].message.text, 'Bạn đã nối thông báo rồi ✓');
+  });
+  test('Bắt đầu (GET_STARTED) khi chưa nối, không có mã → hướng dẫn mở mục Thông báo; không ghi gì', () => {
+    const env = makeEnv();
+    call(env, 'xuLyMeta_', hook(batDau()));
+    assert.equal(env.graphBodies().length, 1);
+    assert.match(env.graphBodies()[0].message.text, /Nối Messenger/);
+    assert.equal(env.writes.length, 0);
+  });
+  test('chưa nối + nhắn chữ thường, không mã → im lặng (không spam)', () => {
+    const env = makeEnv();
+    call(env, 'xuLyMeta_', hook(evText('xin chào')));
+    assert.equal(env.fetches.length, 0);
+  });
+  test('Bắt đầu kèm mã trong referral → nối bình thường', () => {
+    const env = makeEnv();
+    seedCode(env);
+    const ev = { ...batDau(), postback: { payload: 'GET_STARTED', referral: { ref: 'NOI-' + CODE } } };
+    assert.equal(call(env, 'xuLyMeta_', hook(ev)).noi, 1);
+  });
+  test('caiNutBatDau: gửi POST /{PAGE_ID}/messenger_profile với get_started GET_STARTED', () => {
+    const env = makeEnv();
+    assert.equal(env.ctx.caiNutBatDau(), true);
+    assert.ok(env.fetches[0].url.includes('/PAGE1/messenger_profile'));
+    assert.deepEqual(JSON.parse(env.fetches[0].opts.payload), { get_started: { payload: 'GET_STARTED' } });
+  });
+});
+
+describe('N2/N3: dọn dẹp', () => {
+  const H = 36e5;
+  test('xóa mã hết hạn; mỗi khách giữ tối đa 5 mã còn hạn (giữ mới nhất)', () => {
+    const env = makeEnv();
+    for (let i = 0; i < 7; i++) env.store.set('notifyCodes/C' + i, { uid: 'lan', createdAt: new Date(NOW - (i + 1) * H) });
+    env.store.set('notifyCodes/CCU', { uid: 'lan', createdAt: new Date(NOW - 30 * H) });
+    env.store.set('notifyCodes/KHAC', { uid: 'nam', createdAt: new Date(NOW - H) });
+    const kq = call(env, 'donDep_');
+    assert.equal(kq.ma, 3); // 1 hết hạn + 2 dư
+    assert.equal(env.store.has('notifyCodes/CCU'), false);
+    assert.equal(env.store.has('notifyCodes/C5'), false);
+    assert.equal(env.store.has('notifyCodes/C6'), false);
+    for (const k of ['C0', 'C1', 'C2', 'C3', 'C4', 'KHAC']) assert.equal(env.store.has('notifyCodes/' + k), true, k);
+  });
+  test('xóa notifyPrivate của người đã bỏ nối hoặc không còn users/{uid}; giữ người còn nối', () => {
+    const env = makeEnv();
+    env.store.set('users/a', user(null)); env.store.set('users/b', user(null));
+    env.store.set('notifyPrivate/a', { psid: '1' }); env.store.set('notifyLinks/a', { messenger: { linked: true } });
+    env.store.set('notifyPrivate/b', { psid: '2' }); env.store.set('notifyLinks/b', { messenger: { linked: false } });
+    env.store.set('notifyPrivate/c', { psid: '3' }); // không có users/c
+    const kq = call(env, 'donDep_');
+    assert.equal(kq.psid, 2);
+    assert.equal(env.store.has('notifyPrivate/a'), true);
+    assert.equal(env.store.has('notifyPrivate/b'), false);
+    assert.equal(env.store.has('notifyPrivate/c'), false);
+  });
+  test('donDepNgay_ chỉ chạy 1 lần mỗi ngày; sang ngày mới chạy lại', () => {
+    const env = makeEnv();
+    env.store.set('notifyCodes/X', { uid: 'u', createdAt: new Date(NOW - 40 * H) });
+    assert.ok(env.ctx.donDepNgay_('2026-11-26'));
+    env.store.set('notifyCodes/Y', { uid: 'u', createdAt: new Date(NOW - 40 * H) });
+    assert.equal(env.ctx.donDepNgay_('2026-11-26'), null);
+    assert.equal(env.store.has('notifyCodes/Y'), true);
+    assert.ok(env.ctx.donDepNgay_('2026-11-27'));
+    assert.equal(env.store.has('notifyCodes/Y'), false);
+  });
+});
+
+describe('Q1: locEmailNhan_ (công tắc Nhận email)', () => {
+  const tkE = { uid: 'lan', customerEmail: 'Lan@Example.com', viewerEmails: ['nam@example.com', 'xa@example.com'], viewerUids: ['nam', 'xa'] };
+  const dsE = ['lan@example.com', 'nam@example.com', 'xa@example.com', 'la@example.com'];
+  test('bỏ email của người tắt notify.email === false; giữ người bật, người chưa có hồ sơ/notify, và email không biết uid', () => {
+    const env = makeEnv();
+    env.store.set('users/lan', user({ email: false, messenger: false, zalo: false, zaloPhone: '' }));
+    env.store.set('users/nam', user({ email: true, messenger: false, zalo: false, zaloPhone: '' }));
+    // xa: không có hồ sơ
+    assert.deepEqual(call(env, 'locEmailNhan_', tkE, dsE), ['nam@example.com', 'xa@example.com', 'la@example.com']);
+  });
+  test('viewerEmails[i] ↔ viewerUids[i]: tắt ở người xem → chỉ bỏ đúng email đó', () => {
+    const env = makeEnv();
+    env.store.set('users/xa', user({ email: false, messenger: false, zalo: false, zaloPhone: '' }));
+    env.store.set('users/nam', user(null));
+    assert.deepEqual(call(env, 'locEmailNhan_', tkE, dsE), ['lan@example.com', 'nam@example.com', 'la@example.com']);
+  });
+  test('lỗi đọc Firestore → giữ nguyên danh sách', () => {
+    const env = makeEnv();
+    env.ctx.fsGet = () => { throw new Error('mang'); };
+    assert.deepEqual(call(env, 'locEmailNhan_', tkE, dsE), dsE);
+  });
+  test('danh sách rỗng / thiếu trường → không lỗi', () => {
+    const env = makeEnv();
+    assert.deepEqual(call(env, 'locEmailNhan_', {}, []), []);
+    assert.deepEqual(call(env, 'locEmailNhan_', {}, ['a@b.c']), ['a@b.c']);
+  });
+});
+
+describe('Q3: hàm chạy tay', () => {
+  test('thuGuiMessenger: dùng TEST_UID, ghi Logger, không đụng lastNotifyDay/zaloQueue', () => {
+    const env = makeEnv({ props: { TEST_UID: 'lan' } });
+    env.store.set('users/lan', user(null)); linkedFor(env, 'lan');
+    assert.equal(env.ctx.thuGuiMessenger(), true);
+    assert.equal(env.fetches.length, 1);
+    assert.ok(env.logs.some((l) => /gui=1/.test(l)));
+    assert.equal(env.writes.length, 0);
+  });
+  test('thuGuiMessenger: thiếu TEST_UID → ghi Logger, không gọi Graph', () => {
+    const env = makeEnv();
+    assert.equal(env.ctx.thuGuiMessenger(), false);
+    assert.equal(env.fetches.length, 0);
+    assert.ok(env.logs.some((l) => /TEST_UID/.test(l)));
+  });
+  test('kiemTraCaiDat: chỉ in TÊN thuộc tính thiếu, không in giá trị', () => {
+    const env = makeEnv({ props: { PAGE_TOKEN: '' } });
+    const thieu = call(env, 'kiemTraCaiDat');
+    assert.deepEqual(thieu, ['PAGE_TOKEN']);
+    const out = env.logs.join('\n');
+    assert.match(out, /PAGE_TOKEN/);
+    assert.equal(out.includes('KHOA_THU'), false);
+    assert.equal(out.includes('PAGE1'), false);
   });
 });
