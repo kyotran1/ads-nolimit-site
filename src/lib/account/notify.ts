@@ -310,6 +310,7 @@ const checkLink = async (): Promise<boolean> => {
       linked = true;
       savePending(null);
       stopPolling();
+      say(els.status, ''); // xóa dòng "Đã chờ khá lâu…" nếu đang hiện
       render();
       toast(T.linked);
     }
