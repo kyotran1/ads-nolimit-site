@@ -14,6 +14,7 @@ import { renderAdAccounts } from './accounts';
 import { renderCustomer } from './customer';
 import { renderContent } from './content';
 import { renderSettings } from './settings';
+import { renderZaloQueue } from './zalo-queue';
 
 const tabs: Record<string, { title: string; render: (root: HTMLElement) => Promise<void> | void }> = {
   'tong-quan': { title: 'Tổng quan', render: renderOverview },
@@ -24,6 +25,7 @@ const tabs: Record<string, { title: string; render: (root: HTMLElement) => Promi
   'tai-khoan-quang-cao': { title: 'Tài khoản quảng cáo', render: renderAdAccounts },
   'key-may': { title: 'Key & máy', render: renderKeys },
   'noi-dung': { title: 'Khóa học & Hướng dẫn', render: renderContent },
+  'nhac-zalo': { title: 'Nhắc qua Zalo', render: renderZaloQueue },
   'cai-dat': { title: 'Cài đặt thanh toán', render: renderSettings },
 };
 

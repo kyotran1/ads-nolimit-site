@@ -21,6 +21,7 @@ import Overview from '../components/account/Overview.astro';
 import TopUp from '../components/account/TopUp.astro';
 import Orders from '../components/account/Orders.astro';
 import AdReports from '../components/account/AdReports.astro';
+import Notify from '../components/account/Notify.astro';
 import Services from '../components/account/Services.astro';
 import Courses from '../components/account/Courses.astro';
 import Guides from '../components/account/Guides.astro';
@@ -227,6 +228,7 @@ const configJson = JSON.stringify(config).replace(/</g, '\\u003c');
         <TopUp lang={lang} />
         <Orders lang={lang} />
         <AdReports lang={lang} />
+        <Notify lang={lang} />
         <Services lang={lang} />
         <Courses lang={lang} />
         <Guides lang={lang} />
