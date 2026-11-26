@@ -20,7 +20,7 @@ const makeEnv = ({ props = {}, locked = false, graph = () => ({ status: 200, bod
   const locks = { tried: 0, released: 0 };
   const properties = new Map(Object.entries({ PAGE_ID: 'PAGE1', PAGE_TOKEN: 'TOKEN_THU', GAS_KEY: 'KHOA_THU', ...props }));
   const ctx = {
-    console: { log: () => {}, error: () => {} },
+    console: { log: () => {}, warn: () => {}, error: () => {} },
     JSON, Math, Number, String, Object, Array, RegExp, isNaN, encodeURIComponent,
     Date: class extends Date { constructor(...a) { super(...(a.length ? a : [NOW])); } static now() { return NOW; } },
     PropertiesService: { getScriptProperties: () => ({ getProperty: (k) => (properties.has(k) ? properties.get(k) : null), setProperty: (k, v) => properties.set(k, String(v)) }) },
