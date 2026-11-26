@@ -2,7 +2,7 @@
 /** Trang Chính sách bảo mật (/chinh-sach-bao-mat/ và /en/privacy/). */
 import BaseLayout from '../layouts/BaseLayout.astro';
 import PageHero from '../components/PageHero.astro';
-import { contact, links } from '../config/site';
+import { authProviders, contact, links } from '../config/site';
 import { analytics } from '../config/analytics';
 import type { Lang } from '../config/i18n';
 import { localize } from '../config/i18n';
@@ -110,7 +110,7 @@ const termsPage = { vi: localize('/dieu-khoan/', 'vi'), en: localize('/dieu-khoa
                 không dùng bộ mã Facebook (Facebook SDK) trên website.
               </li>
               <li>
-                ADS-Nolimit chỉ nhận <strong>tên, email và ảnh đại diện</strong> của tài khoản Facebook bạn dùng để đăng nhập. Chúng tôi không đăng bài,
+                ADS-Nolimit chỉ nhận <strong>tên, email, ảnh đại diện và mã định danh Facebook dành riêng cho ứng dụng (app-scoped ID)</strong> của tài khoản Facebook bạn dùng để đăng nhập. Chúng tôi không đăng bài,
                 không đọc danh sách bạn bè, tin nhắn hay thông tin nào khác trên Facebook của bạn.
               </li>
               <li>
@@ -118,7 +118,8 @@ const termsPage = { vi: localize('/dieu-khoan/', 'vi'), en: localize('/dieu-khoa
                 Facebook cần được xác minh trước khi dùng cho những việc cần xác nhận danh tính, như được cấp quyền xem báo cáo.
               </li>
               <li>
-                Bạn có thể nối hoặc bỏ nối Facebook ở <a href={accountPage.vi}>Tài khoản → Bảo mật</a>, và gỡ ADS-Nolimit khỏi Facebook trong
+                {authProviders.facebook && (<Fragment>Bạn có thể nối hoặc bỏ nối Facebook ở <a href={accountPage.vi}>Tài khoản → Bảo mật</a>, và gỡ</Fragment>)}
+                {!authProviders.facebook && 'Bạn có thể gỡ'} ADS-Nolimit khỏi Facebook trong
                 Cài đặt → Ứng dụng và trang web. Cách xóa tài khoản và dữ liệu: <a href={deletionPage}>Hướng dẫn xóa dữ liệu</a>.
               </li>
             </ul>
@@ -301,7 +302,7 @@ const termsPage = { vi: localize('/dieu-khoan/', 'vi'), en: localize('/dieu-khoa
                 ADS-Nolimit does not load the Facebook SDK on the website.
               </li>
               <li>
-                ADS-Nolimit only receives the <strong>name, email and profile picture</strong> of the Facebook account you sign in with. We do not
+                ADS-Nolimit only receives the <strong>name, email, profile picture and the app-scoped Facebook ID</strong> of the Facebook account you sign in with. We do not
                 post, read your friends list, your messages or anything else on your Facebook.
               </li>
               <li>
@@ -309,7 +310,8 @@ const termsPage = { vi: localize('/dieu-khoan/', 'vi'), en: localize('/dieu-khoa
                 from Facebook must be verified before it is used for things that need identity confirmation, such as report access.
               </li>
               <li>
-                You can link or unlink Facebook in <a href={accountPage.en}>Account → Security</a>, and remove ADS-Nolimit from Facebook under
+                {authProviders.facebook && (<Fragment>You can link or unlink Facebook in <a href={accountPage.en}>Account → Security</a>, and remove</Fragment>)}
+                {!authProviders.facebook && 'You can remove'} ADS-Nolimit from Facebook under
                 Settings → Apps and websites. How to delete your account and data: <a href={deletionPage}>Data deletion instructions</a>.
               </li>
             </ul>
