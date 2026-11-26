@@ -528,8 +528,17 @@ function caiNutBatDau() {
  * Kết quả ghi bằng Logger (xem Nhật ký thực thi). Không đụng tới lastNotifyDay, không ghi hàng đợi Zalo.
  */
 function thuGuiMessenger() {
-  const uid = tbProp_('TEST_UID');
-  if (!uid) { Logger.log('Chua dat Thuoc tinh TEST_UID'); return false; }
+  // Không đặt TEST_UID → lấy người vừa nối Messenger gần nhất (chỉ chạy tay, để Chủ tịch thử ngay sau khi tự nối)
+  let uid = tbProp_('TEST_UID');
+  if (!uid) {
+    let moiNhat = 0;
+    fsList('notifyPrivate').forEach(function (d) {
+      const t = d.data && d.data.linkedAt instanceof Date ? d.data.linkedAt.getTime() : 0;
+      if (t > moiNhat) { moiNhat = t; uid = d.id; }
+    });
+    if (!uid) { Logger.log('Chua co ai noi Messenger va chua dat TEST_UID'); return false; }
+    Logger.log('Khong co TEST_UID: thu gui cho nguoi noi Messenger gan nhat (luc ' + new Date(moiNhat).toISOString() + ')');
+  }
   const kq = guiMessengerThap_({ label: 'K-Aura (thu)' }, { balance: 1500000, daysLeft: 2 }, [uid]);
   Logger.log('thuGuiMessenger: gui=' + kq.gui + ' boQua=' + kq.boQua + ' loi=' + JSON.stringify(kq.loi.concat(kq.vinhVien)));
   if (kq.boQua && !kq.gui && !kq.loi.length && !kq.vinhVien.length) Logger.log('Khach nay chua noi Messenger, da tat nhan Messenger, hoac chua co PAGE_ID.');
