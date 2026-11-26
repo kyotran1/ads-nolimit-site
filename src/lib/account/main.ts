@@ -22,6 +22,7 @@ import './courses';
 import './guides';
 import './keys';
 import './reports';
+import './notify';
 import { loadProfile } from './profile';
 import { isLeaving, renderSecurity, whenDeleted } from './security';
 import { gate, initLocks } from './locked';

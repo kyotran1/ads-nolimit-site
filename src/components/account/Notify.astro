@@ -1,0 +1,181 @@
+---
+/**
+ * Mục "Thông báo" của trang Tài khoản: nhận báo khi tài khoản quảng cáo sắp hết ngân sách qua Email, Messenger và Zalo.
+ * Xử lý: src/lib/account/notify.ts (pure: notify-format.ts). Dữ liệu: users/{uid}.notify, notifyCodes, notifyLinks (xem firestore.rules).
+ * Tên class/id dùng tiền tố nt- (trình chặn quảng cáo không đụng).
+ */
+import '../../styles/notify.css';
+import Icon from '../Icon.astro';
+import { contact } from '../../config/site';
+import type { Lang } from '../../config/i18n';
+
+interface Props {
+  lang: Lang;
+}
+const { lang } = Astro.props;
+
+const copy = {
+  vi: {
+    lead: 'Chọn cách nhận thông báo khi tài khoản quảng cáo của bạn sắp hết ngân sách (số dư thấp hoặc chỉ đủ chạy vài ngày). Chỉ thông báo về tài khoản, không có tin khuyến mãi.',
+    emailTitle: 'Email',
+    emailText: 'Gửi tới email đăng nhập của bạn.',
+    emailSwitch: 'Nhận thông báo qua email',
+    msgTitle: 'Messenger',
+    msgText: 'Nhận tin nhắn từ trang Facebook ADS-Nolimit ngay trong Messenger.',
+    msgOff: 'Chưa nối Messenger',
+    msgConnect: 'Nối Messenger',
+    msgOffHint: 'Bấm nút, Messenger sẽ mở ra. Bạn chỉ cần gửi tin có sẵn, rồi quay lại đây.',
+    msgWait: 'Đang chờ tin nhắn của bạn',
+    msgStep1: 'Trong Messenger, gửi tin nhắn có sẵn (đừng sửa mã trong tin).',
+    msgStep2: 'Quay lại trang này. Trạng thái tự chuyển sang "Đã nối".',
+    msgNoText: 'Messenger không có sẵn tin? Gửi đúng dòng này:',
+    msgSent: 'Tôi đã gửi',
+    msgReopen: 'Mở lại Messenger',
+    msgCancel: 'Hủy',
+    msgOn: 'Đã nối ✓',
+    msgOnSwitch: 'Nhận thông báo qua Messenger',
+    msgUnlink: 'Bỏ nối',
+    zaloTitle: 'Zalo',
+    zaloText: `Tin Zalo do nhân viên ADS-Nolimit gửi từ số ${contact.zaloPhone}, chỉ để báo ngân sách thấp.`,
+    zaloLabel: 'Số Zalo của bạn',
+    zaloHint: '10 số, ví dụ 0912345678. Bạn có thể gõ có dấu cách hoặc +84.',
+    zaloSwitch: 'Nhắc tôi qua Zalo',
+    zaloSave: 'Lưu số Zalo',
+    consent: 'Khi bật một kênh, bạn đồng ý nhận thông báo về tài khoản qua kênh đó. ADS-Nolimit không gửi quảng cáo hay khuyến mãi qua các kênh này. Bạn tắt hoặc bỏ nối bất cứ lúc nào.',
+    loading: 'Đang tải…',
+  },
+  en: {
+    lead: 'Choose how to be told when your ad account is running low on budget (low balance, or only a few days of spend left). Account notices only, no promotions.',
+    emailTitle: 'Email',
+    emailText: 'Sent to your sign-in email.',
+    emailSwitch: 'Notify me by email',
+    msgTitle: 'Messenger',
+    msgText: 'Get a message from the ADS-Nolimit Facebook page right in Messenger.',
+    msgOff: 'Messenger not connected',
+    msgConnect: 'Connect Messenger',
+    msgOffHint: 'Press the button and Messenger opens. Just send the ready-made message, then come back here.',
+    msgWait: 'Waiting for your message',
+    msgStep1: 'In Messenger, send the ready-made message (do not change the code in it).',
+    msgStep2: 'Come back to this page. The status switches to "Connected" by itself.',
+    msgNoText: 'No ready-made message in Messenger? Send exactly this line:',
+    msgSent: 'I sent it',
+    msgReopen: 'Reopen Messenger',
+    msgCancel: 'Cancel',
+    msgOn: 'Connected ✓',
+    msgOnSwitch: 'Notify me on Messenger',
+    msgUnlink: 'Disconnect',
+    zaloTitle: 'Zalo',
+    zaloText: `Zalo messages are sent by ADS-Nolimit staff from ${contact.zaloPhone}, only to warn you about low budget.`,
+    zaloLabel: 'Your Zalo number',
+    zaloHint: '10 digits, for example 0912345678. You can type spaces or +84.',
+    zaloSwitch: 'Remind me on Zalo',
+    zaloSave: 'Save Zalo number',
+    consent: 'When you turn a channel on, you agree to receive account notices through it. ADS-Nolimit sends no advertising or promotions on these channels. You can turn them off or disconnect at any time.',
+    loading: 'Loading…',
+  },
+}[lang];
+---
+
+<section class="view" data-view="notify" hidden>
+  <p class="view-lead">{copy.lead}</p>
+  <div id="nt-alert" class="auth-alert" role="alert"></div>
+  <div id="nt-status" class="auth-alert" role="status"></div>
+
+  <div class="nt-grid" id="nt-grid" aria-busy="true">
+    <!-- Email -->
+    <section class="panel acc-panel nt-card" aria-labelledby="nt-email-title">
+      <header class="nt-head">
+        <span class="nt-ico" aria-hidden="true"><Icon name="mail" /></span>
+        <div class="nt-head-text">
+          <h2 id="nt-email-title">{copy.emailTitle}</h2>
+          <p class="acc-panel-lead">{copy.emailText}</p>
+        </div>
+      </header>
+      <label class="nt-switch">
+        <input type="checkbox" role="switch" id="nt-email" disabled />
+        <span class="nt-track" aria-hidden="true"></span>
+        <span class="nt-switch-text">{copy.emailSwitch}</span>
+      </label>
+    </section>
+
+    <!-- Messenger -->
+    <section class="panel acc-panel nt-card" aria-labelledby="nt-msg-title">
+      <header class="nt-head">
+        <span class="nt-ico" aria-hidden="true"><Icon name="messenger" /></span>
+        <div class="nt-head-text">
+          <h2 id="nt-msg-title">{copy.msgTitle}</h2>
+          <p class="acc-panel-lead">{copy.msgText}</p>
+        </div>
+      </header>
+
+      <div class="nt-msg" id="nt-msg" data-state="off">
+        <div class="nt-block" data-when="off">
+          <p class="nt-state"><span class="nt-dot" aria-hidden="true"></span>{copy.msgOff}</p>
+          <div class="nt-actions">
+            <button type="button" class="btn btn-primary nt-btn" id="nt-connect"><Icon name="messenger" />{copy.msgConnect}</button>
+          </div>
+          <p class="field-hint">{copy.msgOffHint}</p>
+        </div>
+
+        <div class="nt-block" data-when="wait" hidden>
+          <p class="nt-state nt-state--wait"><span class="spinner" aria-hidden="true"></span>{copy.msgWait}</p>
+          <ol class="nt-steps">
+            <li>{copy.msgStep1}</li>
+            <li>{copy.msgStep2}</li>
+          </ol>
+          <p class="field-hint">{copy.msgNoText}</p>
+          <div class="nt-code">
+            <code id="nt-code-text" class="mono"></code>
+            <button type="button" class="btn btn-sm nt-btn" id="nt-code-copy">{lang === "en" ? "Copy" : "Chép"}</button>
+          </div>
+          <div class="nt-actions">
+            <button type="button" class="btn btn-primary nt-btn" id="nt-check">{copy.msgSent}</button>
+            <a class="btn nt-btn" id="nt-reopen" href="#" target="_blank" rel="noopener">{copy.msgReopen}</a>
+            <button type="button" class="btn btn-ghost nt-btn" id="nt-cancel">{copy.msgCancel}</button>
+          </div>
+        </div>
+
+        <div class="nt-block" data-when="on" hidden>
+          <p class="nt-state nt-state--on"><span class="nt-dot nt-dot--on" aria-hidden="true"></span>{copy.msgOn}</p>
+          <label class="nt-switch">
+            <input type="checkbox" role="switch" id="nt-messenger" disabled />
+            <span class="nt-track" aria-hidden="true"></span>
+            <span class="nt-switch-text">{copy.msgOnSwitch}</span>
+          </label>
+          <div class="nt-actions">
+            <button type="button" class="btn btn-ghost nt-btn" id="nt-unlink">{copy.msgUnlink}</button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Zalo -->
+    <section class="panel acc-panel nt-card" aria-labelledby="nt-zalo-title">
+      <header class="nt-head">
+        <span class="nt-ico" aria-hidden="true"><Icon name="zalo" /></span>
+        <div class="nt-head-text">
+          <h2 id="nt-zalo-title">{copy.zaloTitle}</h2>
+          <p class="acc-panel-lead">{copy.zaloText}</p>
+        </div>
+      </header>
+      <form id="nt-zalo-form" class="acc-form nt-zalo-form" novalidate>
+        <div class="field">
+          <label for="nt-zalo-phone">{copy.zaloLabel}</label>
+          <input id="nt-zalo-phone" name="zaloPhone" type="tel" inputmode="tel" autocomplete="tel" maxlength="20" aria-describedby="nt-zalo-phone-hint nt-zalo-phone-error" disabled />
+          <p class="field-hint" id="nt-zalo-phone-hint">{copy.zaloHint}</p>
+          <p class="field-error" id="nt-zalo-phone-error"></p>
+        </div>
+        <label class="nt-switch">
+          <input type="checkbox" role="switch" id="nt-zalo" disabled />
+          <span class="nt-track" aria-hidden="true"></span>
+          <span class="nt-switch-text">{copy.zaloSwitch}</span>
+        </label>
+        <div class="nt-actions">
+          <button type="submit" class="btn btn-primary nt-btn" id="nt-zalo-save" disabled>{copy.zaloSave}</button>
+        </div>
+      </form>
+    </section>
+  </div>
+
+  <p class="nt-consent">{copy.consent}</p>
+</section>

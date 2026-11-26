@@ -9,7 +9,7 @@ import type { IconName } from '../../components/icon-paths';
 
 type Text = { vi: string; en: string };
 
-export type SectionId = 'overview' | 'topup' | 'orders' | 'ads' | 'services' | 'courses' | 'guides' | 'keys' | 'profile' | 'security';
+export type SectionId = 'overview' | 'topup' | 'orders' | 'ads' | 'notify' | 'services' | 'courses' | 'guides' | 'keys' | 'profile' | 'security';
 
 export interface Section {
   id: SectionId;
@@ -32,6 +32,7 @@ export const sections: readonly Section[] = [
   },
   { id: 'orders', vi: 'don-hang', en: 'orders', icon: 'bag', label: { vi: 'Đơn hàng', en: 'Orders' } },
   { id: 'ads', vi: 'bao-cao-ads', en: 'ad-reports', icon: 'chart', label: { vi: 'Báo cáo quảng cáo', en: 'Ad reports' } },
+  { id: 'notify', vi: 'thong-bao', en: 'notifications', icon: 'bell', label: { vi: 'Thông báo', en: 'Notifications' } },
   {
     id: 'services',
     vi: 'dich-vu',
@@ -56,7 +57,7 @@ export const sections: readonly Section[] = [
 
 /** Nhóm mục trên menu bên trái. */
 export const navGroups: readonly { label: Text; ids: SectionId[] }[] = [
-  { label: { vi: 'Tài khoản', en: 'Account' }, ids: ['overview', 'topup', 'orders', 'ads'] },
+  { label: { vi: 'Tài khoản', en: 'Account' }, ids: ['overview', 'topup', 'orders', 'ads', 'notify'] },
   { label: { vi: 'Dịch vụ & học tập', en: 'Services & learning' }, ids: ['services', 'courses', 'guides', 'keys'] },
   { label: { vi: 'Cài đặt', en: 'Settings' }, ids: ['profile', 'security'] },
 ];
