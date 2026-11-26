@@ -8,6 +8,7 @@ import '../../styles/notify.css';
 import Icon from '../Icon.astro';
 import { contact } from '../../config/site';
 import type { Lang } from '../../config/i18n';
+import { messengerMode } from '../../config/notify-flags';
 
 interface Props {
   lang: Lang;
@@ -24,11 +25,11 @@ const copy = {
     msgText: 'Nhận tin nhắn từ trang Facebook ADS-Nolimit ngay trong Messenger.',
     msgOff: 'Chưa nối Messenger',
     msgConnect: 'Nối Messenger',
-    msgOffHint: 'Bấm nút, Messenger sẽ mở ra. Bạn chỉ cần gửi tin có sẵn, rồi quay lại đây.',
+    msgOffHint: 'Messenger sẽ mở cuộc trò chuyện với page ADS-Nolimit. Bạn bấm Bắt đầu / Get started, hoặc dán dòng mã đã chép rồi gửi.',
     msgWait: 'Đang chờ tin nhắn của bạn',
-    msgStep1: 'Trong Messenger, gửi tin nhắn có sẵn (đừng sửa mã trong tin).',
+    msgStep1: 'Messenger sẽ mở cuộc trò chuyện với page ADS-Nolimit. Bạn bấm Bắt đầu / Get started, hoặc dán dòng mã đã chép rồi gửi.',
     msgStep2: 'Quay lại trang này. Trạng thái tự chuyển sang "Đã nối".',
-    msgNoText: 'Messenger không có sẵn tin? Gửi đúng dòng này:',
+    msgNoText: 'Dòng mã (đã tự chép; chưa chép được thì bấm Chép) — dán vào Messenger rồi gửi:',
     msgSent: 'Tôi đã gửi',
     msgReopen: 'Mở lại Messenger',
     msgCancel: 'Hủy',
@@ -53,11 +54,11 @@ const copy = {
     msgText: 'Get a message from the ADS-Nolimit Facebook page right in Messenger.',
     msgOff: 'Messenger not connected',
     msgConnect: 'Connect Messenger',
-    msgOffHint: 'Press the button and Messenger opens. Just send the ready-made message, then come back here.',
+    msgOffHint: 'Messenger opens the conversation with the ADS-Nolimit page. Press Get started, or paste the copied code line and send it.',
     msgWait: 'Waiting for your message',
-    msgStep1: 'In Messenger, send the ready-made message (do not change the code in it).',
+    msgStep1: 'Messenger opens the conversation with the ADS-Nolimit page. Press Get started, or paste the copied code line and send it.',
     msgStep2: 'Come back to this page. The status switches to "Connected" by itself.',
-    msgNoText: 'No ready-made message in Messenger? Send exactly this line:',
+    msgNoText: 'The code line (copied for you; press Copy if not) — paste it in Messenger and send:',
     msgSent: 'I sent it',
     msgReopen: 'Reopen Messenger',
     msgCancel: 'Cancel',
@@ -98,8 +99,9 @@ const copy = {
       </label>
     </section>
 
-    <!-- Messenger -->
-    <section class="panel acc-panel nt-card" aria-labelledby="nt-msg-title">
+    <!-- Messenger: cờ PUBLIC_MESSENGER_NOTIFY (off: không có thẻ; test: ẩn tới khi bật ?tbtest=1; on: hiện) -->
+    {messengerMode !== 'off' && (
+    <section class="panel acc-panel nt-card" id="nt-msg-card" aria-labelledby="nt-msg-title" hidden={messengerMode === 'test'}>
       <header class="nt-head">
         <span class="nt-ico" aria-hidden="true"><Icon name="messenger" /></span>
         <div class="nt-head-text">
@@ -148,6 +150,7 @@ const copy = {
         </div>
       </div>
     </section>
+    )}
 
     <!-- Zalo -->
     <section class="panel acc-panel nt-card" aria-labelledby="nt-zalo-title">

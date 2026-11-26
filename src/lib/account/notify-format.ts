@@ -75,5 +75,8 @@ export const parseNotify = (data: unknown): NotifyPrefs => {
   };
 };
 
-/** Mã còn dùng được ở máy này (đã tạo chưa quá 7 ngày)? */
-export const pendingValid = (createdAtMs: number, nowMs: number): boolean => Number.isFinite(createdAtMs) && nowMs - createdAtMs >= 0 && nowMs - createdAtMs < 7 * 86400000;
+/** Mã nối hết hạn sau 24 giờ. */
+export const CODE_TTL_MS = 24 * 60 * 60 * 1000;
+
+/** Mã còn dùng được ở máy này (đã tạo chưa quá 24 giờ, đúng hạn của Apps Script)? */
+export const pendingValid = (createdAtMs: number, nowMs: number): boolean => Number.isFinite(createdAtMs) && nowMs - createdAtMs >= 0 && nowMs - createdAtMs < CODE_TTL_MS;

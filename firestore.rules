@@ -26,7 +26,7 @@ rules_version = '2';
 //   adTopups/{mã}        Lệnh nạp ngân sách vào TKQC (khách tạo/hủy; quản trị viên duyệt/từ chối;
 //                        Apps Script bot 3 ghi vào trang tính rồi đánh dấu written).
 //   requests/{id}        Yêu cầu tư vấn dịch vụ (như V3; quản trị viên đổi trạng thái).
-//   notifyCodes/{mã}     Mã nối Messenger (khách tạo; chỉ Apps Script bot 3 đọc/xóa qua REST). Hết hạn 7 ngày.
+//   notifyCodes/{mã}     Mã nối Messenger (khách tạo; chỉ Apps Script bot 3 đọc/xóa qua REST). Hết hạn 24 giờ.
 //   notifyLinks/{uid}    Trạng thái nối Messenger (Apps Script ghi; khách chỉ đọc của mình và bấm "Bỏ nối").
 //   notifyPrivate/{uid}  PSID Messenger: CHỈ server (Apps Script) đọc/ghi, trình duyệt bị cấm hoàn toàn.
 //   zaloQueue/{id}       Hàng đợi nhắc qua Zalo (Apps Script ghi; quản trị đọc và chỉ đổi status/doneAt).

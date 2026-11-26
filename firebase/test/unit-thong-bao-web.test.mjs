@@ -54,9 +54,10 @@ describe('mã nối Messenger', () => {
     assert.equal(messengerLink('AB12CD34EF'), 'https://m.me/adsnolimit.agency2610?ref=NOI-AB12CD34EF');
     assert.equal(messengerText('AB12CD34EF'), 'Nối thông báo NOI-AB12CD34EF');
   });
-  test('pendingValid: dưới 7 ngày mới còn', () => {
+  test('pendingValid: dưới 24 giờ mới còn (khớp hạn của Apps Script)', () => {
     const now = 1_800_000_000_000;
-    assert.equal(pendingValid(now - 86400000, now), true);
+    assert.equal(pendingValid(now - 23 * 3600000, now), true);
+    assert.equal(pendingValid(now - 86400000, now), false);
     assert.equal(pendingValid(now - 7 * 86400000, now), false);
     assert.equal(pendingValid(now + 1000, now), false);
     assert.equal(pendingValid(NaN, now), false);

@@ -17,6 +17,9 @@
   gap: 1rem;
   min-width: 0;
 }
+.nt-card[hidden] {
+  display: none;
+}
 .nt-head {
   display: flex;
   align-items: flex-start;
@@ -272,6 +275,9 @@
 }
 .zq-actions .btn {
   min-height: 48px;
+}
+.zq-actions [hidden] {
+  display: none;
 }
 .zq-main {
   width: 100%;

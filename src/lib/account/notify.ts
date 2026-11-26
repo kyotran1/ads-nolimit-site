@@ -9,6 +9,7 @@ import { fieldError, say } from '../auth/client';
 import { dataErrorMessage } from '../auth/messages';
 import { byId, confirmDialog, copyText, toast } from '../ui/dom';
 import { isVisible, lang, me, register } from './ctx';
+import { messengerDecision, messengerMode, NOTIFY_TEST_KEY } from '../../config/notify-flags';
 import { CODE_RE, DEFAULT_NOTIFY, makeCode, messengerLink, messengerText, normalizeZaloPhone, parseNotify, pendingValid } from './notify-format';
 import type { NotifyPrefs } from './notify-format';
 import { db } from './store';
@@ -22,6 +23,7 @@ const T = {
     zaloOff: 'Đã tắt nhắc qua Zalo.',
     connectFailed: 'Chưa tạo được mã nối. Kiểm tra mạng rồi thử lại.',
     popupBlocked: 'Messenger chưa tự mở. Bấm "Mở lại Messenger" bên dưới.',
+    codeCopied: 'Đã chép dòng mã. Dán vào Messenger nếu không thấy nút Bắt đầu.',
     notYet: 'Chưa thấy tin của bạn. Gửi tin có sẵn trong Messenger, chờ vài giây rồi bấm lại.',
     linked: 'Đã nối Messenger.',
     unlinked: 'Đã bỏ nối Messenger.',
@@ -42,6 +44,7 @@ const T = {
     zaloOff: 'Zalo reminders are off.',
     connectFailed: 'Could not create a connect code. Check your network and try again.',
     popupBlocked: 'Messenger did not open by itself. Press "Reopen Messenger" below.',
+    codeCopied: 'Code line copied. Paste it in Messenger if you do not see Get started.',
     notYet: 'We do not see your message yet. Send the ready-made message in Messenger, wait a few seconds and press again.',
     linked: 'Messenger connected.',
     unlinked: 'Messenger disconnected.',
@@ -55,6 +58,28 @@ const T = {
     retry: 'Try again',
   },
 }[lang];
+
+/** Có thẻ Messenger trong trang này không (cờ build + chế độ thử + thẻ có trong HTML). Tắt thì không đụng tới phần tử/dữ liệu Messenger nào. */
+const messengerActive = (() => {
+  if (messengerMode === 'off') return false;
+  const card = document.getElementById('nt-msg-card');
+  if (!card) return false;
+  let stored: string | null = null;
+  try {
+    stored = localStorage.getItem(NOTIFY_TEST_KEY);
+  } catch {
+    /* không đọc được: coi như chưa bật */
+  }
+  const d = messengerDecision(messengerMode, location.search, stored);
+  try {
+    if (d.write === '1') localStorage.setItem(NOTIFY_TEST_KEY, '1');
+    else if (d.write === 'remove') localStorage.removeItem(NOTIFY_TEST_KEY);
+  } catch {
+    /* chế độ riêng tư: vẫn bật cho lần tải trang này */
+  }
+  card.hidden = !d.show;
+  return d.show;
+})();
 
 const els = {
   grid: byId('nt-grid'),
@@ -132,12 +157,12 @@ const currentState = (): MsgState => (linked ? 'on' : pending ? 'wait' : 'off');
 
 const lockUi = (locked: boolean) => {
   els.grid.setAttribute('aria-busy', String(locked));
-  for (const el of [els.email, els.messenger, els.zalo, els.zaloPhone, els.zaloSave]) el.disabled = locked;
+  for (const el of [els.email, els.zalo, els.zaloPhone, els.zaloSave, ...(messengerActive ? [els.messenger] : [])]) el.disabled = locked;
 };
 
 const render = () => {
   els.email.checked = prefs.email;
-  els.messenger.checked = prefs.messenger;
+  if (messengerActive) els.messenger.checked = prefs.messenger;
   els.zalo.checked = prefs.zalo;
   if (phoneDirty) {
     /* giữ chữ khách đang gõ */
@@ -146,24 +171,45 @@ const render = () => {
     // Gợi ý sẵn số trong hồ sơ nếu dùng được (chưa lưu cho tới khi khách bấm Lưu / bật công tắc)
     if (phoneHint) els.zaloPhone.value = phoneHint;
   }
-  setMsgState(currentState());
+  if (messengerActive) setMsgState(currentState());
 };
 
 /* ---------- Ghi users/{uid}.notify ---------- */
+
+/** Hồ sơ users/{uid} đã có (kết quả getDoc trong load()). null = chưa biết. */
+let profileExists: boolean | null = null;
+
+const isCode = (err: unknown, part: string) => String((err as { code?: string })?.code ?? '').includes(part);
 
 const writeNotify = async (next: NotifyPrefs) => {
   const user = me();
   if (!user) throw new Error('no-user');
   const ref = doc(db, 'users', user.uid);
   const notify = { email: next.email, messenger: next.messenger, zalo: next.zalo, zaloPhone: next.zaloPhone };
+  // Khách chưa có hồ sơ users/{uid} (đăng nhập bằng cách khác, hồ sơ chưa kịp tạo): tạo hồ sơ tối thiểu kèm notify bằng setDoc(merge),
+  // không dùng updateDoc (sẽ lỗi not-found). Đã có hồ sơ thì updateDoc để không đụng trường khác.
+  const create = async () => {
+    const data: Record<string, unknown> = { displayName: (user.displayName ?? '').slice(0, 120), notify, createdAt: serverTimestamp(), updatedAt: serverTimestamp() };
+    if (user.email) data.email = user.email;
+    await setDoc(ref, data, { merge: true });
+    profileExists = true;
+  };
+  if (profileExists === false) {
+    try {
+      await create();
+    } catch (err) {
+      // Luật có thể coi đây là "sửa" nếu hồ sơ vừa được tạo ở nơi khác: thử lại bằng updateDoc
+      if (!isCode(err, 'permission-denied')) throw err;
+      await updateDoc(ref, { notify, updatedAt: serverTimestamp() });
+      profileExists = true;
+    }
+    return;
+  }
   try {
     await updateDoc(ref, { notify, updatedAt: serverTimestamp() });
   } catch (err) {
-    if (!String((err as { code?: string })?.code ?? '').includes('not-found')) throw err;
-    // Hồ sơ chưa có (hiếm): tạo hồ sơ tối thiểu kèm notify
-    const data: Record<string, unknown> = { displayName: (user.displayName ?? '').slice(0, 120), notify, createdAt: serverTimestamp(), updatedAt: serverTimestamp() };
-    if (user.email) data.email = user.email;
-    await setDoc(ref, data);
+    if (!isCode(err, 'not-found')) throw err;
+    await create();
   }
 };
 
@@ -190,7 +236,7 @@ const save = async (next: NotifyPrefs, message = T.saved): Promise<boolean> => {
 /* ---------- Công tắc ---------- */
 
 els.email.addEventListener('change', () => void save({ ...prefs, email: els.email.checked }));
-els.messenger.addEventListener('change', () => void save({ ...prefs, messenger: els.messenger.checked }));
+if (messengerActive) els.messenger.addEventListener('change', () => void save({ ...prefs, messenger: els.messenger.checked }));
 
 /** Đọc ô số Zalo; báo lỗi ngay dưới ô nếu sai. Trả về số đã chuẩn hóa ('' = chưa nhập) hoặc null nếu sai. */
 const readPhone = (): string | null => {
@@ -295,29 +341,51 @@ document.addEventListener('visibilitychange', () => {
   if (!document.hidden && pending && !linked && isVisible('notify')) void checkLink();
 });
 
-els.connect.addEventListener('click', async () => {
+els.connect?.addEventListener('click', async () => {
   const user = me();
   if (!user || els.connect.disabled) return;
   say(els.alert, '');
   say(els.status, '');
   els.connect.disabled = true;
+  // Điện thoại chỉ cho mở cửa sổ / chép khi còn đang trong thao tác bấm: làm cả hai NGAY ở đây, trước mọi await.
+  // Mở cửa sổ trống rồi đổi địa chỉ sau khi mã đã lưu xong; bị chặn (w = null) thì dùng nút "Mở lại Messenger".
+  const w = window.open('', '_blank');
+  const code = makeCode((b) => crypto.getRandomValues(b));
+  const copied = copyText(messengerText(code));
   try {
-    const code = makeCode((b) => crypto.getRandomValues(b));
+    // Mỗi khách giữ ít mã nhất có thể: xóa mã cũ của máy này (nếu còn) trước khi tạo mã mới. Không xóa được thì Apps Script sẽ dọn.
+    if (pending) {
+      try {
+        await deleteDoc(doc(db, 'notifyCodes', pending.code));
+      } catch {
+        /* mã đã hết hạn / đã dùng, hoặc mạng chập chờn */
+      }
+      savePending(null);
+    }
     await setDoc(doc(db, 'notifyCodes', code), { uid: user.uid, createdAt: serverTimestamp() });
     savePending({ code, uid: user.uid, at: Date.now() });
     setMsgState('wait');
-    const w = window.open(messengerLink(code), '_blank');
-    if (w) w.opener = null;
-    else say(els.status, T.popupBlocked, { kind: 'info' });
+    if (w) {
+      try {
+        w.opener = null;
+      } catch {
+        /* bỏ qua */
+      }
+      w.location.href = messengerLink(code);
+    }
+    const didCopy = await copied;
+    if (!w) say(els.status, didCopy ? `${T.popupBlocked} ${T.codeCopied}` : T.popupBlocked, { kind: 'info' });
+    else if (didCopy) say(els.status, T.codeCopied, { kind: 'info' });
     startPolling();
   } catch (err) {
+    if (w) w.close();
     say(els.alert, `${T.connectFailed} ${dataErrorMessage(err)}`);
   } finally {
     els.connect.disabled = false;
   }
 });
 
-els.check.addEventListener('click', async () => {
+els.check?.addEventListener('click', async () => {
   els.check.disabled = true;
   say(els.status, '');
   const ok = await checkLink();
@@ -325,7 +393,7 @@ els.check.addEventListener('click', async () => {
   els.check.disabled = false;
 });
 
-els.cancel.addEventListener('click', async () => {
+els.cancel?.addEventListener('click', async () => {
   const code = pending?.code;
   stopPolling();
   savePending(null);
@@ -335,12 +403,12 @@ els.cancel.addEventListener('click', async () => {
     try {
       await deleteDoc(doc(db, 'notifyCodes', code));
     } catch {
-      /* mã sẽ tự hết hạn sau 7 ngày */
+      /* mã sẽ tự hết hạn sau 24 giờ */
     }
   }
 });
 
-els.codeCopy.addEventListener('click', async () => {
+els.codeCopy?.addEventListener('click', async () => {
   if (!pending) return;
   const ok = await copyText(messengerText(pending.code));
   const label = els.codeCopy.textContent;
@@ -348,7 +416,7 @@ els.codeCopy.addEventListener('click', async () => {
   window.setTimeout(() => (els.codeCopy.textContent = label === T.copied ? T.copy : label), 1800);
 });
 
-els.unlink.addEventListener('click', async () => {
+els.unlink?.addEventListener('click', async () => {
   const user = me();
   if (!user) return;
   const { ok } = await confirmDialog({ title: T.unlinkTitle, body: [T.unlinkBody], confirm: T.unlinkYes, cancel: T.cancel });
@@ -377,16 +445,17 @@ const load = async () => {
   say(els.alert, '');
   lockUi(true);
   try {
-    const [profile, link] = await Promise.all([getDoc(doc(db, 'users', user.uid)), getDoc(doc(db, 'notifyLinks', user.uid))]);
+    const [profile, link] = await Promise.all([getDoc(doc(db, 'users', user.uid)), messengerActive ? getDoc(doc(db, 'notifyLinks', user.uid)) : Promise.resolve(null)]);
+    profileExists = profile.exists();
     prefs = parseNotify(profile.data());
     const rawPhone = profile.data()?.phone;
     phoneHint = typeof rawPhone === 'string' ? (normalizeZaloPhone(rawPhone) ?? '') : '';
-    linked = (link.data() as { messenger?: { linked?: boolean } } | undefined)?.messenger?.linked === true;
-    pending = linked ? null : readPending(user.uid);
+    linked = (link?.data() as { messenger?: { linked?: boolean } } | undefined)?.messenger?.linked === true;
+    pending = linked || !messengerActive ? null : readPending(user.uid);
     if (linked) savePending(null);
     loaded = true;
     render();
-    if (pending && !linked) startPolling();
+    if (messengerActive && pending && !linked) startPolling();
   } catch (err) {
     say(els.alert, `${T.saveFailed} ${dataErrorMessage(err)}`, { action: { label: T.retry, run: () => void load() } });
   } finally {
@@ -398,7 +467,7 @@ const load = async () => {
 register('notify', {
   enter() {
     if (!loaded) void load();
-    else if (pending && !linked) {
+    else if (messengerActive && pending && !linked) {
       void checkLink();
       startPolling();
     }
