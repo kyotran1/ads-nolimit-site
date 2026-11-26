@@ -124,6 +124,25 @@ const termsPage = { vi: localize('/dieu-khoan/', 'vi'), en: localize('/dieu-khoa
               </li>
             </ul>
 
+            <h3 id="thong-bao">Thông báo tài khoản qua Messenger và Zalo (nếu bạn bật)</h3>
+            <ul>
+              <li>
+                Ở <a href={`${accountPage.vi}#thong-bao`}>Tài khoản → Thông báo</a>, bạn có thể chọn nhận báo khi tài khoản quảng cáo sắp hết
+                ngân sách qua Messenger (tin nhắn từ trang Facebook ADS-Nolimit) và/hoặc Zalo.
+              </li>
+              <li>
+                Khi bạn nối Messenger, ADS-Nolimit lưu <strong>mã người dùng Messenger dành riêng cho trang (PSID)</strong> và tên Messenger của
+                bạn, chỉ để gửi thông báo về tài khoản của bạn. Mã này chỉ máy chủ đọc được, không hiện trên web.
+              </li>
+              <li>
+                Với Zalo, ADS-Nolimit lưu số Zalo bạn nhập; nhân viên ADS-Nolimit nhắn từ số 0888 88 2823.
+              </li>
+              <li>
+                Chúng tôi chỉ gửi thông báo về tài khoản (số dư thấp, sắp hết ngân sách), không gửi quảng cáo hay khuyến mãi qua các kênh này.
+                Bạn tắt hoặc bỏ nối bất cứ lúc nào ở mục Thông báo; khi bỏ nối hoặc xóa tài khoản, mã Messenger được xóa.
+              </li>
+            </ul>
+
             <h3 id="cookie">Cookie & công cụ đo lường</h3>
             {analytics.enabled ? (
               <p>
@@ -313,6 +332,25 @@ const termsPage = { vi: localize('/dieu-khoan/', 'vi'), en: localize('/dieu-khoa
                 {authProviders.facebook && (<Fragment>You can link or unlink Facebook in <a href={accountPage.en}>Account → Security</a>, and remove</Fragment>)}
                 {!authProviders.facebook && 'You can remove'} ADS-Nolimit from Facebook under
                 Settings → Apps and websites. How to delete your account and data: <a href={deletionPage}>Data deletion instructions</a>.
+              </li>
+            </ul>
+
+            <h3 id="notifications">Account notifications on Messenger and Zalo (if you turn them on)</h3>
+            <ul>
+              <li>
+                In <a href={`${accountPage.en}#notifications`}>Account → Notifications</a> you can choose to be told when an ad account is running
+                low on budget, through Messenger (messages from the ADS-Nolimit Facebook page) and/or Zalo.
+              </li>
+              <li>
+                When you connect Messenger, ADS-Nolimit stores your <strong>page-scoped Messenger ID (PSID)</strong> and Messenger name, only
+                to send notifications about your account. Only our server can read this ID; it is never shown on the website.
+              </li>
+              <li>
+                For Zalo, ADS-Nolimit stores the Zalo number you enter; ADS-Nolimit staff message you from 0888 88 2823.
+              </li>
+              <li>
+                We only send account notifications (low balance, budget running out), never advertising or promotions, on these channels.
+                You can turn them off or disconnect at any time under Notifications; disconnecting or deleting your account removes the Messenger ID.
               </li>
             </ul>
 
