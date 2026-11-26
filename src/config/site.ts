@@ -12,6 +12,9 @@ import googleBadge from '../assets/partners/google-partner.png';
 import shopifyBadge from '../assets/partners/shopify-partners.png';
 import tiktokShopBadge from '../assets/partners/tiktok-shop.png';
 
+/** Cách đăng nhập được bật (Facebook mặc định tắt, bật bằng PUBLIC_FB_LOGIN=on lúc build). Định nghĩa ở auth-providers.ts để mã trình duyệt đọc được mà không kéo theo ảnh. */
+export { authProviders } from './auth-providers';
+
 export interface Partner {
   /** Tên nền tảng */
   name: string;

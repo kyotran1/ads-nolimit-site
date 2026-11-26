@@ -5,6 +5,7 @@
  * File này được nạp ở trình duyệt, chỉ trên 4 trang tài khoản.
  */
 import { isIos, isStandalone } from '../pwa/install';
+import { facebookErrorText } from './facebook';
 
 export type Lang = 'vi' | 'en';
 type Text = Record<Lang, string>;
@@ -132,9 +133,20 @@ export const errorCode = (err: unknown): string => {
   return typeof code === 'string' ? code.replace(/^auth\//, '') : '';
 };
 
+/** Email Firebase kèm trong lỗi "email đã có tài khoản khác" (customData.email), '' nếu không có. */
+export const errorEmail = (err: unknown): string => {
+  const email = (err as { customData?: { email?: unknown } } | null)?.customData?.email;
+  return typeof email === 'string' ? email : '';
+};
+
 /** Thông báo dễ hiểu cho một lỗi Firebase Authentication. */
-export const authErrorMessage = (err: unknown, context: 'default' | 'reauth' | 'google' | 'google-signin' = 'default'): string => {
+export const authErrorMessage = (
+  err: unknown,
+  context: 'default' | 'reauth' | 'google' | 'google-signin' | 'facebook' = 'default',
+): string => {
   const raw = errorCode(err);
+  // Facebook: chữ riêng (lỗi im lặng trả ''); email trùng lấy từ customData của lỗi Firebase.
+  if (context === 'facebook') return facebookErrorText(raw, pageLang(), errorEmail(err));
   const code = aliases[raw] ?? raw;
   if (context === 'reauth' && reauthErrors[code]) return pick(reauthErrors[code]);
   if (context === 'google' || context === 'google-signin') {
@@ -217,6 +229,7 @@ const text = {
   busySignIn: { vi: 'Đang đăng nhập…', en: 'Signing in…' },
   busySignUp: { vi: 'Đang tạo tài khoản…', en: 'Creating account…' },
   busyGoogle: { vi: 'Đang mở Google…', en: 'Opening Google…' },
+  busyFacebook: { vi: 'Đang mở Facebook…', en: 'Opening Facebook…' },
   busySend: { vi: 'Đang gửi…', en: 'Sending…' },
   busySave: { vi: 'Đang lưu…', en: 'Saving…' },
   busyCheck: { vi: 'Đang kiểm tra…', en: 'Checking…' },
@@ -280,6 +293,56 @@ const text = {
   unverified: { vi: 'Chưa xác minh', en: 'Not verified' },
   providerPassword: { vi: 'Email & mật khẩu', en: 'Email & password' },
   providerGoogle: { vi: 'Google', en: 'Google' },
+  providerFacebook: { vi: 'Facebook', en: 'Facebook' },
+  noPassword: {
+    vi: 'Bạn đăng nhập bằng {providers} nên không có mật khẩu riêng ở ADS-Nolimit.',
+    en: 'You sign in with {providers}, so there is no separate ADS-Nolimit password.',
+  },
+  fbStateLinked: { vi: 'Facebook: đã nối', en: 'Facebook: linked' },
+  fbStateNone: { vi: 'Facebook: chưa nối', en: 'Facebook: not linked' },
+  fbLinked: { vi: 'Đã nối Facebook vào tài khoản ADS-Nolimit của bạn.', en: 'Facebook is now linked to your ADS-Nolimit account.' },
+  fbLinkFailed: {
+    vi: 'Chưa nối được Facebook vào tài khoản. Bạn nối lại sau ở Tài khoản → Bảo mật nhé.',
+    en: 'Could not link Facebook to your account yet. You can link it later in Account → Security.',
+  },
+  fbUnlinked: { vi: 'Đã bỏ nối Facebook.', en: 'Facebook has been unlinked.' },
+  fbLinkOnlyOther: {
+    vi: 'Đây là cách đăng nhập duy nhất của bạn nên chưa bỏ nối được. Bạn thêm Google hoặc email & mật khẩu trước.',
+    en: 'This is your only way to sign in, so it cannot be unlinked yet. Add Google or an email and password first.',
+  },
+  welcomeFacebook: { vi: 'Chào mừng bạn đến với ADS-Nolimit!', en: 'Welcome to ADS-Nolimit!' },
+  welcomeFacebookVerify: {
+    vi: 'Chào mừng bạn đến với ADS-Nolimit! Email {email} từ Facebook chưa được xác minh: bạn bấm “Gửi email xác minh” ở khung bên dưới để nhận thông báo và được cấp quyền xem báo cáo.',
+    en: 'Welcome to ADS-Nolimit! The email {email} from Facebook is not verified yet: press “Send verification email” in the box below to get notifications and be granted report access.',
+  },
+  welcomeFacebookNoEmail: {
+    vi: 'Chào mừng bạn đến với ADS-Nolimit! Facebook của bạn không chia sẻ email. Bạn thêm email ở khung bên dưới để nhận thông báo và được cấp quyền xem báo cáo.',
+    en: 'Welcome to ADS-Nolimit! Your Facebook account did not share an email. Add one in the box below to get notifications and be granted report access.',
+  },
+  needEmailTopup: {
+    vi: 'Tài khoản của bạn chưa có email. Bạn thêm email ở khung đầu trang rồi tạo lệnh nạp nhé.',
+    en: 'Your account has no email yet. Add one in the box at the top of the page, then create the top-up.',
+  },
+  noEmail: { vi: 'Chưa có email', en: 'No email yet' },
+  emailGapSent: {
+    vi: 'Đã gửi email xác minh tới {email}. Bạn mở email và bấm link; xong bạn bấm “Tôi đã xác minh” để email được thêm vào tài khoản.',
+    en: 'Verification email sent to {email}. Open it and click the link, then press “I have verified” so the email is added to your account.',
+  },
+  emailGapDone: { vi: 'Đã thêm và xác minh email. Cảm ơn bạn!', en: 'Your email is added and verified. Thank you!' },
+  emailGapWaiting: {
+    vi: 'Email vẫn chưa được thêm. Bạn bấm link trong email xác minh rồi thử lại.',
+    en: 'The email has not been added yet. Click the link in the verification email, then try again.',
+  },
+  emailGapReauth: {
+    vi: 'Vì lý do bảo mật, bạn cần xác nhận lại tài khoản trước khi thêm email.',
+    en: 'For security, please confirm your account again before adding an email.',
+  },
+  reauthFacebook: { vi: 'Xác nhận lại bằng Facebook', en: 'Confirm again with Facebook' },
+  reauthGoogle: { vi: 'Xác nhận lại bằng Google', en: 'Confirm again with Google' },
+  deleteSocial: {
+    vi: 'Khi bấm nút xóa, {provider} sẽ hỏi lại tài khoản của bạn để xác nhận.',
+    en: 'When you press delete, {provider} will ask you to confirm your account.',
+  },
   and: { vi: ' và ', en: ' and ' },
   show: { vi: 'Hiện mật khẩu', en: 'Show password' },
   hide: { vi: 'Ẩn mật khẩu', en: 'Hide password' },
