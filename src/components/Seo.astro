@@ -34,26 +34,38 @@ const organization = {
   '@context': 'https://schema.org',
   '@type': 'Organization',
   name: site.name,
+  alternateName: ['ADS NOLIMIT', 'ADS-Nolimit Agency'],
   url: `${site.url}/`,
   logo: `${site.url}/logo.png`,
   email: contact.email,
-  sameAs: [links.facebook],
+  sameAs: [links.facebook, links.telegram],
   contactPoint: [
     {
       '@type': 'ContactPoint',
       telephone: intlPhone(contact.hotline),
       contactType: 'customer service',
       areaServed: 'VN',
-      availableLanguage: ['Vietnamese'],
+      availableLanguage: ['Vietnamese', 'English'],
     },
     {
       '@type': 'ContactPoint',
       telephone: intlPhone(contact.zaloPhone),
       contactType: 'sales',
       areaServed: 'VN',
-      availableLanguage: ['Vietnamese'],
+      availableLanguage: ['Vietnamese', 'English'],
     },
   ],
+};
+
+// Tên trang web hiện trên Google (Google chỉ đọc ở trang chủ tên miền "/"): https://developers.google.com/search/docs/appearance/site-names
+const isHome = Astro.url.pathname === '/';
+const website = {
+  '@context': 'https://schema.org',
+  '@type': 'WebSite',
+  name: site.name,
+  alternateName: ['ADS NOLIMIT', 'ADS-Nolimit Agency', 'ads-nolimit.agency'],
+  url: `${site.url}/`,
+  inLanguage: ['vi', 'en'],
 };
 ---
 
@@ -89,3 +101,4 @@ const organization = {
 <meta name="twitter:image" content={imageUrl} />
 
 <script is:inline type="application/ld+json" set:html={JSON.stringify(organization)}></script>
+{isHome && <script is:inline type="application/ld+json" set:html={JSON.stringify(website)}></script>}
