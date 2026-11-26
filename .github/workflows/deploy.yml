@@ -38,7 +38,7 @@ jobs:
         env:
           ASTRO_TELEMETRY_DISABLED: '1'
           PUBLIC_FB_LOGIN: test   # off | test | on — xem src/config/auth-providers.ts
-          PUBLIC_MESSENGER_NOTIFY: test   # off | test | on — xem src/config/notify-flags.ts
+          PUBLIC_MESSENGER_NOTIFY: on   # off | test | on — xem src/config/notify-flags.ts
 
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v4
