@@ -58,7 +58,7 @@ export default {
       const ok =
         env.META_VERIFY_TOKEN &&
         url.searchParams.get('hub.mode') === 'subscribe' &&
-        sameText(url.searchParams.get('hub.verify_token') ?? '', env.META_VERIFY_TOKEN);
+        sameText((url.searchParams.get('hub.verify_token') ?? '').trim(), String(env.META_VERIFY_TOKEN).trim());
       const challenge = url.searchParams.get('hub.challenge') ?? '';
       return ok ? text(challenge, 200) : text('Forbidden', 403);
     }
