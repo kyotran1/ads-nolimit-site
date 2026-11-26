@@ -26,6 +26,10 @@ rules_version = '2';
 //   adTopups/{mã}        Lệnh nạp ngân sách vào TKQC (khách tạo/hủy; quản trị viên duyệt/từ chối;
 //                        Apps Script bot 3 ghi vào trang tính rồi đánh dấu written).
 //   requests/{id}        Yêu cầu tư vấn dịch vụ (như V3; quản trị viên đổi trạng thái).
+//   notifyCodes/{mã}     Mã nối Messenger (khách tạo; chỉ Apps Script bot 3 đọc/xóa qua REST). Hết hạn 7 ngày.
+//   notifyLinks/{uid}    Trạng thái nối Messenger (Apps Script ghi; khách chỉ đọc của mình và bấm "Bỏ nối").
+//   notifyPrivate/{uid}  PSID Messenger: CHỈ server (Apps Script) đọc/ghi, trình duyệt bị cấm hoàn toàn.
+//   zaloQueue/{id}       Hàng đợi nhắc qua Zalo (Apps Script ghi; quản trị đọc và chỉ đổi status/doneAt).
 //   admins/{uid}         Danh sách quản trị viên: CHỈ tạo trong Firebase Console, website không ghi được.
 //
 // Thêm gói mới vào src/data/pricing.ts: thêm id gói vào planIds() bên dưới (yêu cầu tư vấn),
@@ -111,9 +115,22 @@ service cloud.firestore {
     // users/{uid} — hồ sơ khách
     // ======================================================================
 
+    // Tùy chọn nhận thông báo ngân sách thấp (mục "Thông báo"): đủ 4 trường; số Zalo rỗng hoặc đúng 0xxxxxxxxx.
+    function validNotify(n) {
+      return n is map
+        && n.keys().hasOnly(['email', 'messenger', 'zalo', 'zaloPhone'])
+        && n.keys().hasAll(['email', 'messenger', 'zalo', 'zaloPhone'])
+        && n.email is bool
+        && n.messenger is bool
+        && n.zalo is bool
+        && n.zaloPhone is string
+        && (n.zaloPhone == '' || n.zaloPhone.matches('^0[35789][0-9]{8}$'));
+    }
+
     function validProfile(d) {
-      return d.keys().hasOnly(['displayName', 'email', 'phone', 'company', 'industry', 'aiOfficeNews', 'avatar', 'createdAt', 'updatedAt'])
+      return d.keys().hasOnly(['displayName', 'email', 'phone', 'company', 'industry', 'aiOfficeNews', 'avatar', 'notify', 'createdAt', 'updatedAt'])
         && d.keys().hasAll(['createdAt', 'updatedAt'])
+        && (!('notify' in d) || validNotify(d.notify))
         && optString(d, 'displayName', 120)
         // ảnh đại diện: data URL ảnh đã thu nhỏ 128px (≤ 32 000 ký tự); '' = xóa ảnh
         && (!('avatar' in d) || (d.avatar is string && d.avatar.size() <= 32000 && (d.avatar == '' || d.avatar.matches('^data:image/(webp|jpeg|png);base64,[A-Za-z0-9+/=]+$'))))
@@ -939,6 +956,53 @@ service cloud.firestore {
       allow create: if newAdTopup(code);
       allow update: if customerCancelsAdTopup() || adminApprovesAdTopup() || adminRejectsAdTopup();
       allow delete: if adminDeletesAdTopup();
+    }
+
+    // ======================================================================
+    // Thông báo ngân sách thấp qua Messenger + Zalo (26/11/2026).
+    // Apps Script bot 3 ghi/đọc các tài liệu dưới đây bằng Firestore REST với quyền Google của chủ (không qua luật này).
+    // ======================================================================
+
+    // Mã nối Messenger: 10 ký tự ngẫu nhiên do trình duyệt tạo. Khách chỉ TẠO (không đọc, không sửa, không ghi đè mã có sẵn)
+    // và xóa mã của mình. Chỉ Apps Script đọc được mã để đổi lấy PSID, nên đoán mã của người khác cũng không xem được gì.
+    match /notifyCodes/{code} {
+      allow create: if signedIn()
+        && code.matches('^[A-Z0-9]{10}$')
+        && request.resource.data.keys().hasOnly(['uid', 'createdAt'])
+        && request.resource.data.keys().hasAll(['uid', 'createdAt'])
+        && request.resource.data.uid == request.auth.uid
+        && request.resource.data.createdAt == request.time;
+      allow delete: if signedIn() && resource.data.uid == request.auth.uid;
+      allow read, update: if false;
+    }
+
+    // Trạng thái nối Messenger. Khách đọc doc của mình; chỉ được ghi đúng { messenger: { linked: false } } (bỏ nối).
+    match /notifyLinks/{uid} {
+      allow get: if isMe(uid);
+      allow list: if false;
+      allow create, update: if isMe(uid)
+        && request.resource.data.keys().hasOnly(['messenger'])
+        && request.resource.data.messenger is map
+        && request.resource.data.messenger.keys().hasOnly(['linked'])
+        && request.resource.data.messenger.linked == false;
+      allow delete: if false;
+    }
+
+    // PSID Messenger của khách: không bao giờ tới trình duyệt.
+    match /notifyPrivate/{uid} {
+      allow read, write: if false;
+    }
+
+    // Hàng đợi nhắc qua Zalo: quản trị đọc, chỉ đổi status (+ doneAt). Tạo/xóa do Apps Script.
+    match /zaloQueue/{id} {
+      allow read: if isAdmin();
+      allow update: if isAdmin()
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status', 'doneAt'])
+        && request.resource.data.status in ['cho', 'da-gui', 'bo-qua']
+        && (request.resource.data.status == 'cho'
+          ? !('doneAt' in request.resource.data)
+          : request.resource.data.doneAt == request.time);
+      allow create, delete: if false;
     }
 
     // Mọi đường dẫn khác: cấm.
