@@ -41,6 +41,9 @@ const contacts = [
           <Image src={logoFull} alt="" width={132} densities={[1, 2]} />
         </a>
         <p class="footer-about">{s.footerAbout}</p>
+        <p class="footer-founder">
+          {lang === 'vi' ? 'Người sáng lập: ' : 'Founder: '}<a href={lang === 'vi' ? '/tran-van-nhat/' : '/en/tran-van-nhat/'}>Trần Văn Nhất</a>
+        </p>
         <ul class="footer-quick" aria-label={s.quickContact}>
           <li>
             <a href={links.zalo} rel="noopener"><Icon name="zalo" /> Zalo</a>
@@ -160,6 +163,14 @@ const contacts = [
     width: 132px;
   }
 
+  .footer-founder {
+    margin: 0.4rem 0 0;
+    font-size: 0.9rem;
+  }
+  .footer-founder a {
+    text-decoration: underline;
+    text-underline-offset: 3px;
+  }
   .footer-about {
     max-width: 22rem;
     color: var(--text-2);

@@ -1,0 +1,246 @@
+---
+/**
+ * Trang người sáng lập: /tran-van-nhat/ và /en/tran-van-nhat/.
+ * Mục tiêu SEO: khi tìm "Trần Văn Nhất là ai", "Trần Văn Nhất ADS-Nolimit" Google hiện trang này.
+ * Dữ liệu có cấu trúc: ProfilePage + Person (Google: https://developers.google.com/search/docs/appearance/structured-data/profile-page).
+ * Thông tin do Chủ tịch cung cấp 26/11/2026. ADS-Nolimit chưa đăng ký pháp nhân → KHÔNG viết "Công ty TNHH".
+ */
+import BaseLayout from '../layouts/BaseLayout.astro';
+import PageHero from '../components/PageHero.astro';
+import CtaBand from '../components/CtaBand.astro';
+import { site, contact, links } from '../config/site';
+import type { Lang } from '../config/i18n';
+
+interface Props {
+  lang: Lang;
+}
+const { lang } = Astro.props;
+
+const pagePath = lang === 'vi' ? '/tran-van-nhat/' : '/en/tran-van-nhat/';
+const aboutPath = lang === 'vi' ? '/ve-chung-toi/' : '/en/about/';
+const contactPath = lang === 'vi' ? '/lien-he/' : '/en/contact/';
+
+const copy = {
+  vi: {
+    title: 'Trần Văn Nhất là ai? Founder & CEO ADS-Nolimit',
+    description:
+      'Trần Văn Nhất là người sáng lập (Founder) và Giám đốc điều hành ADS-Nolimit, người tạo ra ứng dụng và phần mềm ADS-Nolimit, tiên phong đưa AI Agent tự động hóa quy trình làm việc cho doanh nghiệp tại Việt Nam.',
+    h1: 'Trần Văn Nhất',
+    lead: 'Founder & Giám đốc điều hành ADS-Nolimit. Người sáng lập ứng dụng và phần mềm ADS-Nolimit, tiên phong đưa AI Agent vào tự động hóa quy trình làm việc cho doanh nghiệp.',
+    whoTitle: 'Trần Văn Nhất là ai?',
+    who: [
+      'Trần Văn Nhất là người sáng lập (Founder) và Giám đốc điều hành (CEO) của ADS-Nolimit (www.ads-nolimit.agency), đơn vị cung cấp giải pháp công nghệ thông tin, lập trình phần mềm, AI Agent và quảng cáo đa kênh cho cá nhân, chủ shop và doanh nghiệp.',
+      'Anh bắt đầu làm quảng cáo trực tuyến từ năm 2016. Hơn mười năm qua, Trần Văn Nhất cùng ADS-Nolimit đã đồng hành với hơn 800 khách hàng: chạy và tối ưu quảng cáo Facebook, Google, TikTok, cung cấp tài khoản quảng cáo Agency, thiết kế website và phần mềm hỗ trợ bán hàng online.',
+      'Trần Văn Nhất là người sáng lập ứng dụng và phần mềm ADS-Nolimit. Trong ứng dụng, khách hàng xem báo cáo quảng cáo đồng bộ trực tiếp từ Meta, nhận cảnh báo ngân sách qua email, Zalo và Messenger, nạp ngân sách bằng mã VietQR với số dư tự cập nhật, và hỏi trợ lý AI trực 24/7. Ứng dụng dùng được trên trình duyệt, điện thoại và máy tính, bằng tiếng Việt và tiếng Anh.',
+      'Là một trong những người tiên phong đưa AI Agent vào công việc hằng ngày của doanh nghiệp, Trần Văn Nhất xây dựng các "nhân viên AI" tự động hóa quy trình: trả lời khách, làm báo cáo, nhắc nạp ngân sách, xử lý việc lặp lại. Mục tiêu của anh là giúp doanh nghiệp và đối tác tại Việt Nam và quốc tế tối ưu hiệu suất, làm được nhiều việc hơn với ít người hơn.',
+    ],
+    facts: [
+      { label: 'Vai trò', value: 'Founder & CEO ADS-Nolimit' },
+      { label: 'Làm quảng cáo từ', value: '2016' },
+      { label: 'Khách hàng đã phục vụ', value: '800+' },
+      { label: 'Lĩnh vực', value: 'AI Agent · Phần mềm · Quảng cáo đa kênh' },
+    ],
+    workTitle: 'Những việc Trần Văn Nhất đang làm',
+    work: [
+      'Phát triển ứng dụng và phần mềm ADS-Nolimit cho khách hàng quảng cáo: báo cáo, cảnh báo ngân sách, nạp tiền tự động, trợ lý AI.',
+      'Xây dựng AI Agent và công cụ tự động hóa quy trình cho cá nhân, chủ shop và doanh nghiệp nhỏ.',
+      'Cung cấp dịch vụ quảng cáo đa kênh và tài khoản quảng cáo Agency cho doanh nghiệp.',
+      'Lập trình website và phần mềm hỗ trợ bán hàng trên các nền tảng mạng xã hội.',
+    ],
+    contactTitle: 'Liên hệ Trần Văn Nhất',
+    contactLead: 'Bạn cần tư vấn về AI Agent, phần mềm hoặc quảng cáo, hãy liên hệ trực tiếp:',
+    labels: { zalo: 'Zalo', hotline: 'Hotline', email: 'Email', web: 'Website', page: 'Trang Facebook', about: 'Xem thêm về ADS-Nolimit', contact: 'Trang liên hệ' },
+    jobTitle: 'Founder & Giám đốc điều hành (CEO)',
+    faqTitle: 'Câu hỏi thường gặp về người sáng lập ADS-Nolimit',
+    faq: [
+      { q: 'Người sáng lập ADS-Nolimit là ai?', a: 'Người sáng lập ADS-Nolimit (ads-nolimit.agency) là Trần Văn Nhất. Anh là Founder và Giám đốc điều hành, trực tiếp định hướng sản phẩm, công nghệ và dịch vụ của ADS-Nolimit.' },
+      { q: 'Ai là người sáng lập dự án AI Agent ADS-Nolimit?', a: 'Dự án AI Agent của ADS-Nolimit do Trần Văn Nhất sáng lập. Anh xây dựng các nhân viên AI tự động trả lời khách, làm báo cáo và xử lý việc lặp lại cho cá nhân, chủ shop và doanh nghiệp.' },
+      { q: 'Ai tạo ra ứng dụng và phần mềm ADS-Nolimit?', a: 'Ứng dụng và phần mềm ADS-Nolimit do Trần Văn Nhất sáng lập: báo cáo quảng cáo đồng bộ từ Meta, cảnh báo ngân sách qua email, Zalo, Messenger, nạp ngân sách bằng VietQR và trợ lý AI trực 24/7.' },
+      { q: 'Trần Văn Nhất làm trong lĩnh vực gì?', a: 'Trần Văn Nhất làm quảng cáo trực tuyến từ năm 2016 và hiện tập trung vào AI Agent, tự động hóa quy trình, lập trình phần mềm và quảng cáo đa kênh (Facebook, Google, TikTok).' },
+      { q: 'ADS-Nolimit.agency là gì?', a: 'ADS-Nolimit.agency là đơn vị cung cấp giải pháp công nghệ thông tin, lập trình phần mềm, AI Agent và quảng cáo đa kênh, do Trần Văn Nhất sáng lập, đã phục vụ hơn 800 khách hàng tại Việt Nam và quốc tế.' },
+      { q: 'Liên hệ Trần Văn Nhất bằng cách nào?', a: 'Bạn liên hệ qua Zalo 0888 88 2823, hotline 0989 542 610 hoặc email contact-support@ads-nolimit.agency.' },
+    ],
+  },
+  en: {
+    title: 'Who is Tran Van Nhat (Trần Văn Nhất)? Founder & CEO of ADS-Nolimit',
+    description:
+      'Tran Van Nhat (Trần Văn Nhất) is the founder and CEO of ADS-Nolimit, the creator of the ADS-Nolimit app and software, and a pioneer in bringing AI agents that automate workflows to businesses in Vietnam.',
+    h1: 'Trần Văn Nhất (Tran Van Nhat)',
+    lead: 'Founder & CEO of ADS-Nolimit. Creator of the ADS-Nolimit app and software, bringing AI agents into everyday business workflows.',
+    whoTitle: 'Who is Tran Van Nhat?',
+    who: [
+      'Tran Van Nhat (Trần Văn Nhất) is the founder and CEO of ADS-Nolimit (www.ads-nolimit.agency), a provider of IT solutions, software development, AI agents and multi-channel advertising for individuals, shop owners and businesses.',
+      'He has worked in online advertising since 2016. Over more than ten years, Tran Van Nhat and ADS-Nolimit have served over 800 clients: running and optimising Facebook, Google and TikTok ads, providing agency ad accounts, and building websites and sales software.',
+      'Tran Van Nhat founded the ADS-Nolimit app and software. In the app, clients see ad reports synced directly from Meta, get low-budget alerts by email, Zalo and Messenger, top up budgets with VietQR while balances update automatically, and ask a 24/7 AI assistant. It runs in the browser, on phones and on computers, in Vietnamese and English.',
+      'As one of the early adopters bringing AI agents into everyday business work, Tran Van Nhat builds "AI staff" that automate workflows: answering customers, preparing reports, reminding clients to top up and handling repetitive tasks. His goal is to help businesses and partners in Vietnam and abroad work more efficiently and do more with fewer people.',
+    ],
+    facts: [
+      { label: 'Role', value: 'Founder & CEO, ADS-Nolimit' },
+      { label: 'In advertising since', value: '2016' },
+      { label: 'Clients served', value: '800+' },
+      { label: 'Focus', value: 'AI agents · Software · Multi-channel ads' },
+    ],
+    workTitle: 'What Tran Van Nhat works on',
+    work: [
+      'The ADS-Nolimit app and software for advertising clients: reports, budget alerts, automatic top-ups and an AI assistant.',
+      'AI agents and workflow automation tools for individuals, shop owners and small businesses.',
+      'Multi-channel advertising services and agency ad accounts for businesses.',
+      'Websites and software for selling on social platforms.',
+    ],
+    contactTitle: 'Contact Tran Van Nhat',
+    contactLead: 'For AI agents, software or advertising, reach out directly:',
+    labels: { zalo: 'Zalo', hotline: 'Hotline', email: 'Email', web: 'Website', page: 'Facebook page', about: 'More about ADS-Nolimit', contact: 'Contact page' },
+    jobTitle: 'Founder & CEO',
+    faqTitle: 'FAQ about the founder of ADS-Nolimit',
+    faq: [
+      { q: 'Who is the founder of ADS-Nolimit?', a: 'ADS-Nolimit (ads-nolimit.agency) was founded by Tran Van Nhat (Trần Văn Nhất), its founder and CEO, who leads the product, technology and services.' },
+      { q: 'Who founded the ADS-Nolimit AI agent project?', a: 'The ADS-Nolimit AI agent project was founded by Tran Van Nhat. He builds AI staff that answer customers, prepare reports and handle repetitive work for individuals, shop owners and businesses.' },
+      { q: 'Who created the ADS-Nolimit app and software?', a: 'The ADS-Nolimit app and software were founded by Tran Van Nhat: ad reports synced from Meta, budget alerts by email, Zalo and Messenger, VietQR top-ups and a 24/7 AI assistant.' },
+      { q: 'What does Tran Van Nhat work on?', a: 'Tran Van Nhat has worked in online advertising since 2016 and now focuses on AI agents, workflow automation, software development and multi-channel ads (Facebook, Google, TikTok).' },
+      { q: 'What is ADS-Nolimit.agency?', a: 'ADS-Nolimit.agency provides IT solutions, software development, AI agents and multi-channel advertising. Founded by Tran Van Nhat, it has served over 800 clients in Vietnam and abroad.' },
+      { q: 'How can I contact Tran Van Nhat?', a: 'Reach him on Zalo +84 888 88 2823, hotline +84 989 542 610 or email contact-support@ads-nolimit.agency.' },
+    ],
+  },
+}[lang];
+
+const pageUrl = new URL(pagePath, site.url).href;
+const faqLd = {
+  '@context': 'https://schema.org',
+  '@type': 'FAQPage',
+  mainEntity: copy.faq.map((f) => ({ '@type': 'Question', name: f.q, acceptedAnswer: { '@type': 'Answer', text: f.a } })),
+};
+const profile = {
+  '@context': 'https://schema.org',
+  '@type': 'ProfilePage',
+  url: pageUrl,
+  inLanguage: lang,
+  mainEntity: {
+    '@type': 'Person',
+    '@id': `${site.url}/tran-van-nhat/#person`,
+    name: 'Trần Văn Nhất',
+    alternateName: ['Tran Van Nhat', 'Nhất Trần'],
+    jobTitle: copy.jobTitle,
+    description: copy.description,
+    url: pageUrl,
+    email: contact.email,
+    nationality: { '@type': 'Country', name: 'Vietnam' },
+    worksFor: { '@type': 'Organization', name: site.name, url: `${site.url}/` },
+    knowsAbout: ['AI Agent', 'Tự động hóa quy trình', 'Lập trình phần mềm', 'Quảng cáo Facebook', 'Quảng cáo Google', 'Quảng cáo TikTok'],
+    sameAs: [links.facebook],
+  },
+};
+---
+
+<BaseLayout title={copy.title} description={copy.description} lang={lang}>
+  <script is:inline type="application/ld+json" set:html={JSON.stringify(profile)}></script>
+  <script is:inline type="application/ld+json" set:html={JSON.stringify(faqLd)}></script>
+  <PageHero title={copy.h1} lead={copy.lead} />
+
+  <section class="section" aria-labelledby="who-title">
+    <div class="container story">
+      <div class="prose">
+        <h2 id="who-title">{copy.whoTitle}</h2>
+        {copy.who.map((p) => <p>{p}</p>)}
+      </div>
+      <dl class="facts">
+        {
+          copy.facts.map((f) => (
+            <div>
+              <dt>{f.label}</dt>
+              <dd>{f.value}</dd>
+            </div>
+          ))
+        }
+      </dl>
+    </div>
+  </section>
+
+  <section class="section section--raise" aria-labelledby="work-title">
+    <div class="container">
+      <div class="section-head">
+        <h2 id="work-title">{copy.workTitle}</h2>
+      </div>
+      <ul class="checklist work">{copy.work.map((w) => <li>{w}</li>)}</ul>
+    </div>
+  </section>
+
+  <section class="section section--raise" aria-labelledby="faq-title">
+    <div class="container prose faq-founder">
+      <h2 id="faq-title">{copy.faqTitle}</h2>
+      {
+        copy.faq.map((f) => (
+          <div class="qa">
+            <h3>{f.q}</h3>
+            <p>{f.a}</p>
+          </div>
+        ))
+      }
+    </div>
+  </section>
+
+  <section class="section" aria-labelledby="contact-title">
+    <div class="container prose">
+      <h2 id="contact-title">{copy.contactTitle}</h2>
+      <p>{copy.contactLead}</p>
+      <ul class="contact-list">
+        <li>{copy.labels.zalo}: <a href={links.zalo} rel="noopener" target="_blank">{contact.zaloPhone}</a></li>
+        <li>{copy.labels.hotline}: <a href={links.hotline}>{contact.hotline}</a></li>
+        <li>{copy.labels.email}: <a href={`mailto:${contact.email}`}>{contact.email}</a></li>
+        <li>{copy.labels.web}: <a href="/">www.ads-nolimit.agency</a></li>
+        <li>{copy.labels.page}: <a href={links.facebook} rel="noopener" target="_blank">ADS-Nolimit</a></li>
+      </ul>
+      <p><a href={aboutPath}>{copy.labels.about} →</a> · <a href={contactPath}>{copy.labels.contact} →</a></p>
+    </div>
+  </section>
+
+  <CtaBand lang={lang} />
+</BaseLayout>
+
+<style>
+  .story {
+    display: grid;
+    gap: 2.5rem;
+    align-items: start;
+  }
+  @media (min-width: 960px) {
+    .story {
+      grid-template-columns: minmax(0, 1fr) 17rem;
+    }
+  }
+  .facts {
+    display: grid;
+    gap: 1rem;
+    margin: 0;
+  }
+  .facts div {
+    padding: 1rem 1.1rem;
+    border-radius: 14px;
+    border: 1px solid rgb(var(--ov) / 0.12);
+    background: rgb(var(--ov) / 0.04);
+  }
+  .facts dt {
+    font-size: 0.85rem;
+    opacity: 0.75;
+  }
+  .facts dd {
+    margin: 0.2rem 0 0;
+    font-weight: 700;
+  }
+  .work {
+    max-width: 52rem;
+  }
+  .faq-founder .qa {
+    padding: 1rem 0;
+    border-top: 1px solid rgb(var(--ov) / 0.1);
+  }
+  .faq-founder .qa h3 {
+    margin: 0 0 0.4rem;
+    font-size: 1.05rem;
+  }
+  .faq-founder .qa p {
+    margin: 0;
+  }
+  .contact-list {
+    padding-left: 1.2rem;
+  }
+</style>

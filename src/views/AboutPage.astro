@@ -135,6 +135,10 @@ const copy = {
       <div class="prose">
         <h2 id="story-title">{copy.storyTitle}</h2>
         {copy.story.map((p) => <p>{p}</p>)}
+        <p class="founder-link">
+          {lang === 'vi' ? 'Người sáng lập & Giám đốc điều hành: ' : 'Founder & CEO: '}
+          <a href={lang === 'vi' ? '/tran-van-nhat/' : '/en/tran-van-nhat/'}>Trần Văn Nhất →</a>
+        </p>
       </div>
 
       <dl class="facts">

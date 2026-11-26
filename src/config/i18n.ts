@@ -40,6 +40,7 @@ export const routes: readonly RoutePair[] = [
     en: '/en/blog/vietnam-ai-law-and-personal-data-law-2026/',
   },
   { vi: '/ve-chung-toi/', en: '/en/about/' },
+  { vi: '/tran-van-nhat/', en: '/en/tran-van-nhat/' },
   { vi: '/lien-he/', en: '/en/contact/' },
   { vi: '/chinh-sach-bao-mat/', en: '/en/privacy/' },
   { vi: '/dieu-khoan/', en: '/en/terms/' },
